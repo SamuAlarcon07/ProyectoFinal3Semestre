@@ -12,14 +12,16 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Construye objetos Compra paso a paso.
+ * Builder encargado de construir objetos Compra paso a paso.
  */
 public class CompraBuilder {
 
+    // Datos obligatorios.
     private final String codigo;
     private final Cliente cliente;
     private final EstadoCompra estadoInicial;
 
+    // Datos opcionales.
     private LocalDateTime fecha = LocalDateTime.now();
     private final List<DetalleCompra> detalles = new ArrayList<>();
     private BigDecimal descuentos = BigDecimal.ZERO;
@@ -27,6 +29,7 @@ public class CompraBuilder {
 
     public CompraBuilder(String codigo, Cliente cliente,
                          EstadoCompra estadoInicial) {
+
         if (codigo == null || codigo.isBlank()) {
             throw new IllegalArgumentException(
                     "El código de la compra es obligatorio."
@@ -60,19 +63,29 @@ public class CompraBuilder {
         return this;
     }
 
+    /**
+     * Construye la compra con todos los datos configurados.
+     */
     public Compra build() {
+
         Compra compra = new Compra(
-                codigo, cliente, fecha, estadoInicial
+                codigo,
+                cliente,
+                fecha,
+                estadoInicial
         );
 
+        // Agregar primero los detalles.
         for (DetalleCompra detalle : detalles) {
             compra.agregarDetalle(detalle);
         }
 
+        // Aplicar los descuentos.
         if (descuentos.compareTo(BigDecimal.ZERO) > 0) {
             compra.aplicarDescuentos(descuentos);
         }
 
+        // Aplicar los puntos redimidos.
         if (valorPuntosRedimidos.compareTo(BigDecimal.ZERO) > 0) {
             compra.aplicarValorPuntosRedimidos(
                     valorPuntosRedimidos

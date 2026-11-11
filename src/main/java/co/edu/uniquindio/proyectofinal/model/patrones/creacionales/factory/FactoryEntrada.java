@@ -8,7 +8,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Fábrica abstracta para crear los diferentes tipos de entradas.
+ * Creador abstracto del patrón Factory Method.
+ * Define el método para crear los diferentes tipos de entradas.
  */
 public abstract class FactoryEntrada {
 

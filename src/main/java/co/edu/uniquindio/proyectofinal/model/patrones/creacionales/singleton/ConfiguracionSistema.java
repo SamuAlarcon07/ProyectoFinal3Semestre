@@ -3,8 +3,8 @@ package co.edu.uniquindio.proyectofinal.model.patrones.creacionales.singleton;
 import java.util.Objects;
 
 /**
- * Configuración general compartida de CinemaUQ.
- * Implementa el patrón Singleton mediante inicialización Holder.
+ * Mantiene la configuración general compartida de CinemaUQ.
+ * Implementa el patrón Singleton.
  */
 public final class ConfiguracionSistema {
 
@@ -13,14 +13,23 @@ public final class ConfiguracionSistema {
     private volatile String moneda = "COP";
     private volatile boolean modoMantenimiento;
 
+    /**
+     * Holder que crea la instancia única.
+     */
     private static class InstanciaHolder {
         private static final ConfiguracionSistema INSTANCIA =
                 new ConfiguracionSistema();
     }
 
+    /**
+     * Constructor privado para impedir instancias externas.
+     */
     private ConfiguracionSistema() {
     }
 
+    /**
+     * Devuelve la única instancia de configuración.
+     */
     public static ConfiguracionSistema getInstancia() {
         return InstanciaHolder.INSTANCIA;
     }
@@ -69,4 +78,3 @@ public final class ConfiguracionSistema {
         return valor.trim();
     }
 }
-

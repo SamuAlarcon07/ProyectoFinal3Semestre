@@ -40,9 +40,7 @@ public class Cine {
         this.salas = new ArrayList<>();
     }
 
-    /**
-     * Actualiza los datos de contacto y presentación de la empresa.
-     */
+    /** Actualiza los datos de contacto y presentación de la empresa. */
     public void actualizarInformacion(String razonSocial, String nombreComercial,
                                       String direccion, String telefono,
                                       String correoElectronico, String paginaWeb) {
@@ -54,9 +52,7 @@ public class Cine {
         this.paginaWeb = paginaWeb == null ? "" : paginaWeb.trim();
     }
 
-    /**
-     * Registra una sala si todavía no existe otra con el mismo código.
-     */
+    /** Registra una sala si todavía no existe otra con el mismo código. */
     public void registrarSala(Sala sala) {
         Objects.requireNonNull(sala, "La sala no puede ser nula.");
         boolean existe = salas.stream()
@@ -67,9 +63,7 @@ public class Cine {
         salas.add(sala);
     }
 
-    /**
-     * Busca una sala por su código.
-     */
+    /** Busca una sala por su código. */
     public Optional<Sala> buscarSala(String codigo) {
         if (codigo == null || codigo.isBlank()) {
             return Optional.empty();
@@ -79,13 +73,8 @@ public class Cine {
                 .findFirst();
     }
 
-    public void activar() {
-        this.activo = true;
-    }
-
-    public void desactivar() {
-        this.activo = false;
-    }
+    public void activar() { this.activo = true; }
+    public void desactivar() { this.activo = false; }
 
     private static String validarTexto(String valor, String campo) {
         if (valor == null || valor.isBlank()) {
@@ -94,39 +83,13 @@ public class Cine {
         return valor.trim();
     }
 
-    public String getNit() {
-        return nit;
-    }
-
-    public String getRazonSocial() {
-        return razonSocial;
-    }
-
-    public String getNombreComercial() {
-        return nombreComercial;
-    }
-
-    public String getDireccion() {
-        return direccion;
-    }
-
-    public String getTelefono() {
-        return telefono;
-    }
-
-    public String getCorreoElectronico() {
-        return correoElectronico;
-    }
-
-    public String getPaginaWeb() {
-        return paginaWeb;
-    }
-
-    public boolean isActivo() {
-        return activo;
-    }
-
-    public List<Sala> getSalas() {
-        return List.copyOf(salas);
-    }
+    public String getNit() { return nit; }
+    public String getRazonSocial() { return razonSocial; }
+    public String getNombreComercial() { return nombreComercial; }
+    public String getDireccion() { return direccion; }
+    public String getTelefono() { return telefono; }
+    public String getCorreoElectronico() { return correoElectronico; }
+    public String getPaginaWeb() { return paginaWeb; }
+    public boolean isActivo() { return activo; }
+    public List<Sala> getSalas() { return List.copyOf(salas); }
 }

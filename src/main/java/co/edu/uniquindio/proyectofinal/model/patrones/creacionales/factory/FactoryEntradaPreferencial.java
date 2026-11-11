@@ -8,13 +8,17 @@ import co.edu.uniquindio.proyectofinal.model.principal.Funcion;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/** Fábrica de entradas preferenciales. */
+/** Fábrica encargada de crear entradas preferenciales. */
 public class FactoryEntradaPreferencial extends FactoryEntrada {
 
     @Override
     public Entrada crearEntrada(
-            String codigo, String codigoQR, Funcion funcion,
-            Asiento asiento, BigDecimal precio, LocalDateTime fechaEmision
+            String codigo,
+            String codigoQR,
+            Funcion funcion,
+            Asiento asiento,
+            BigDecimal precio,
+            LocalDateTime fechaEmision
     ) {
         return new EntradaPreferencial(
                 codigo, codigoQR, funcion, asiento, precio, fechaEmision

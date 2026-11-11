@@ -16,11 +16,15 @@ public abstract class ElementoVendibleDecorador implements ElementoVendible {
     protected ElementoVendibleDecorador(ElementoVendible elementoDecorado) {
         this.elementoDecorado = Objects.requireNonNull(
                 elementoDecorado,
-                "El elemento que se desea decorar es obligatorio."
-        );
+                "El elemento que se desea decorar es obligatorio.");
     }
 
     protected ElementoVendible getElementoDecorado() {
+        return elementoDecorado;
+    }
+
+    /** Devuelve el elemento original para integraciones que necesiten identificarlo. */
+    public final ElementoVendible obtenerElementoOriginal() {
         return elementoDecorado;
     }
 
@@ -34,4 +38,3 @@ public abstract class ElementoVendibleDecorador implements ElementoVendible {
         return elementoDecorado.consultarDescripcion();
     }
 }
-
