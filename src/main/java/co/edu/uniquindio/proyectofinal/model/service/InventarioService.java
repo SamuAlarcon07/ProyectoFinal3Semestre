@@ -50,7 +50,7 @@ public class InventarioService {
 
 
 
-    public boolean validarDisponibilidadCompra(Compra compra) {
+    public synchronized boolean validarDisponibilidadCompra(Compra compra) {
 
         for (Map.Entry<Producto, Integer> requisito : calcularRequisitos(compra).entrySet()) {
 
@@ -72,7 +72,19 @@ public class InventarioService {
 
 
 
-    public void registrarVentaCompra(Compra compra) {
+    /**
+     * Indica si el inventario de una compra ya fue descontado.
+     * Se utiliza para evitar procesar dos veces la misma venta.
+     */
+    public synchronized boolean fueDescontada(String codigoCompra) {
+        if (codigoCompra == null || codigoCompra.isBlank()) {
+            throw new IllegalArgumentException(
+                    "El código de compra es obligatorio.");
+        }
+        return comprasDescontadas.contains(codigoCompra.trim());
+    }
+
+    public synchronized void registrarVentaCompra(Compra compra) {
 
         if (compra == null) throw new IllegalArgumentException("La compra es obligatoria.");
 

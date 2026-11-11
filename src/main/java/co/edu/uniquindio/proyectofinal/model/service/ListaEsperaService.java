@@ -1,116 +1,130 @@
 package co.edu.uniquindio.proyectofinal.model.service;
 
-
-
+import co.edu.uniquindio.proyectofinal.model.enums.EstadoSolicitudEspera;
 import co.edu.uniquindio.proyectofinal.model.principal.Cliente;
-
 import co.edu.uniquindio.proyectofinal.model.principal.Funcion;
-
 import co.edu.uniquindio.proyectofinal.model.principal.ListaEspera;
-
 import co.edu.uniquindio.proyectofinal.model.principal.SolicitudEspera;
 
-
-
 import java.time.LocalDateTime;
-
 import java.util.LinkedHashMap;
-
+import java.util.List;
 import java.util.Map;
-
+import java.util.Objects;
 import java.util.Optional;
-
 import java.util.UUID;
 
-
-
 /** Administra las listas de espera y las ofertas de asientos liberados. */
-
 public class ListaEsperaService {
-
-
 
     private final Map<String, ListaEspera> listasPorFuncion = new LinkedHashMap<>();
 
-
-
-    public ListaEspera obtenerOCrearLista(Funcion funcion) {
-
-        if (funcion == null) throw new IllegalArgumentException("La función es obligatoria.");
-
-        return listasPorFuncion.computeIfAbsent(funcion.getCodigo(),
-
-                codigo -> new ListaEspera(UUID.randomUUID().toString(), funcion, LocalDateTime.now()));
-
+    public synchronized ListaEspera obtenerOCrearLista(Funcion funcion) {
+        Objects.requireNonNull(funcion, "La función es obligatoria.");
+        return listasPorFuncion.computeIfAbsent(
+                funcion.getCodigo(),
+                codigo -> new ListaEspera(UUID.randomUUID().toString(), funcion, LocalDateTime.now())
+        );
     }
 
+    public synchronized SolicitudEspera registrarSolicitud(
+            Funcion funcion, Cliente cliente, int cantidad) {
+        return registrarSolicitud(funcion, cliente, cantidad, LocalDateTime.now());
+    }
 
-
-    public SolicitudEspera registrarSolicitud(Funcion funcion, Cliente cliente, int cantidad) {
+    /** Permite registrar una solicitud con una fecha explícita, útil para pruebas. */
+    public synchronized SolicitudEspera registrarSolicitud(
+            Funcion funcion, Cliente cliente, int cantidad, LocalDateTime fechaSolicitud) {
+        Objects.requireNonNull(funcion, "La función es obligatoria.");
+        Objects.requireNonNull(cliente, "El cliente es obligatorio.");
+        Objects.requireNonNull(fechaSolicitud, "La fecha de solicitud es obligatoria.");
+        procesarOfertasVencidas(fechaSolicitud);
 
         ListaEspera lista = obtenerOCrearLista(funcion);
-
-        SolicitudEspera solicitud = new SolicitudEspera(UUID.randomUUID().toString(),
-
-                cliente, LocalDateTime.now(), cantidad);
-
+        SolicitudEspera solicitud = new SolicitudEspera(
+                UUID.randomUUID().toString(), cliente, fechaSolicitud, cantidad);
         lista.agregarSolicitud(solicitud);
-
         return solicitud;
-
     }
 
+    /**
+     * Antes de ofrecer los asientos a la siguiente persona, marca como EXPIRADA
+     * cualquier oferta cuyo plazo ya terminó.
+     */
+    public synchronized Optional<SolicitudEspera> notificarSiguiente(
+            Funcion funcion, int asientosLiberados,
+            int minutosParaAceptar, LocalDateTime ahora) {
+        Objects.requireNonNull(funcion, "La función es obligatoria.");
+        Objects.requireNonNull(ahora, "La fecha de consulta es obligatoria.");
 
+        procesarOfertasVencidas(ahora);
 
-    public Optional<SolicitudEspera> notificarSiguiente(Funcion funcion,
-
-                                                        int asientosLiberados, int minutosParaAceptar, LocalDateTime ahora) {
-
-        if (funcion == null || ahora == null) throw new IllegalArgumentException("La función y la fecha son obligatorias.");
-
-        if (asientosLiberados <= 0 || minutosParaAceptar <= 0) return Optional.empty();
+        if (asientosLiberados <= 0 || minutosParaAceptar <= 0) {
+            return Optional.empty();
+        }
 
         ListaEspera lista = listasPorFuncion.get(funcion.getCodigo());
-
-        if (lista == null) return Optional.empty();
+        if (lista == null) {
+            return Optional.empty();
+        }
 
         Optional<SolicitudEspera> siguiente = lista.obtenerSiguienteSolicitud()
+                .filter(solicitud -> solicitud.getCantidadAsientos() <= asientosLiberados);
 
-                .filter(s -> s.getCantidadAsientos() <= asientosLiberados);
-
-        siguiente.ifPresent(s -> s.notificarDisponibilidad(ahora.plusMinutes(minutosParaAceptar)));
-
+        siguiente.ifPresent(solicitud ->
+                solicitud.notificarDisponibilidad(ahora.plusMinutes(minutosParaAceptar)));
         return siguiente;
-
     }
 
+    /**
+     * Recorre todas las listas y expira las ofertas vencidas.
+     * Devuelve el número de solicitudes que cambiaron a EXPIRADA.
+     * Este método puede invocarse periódicamente desde la aplicación JavaFX.
+     */
+    public synchronized int procesarOfertasVencidas(LocalDateTime ahora) {
+        Objects.requireNonNull(ahora, "La fecha de procesamiento es obligatoria.");
+        int expiradas = 0;
 
+        for (ListaEspera lista : listasPorFuncion.values()) {
+            for (SolicitudEspera solicitud : lista.consultarSolicitudes()) {
+                boolean estabaNotificada =
+                        solicitud.getEstado() == EstadoSolicitudEspera.NOTIFICADA;
+                solicitud.expirar(ahora);
+                if (estabaNotificada
+                        && solicitud.getEstado() == EstadoSolicitudEspera.EXPIRADA) {
+                    expiradas++;
+                }
+            }
+        }
+        return expiradas;
+    }
 
-    public void atenderSolicitud(SolicitudEspera solicitud, LocalDateTime instante) {
-
-        if (solicitud == null) throw new IllegalArgumentException("La solicitud es obligatoria.");
-
+    public synchronized void atenderSolicitud(
+            SolicitudEspera solicitud, LocalDateTime instante) {
+        Objects.requireNonNull(solicitud, "La solicitud es obligatoria.");
+        Objects.requireNonNull(instante, "El instante es obligatorio.");
+        solicitud.expirar(instante);
         solicitud.atender(instante);
-
     }
 
-
-
-    public void cancelarSolicitud(SolicitudEspera solicitud) {
-
-        if (solicitud == null) throw new IllegalArgumentException("La solicitud es obligatoria.");
-
+    public synchronized void cancelarSolicitud(SolicitudEspera solicitud) {
+        Objects.requireNonNull(solicitud, "La solicitud es obligatoria.");
         solicitud.cancelar();
-
     }
 
-
-
-    public Optional<ListaEspera> buscarLista(Funcion funcion) {
-
-        return funcion == null ? Optional.empty() : Optional.ofNullable(listasPorFuncion.get(funcion.getCodigo()));
-
+    public synchronized Optional<ListaEspera> buscarLista(Funcion funcion) {
+        return funcion == null
+                ? Optional.empty()
+                : Optional.ofNullable(listasPorFuncion.get(funcion.getCodigo()));
     }
 
+    /** Consulta solicitudes y actualiza primero el estado de las ofertas vencidas. */
+    public synchronized List<SolicitudEspera> consultarSolicitudes(
+            Funcion funcion, LocalDateTime ahora) {
+        Objects.requireNonNull(ahora, "La fecha de consulta es obligatoria.");
+        procesarOfertasVencidas(ahora);
+        return buscarLista(funcion)
+                .map(ListaEspera::consultarSolicitudes)
+                .orElseGet(List::of);
+    }
 }
-
