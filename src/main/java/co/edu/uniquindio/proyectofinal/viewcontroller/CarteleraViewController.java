@@ -10,13 +10,17 @@ import co.edu.uniquindio.proyectofinal.model.principal.ReservaAsiento;
 import co.edu.uniquindio.proyectofinal.model.principal.TarjetaVirtual;
 import co.edu.uniquindio.proyectofinal.model.principal.Funcion;
 import co.edu.uniquindio.proyectofinal.model.principal.Pelicula;
+import co.edu.uniquindio.proyectofinal.model.principal.PeliculaGuardada;
+import co.edu.uniquindio.proyectofinal.model.enums.TipoListaPelicula;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
+import javafx.animation.ScaleTransition;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
@@ -25,6 +29,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
@@ -39,6 +44,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Window;
 
@@ -55,6 +61,7 @@ import java.util.Locale;
 import java.net.URL;
 import java.util.Map;
 import java.util.Optional;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.TreeMap;
 
@@ -248,6 +255,18 @@ public class CarteleraViewController {
             poster.getChildren().add(posterText);
         }
 
+        // Acceso rápido a Favoritas desde la esquina superior derecha del póster.
+        Button corazon = new Button();
+        corazon.setFocusTraversable(false);
+        corazon.setMinSize(34, 34);
+        corazon.setPrefSize(34, 34);
+        corazon.setMaxSize(34, 34);
+        actualizarEstiloCorazon(corazon, pelicula);
+        corazon.setOnAction(event -> alternarFavorita(pelicula, corazon));
+        StackPane.setAlignment(corazon, Pos.TOP_RIGHT);
+        StackPane.setMargin(corazon, new Insets(9, 9, 0, 0));
+        poster.getChildren().add(corazon);
+
         Label titulo = new Label(pelicula.getTitulo());
         titulo.getStyleClass().add("movie-title");
         titulo.setWrapText(true);
@@ -263,6 +282,92 @@ public class CarteleraViewController {
 
         tarjeta.getChildren().addAll(poster, titulo, datos, detalles);
         return tarjeta;
+    }
+
+    /** Comprueba si la película ya pertenece a la lista de Favoritas. */
+    private boolean estaEnFavoritas(Pelicula pelicula) {
+        if (operaciones == null || cliente == null) {
+            return false;
+        }
+        return operaciones.consultarListaPersonal(cliente, TipoListaPelicula.FAVORITA)
+                .stream()
+                .anyMatch(guardada -> guardada.getPelicula().getCodigo()
+                        .equals(pelicula.getCodigo()));
+    }
+
+    /** Actualiza el corazón según el estado persistido de la película. */
+    private void actualizarEstiloCorazon(Button corazon, Pelicula pelicula) {
+        boolean guardada = estaEnFavoritas(pelicula);
+        corazon.setText(guardada ? "♥" : "♡");
+        // El propio glifo tiene forma de corazón: no se dibuja un botón circular.
+        // Se fuerza Segoe UI Symbol para evitar que el carácter desaparezca
+        // por la fuente personalizada utilizada en el resto de la interfaz.
+        corazon.setStyle(guardada
+                ? "-fx-background-color: transparent;"
+                  + "-fx-text-fill: #ffc52e; -fx-font-family: 'Segoe UI Symbol';"
+                  + "-fx-font-size: 29px; -fx-font-weight: bold;"
+                  + "-fx-padding: 0; -fx-cursor: hand;"
+                  + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75), 5, 0.3, 0, 1);"
+                : "-fx-background-color: transparent;"
+                  + "-fx-text-fill: white; -fx-font-family: 'Segoe UI Symbol';"
+                  + "-fx-font-size: 29px; -fx-font-weight: bold;"
+                  + "-fx-padding: 0; -fx-cursor: hand;"
+                  + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.85), 5, 0.3, 0, 1);");
+        corazon.setAccessibleText(guardada
+                ? "Quitar de películas favoritas" : "Agregar a películas favoritas");
+    }
+
+    /** Ejecuta un pequeño pulso al cambiar el estado de Favoritas. */
+    private void animarCorazon(Button corazon, Runnable alTerminar) {
+        // Reinicia la escala para que cada clic produzca la animación completa.
+        corazon.setScaleX(1.0);
+        corazon.setScaleY(1.0);
+
+        ScaleTransition pulso = new ScaleTransition(
+                javafx.util.Duration.millis(125), corazon);
+        pulso.setToX(1.38);
+        pulso.setToY(1.38);
+        pulso.setAutoReverse(true);
+        pulso.setCycleCount(2);
+        pulso.setOnFinished(event -> {
+            corazon.setScaleX(1.0);
+            corazon.setScaleY(1.0);
+            if (alTerminar != null) {
+                // Ejecuta la alerta después de finalizar el pulso de animación.
+                // Así showAndWait() no se invoca durante el procesamiento del pulso.
+                Platform.runLater(alTerminar);
+            }
+        });
+        pulso.playFromStart();
+    }
+
+    /** Agrega o quita la película de Favoritas sin duplicar registros. */
+    private void alternarFavorita(Pelicula pelicula, Button corazon) {
+        if (operaciones == null || cliente == null) {
+            mostrarAlerta(Alert.AlertType.WARNING, "Favoritas",
+                    "No se pudo acceder a tu lista", "Inicia sesión como cliente para guardar películas.");
+            return;
+        }
+        try {
+            if (estaEnFavoritas(pelicula)) {
+                operaciones.quitarPeliculaGuardada(
+                        cliente, pelicula, TipoListaPelicula.FAVORITA);
+                actualizarEstiloCorazon(corazon, pelicula);
+                animarCorazon(corazon, () -> mostrarAlertaFavorita(
+                        pelicula, false));
+            } else {
+                operaciones.guardarPelicula(
+                        cliente, pelicula, TipoListaPelicula.FAVORITA);
+                actualizarEstiloCorazon(corazon, pelicula);
+                animarCorazon(corazon, () -> mostrarAlertaFavorita(
+                        pelicula, true));
+            }
+        } catch (RuntimeException ex) {
+            mostrarAlerta(Alert.AlertType.ERROR, "Favoritas",
+                    "No se pudo actualizar tu lista",
+                    ex.getMessage() == null ? "Inténtalo nuevamente." : ex.getMessage());
+            actualizarEstiloCorazon(corazon, pelicula);
+        }
     }
 
     /**
@@ -422,238 +527,222 @@ public class CarteleraViewController {
         prepararDialogo(dialogo, "Seleccionar asientos",
                 funcion.getPelicula().getTitulo() + " · "
                         + FORMATO_FUNCION.format(funcion.getFechaHora()),
-                820, 680);
+                690, 610);
 
         ButtonType continuar = new ButtonType(
                 "Confirmar selección", ButtonBar.ButtonData.OK_DONE);
         dialogo.getDialogPane().getButtonTypes().addAll(continuar, ButtonType.CANCEL);
+        Button botonConfirmarInicial = (Button) dialogo.getDialogPane()
+                .lookupButton(continuar);
+        botonConfirmarInicial.setDisable(true);
 
         Map<String, Asiento> seleccionados = new LinkedHashMap<>();
-        Map<String, StackPane> controlesPorId = new LinkedHashMap<>();
-
-        Button botonContinuar =
-                (Button) dialogo.getDialogPane().lookupButton(continuar);
-        botonContinuar.setDisable(true);
-
         Label resumen = new Label("No has seleccionado asientos.");
         resumen.getStyleClass().add("seat-selection-summary");
-        resumen.setWrapText(true);
 
-        VBox contenido = new VBox(16);
-        contenido.setPadding(new Insets(20));
-        contenido.setAlignment(Pos.TOP_CENTER);
-        contenido.setStyle("-fx-background-color: #08192b;");
+        VBox contenido = new VBox(14);
+        contenido.setPadding(new Insets(16));
 
-        Label pantalla = new Label("P A N T A L L A");
+        Label pantalla = new Label("PANTALLA");
+        pantalla.getStyleClass().add("seat-screen");
         pantalla.setMaxWidth(Double.MAX_VALUE);
         pantalla.setAlignment(Pos.CENTER);
-        pantalla.setPadding(new Insets(13, 20, 13, 20));
-        pantalla.setStyle(
-                "-fx-background-color: linear-gradient(to right, #263e59, #f2bd39, #263e59);"
-                        + "-fx-background-radius: 8 8 28 28;"
-                        + "-fx-text-fill: #101827;"
-                        + "-fx-font-size: 12px;"
-                        + "-fx-font-weight: bold;"
-        );
 
-        HBox leyenda = new HBox(20,
+        HBox leyenda = new HBox(16,
                 crearLeyendaAsiento("Disponible", "seat-legend-available"),
                 crearLeyendaAsiento("Seleccionado", "seat-legend-selected"),
                 crearLeyendaAsiento("Ocupado", "seat-legend-occupied"));
         leyenda.setAlignment(Pos.CENTER);
 
-        VBox filas = new VBox(11);
-        filas.setAlignment(Pos.CENTER);
-        filas.setPadding(new Insets(12, 6, 12, 6));
+        GridPane mapa = new GridPane();
+        mapa.setHgap(8);
+        mapa.setVgap(8);
+        mapa.setAlignment(Pos.CENTER);
+        mapa.getStyleClass().add("seat-map");
 
-        Map<String, List<Asiento>> asientosPorFila =
+        Map<String, List<Asiento>> porFila =
                 new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-
         for (Asiento asiento : carteleraController.consultarAsientos(funcion)) {
-            asientosPorFila.computeIfAbsent(
-                    asiento.getFila(), clave -> new ArrayList<>()).add(asiento);
+            porFila.computeIfAbsent(asiento.getFila(), clave -> new ArrayList<>())
+                    .add(asiento);
         }
 
-        long disponibles = 0;
-
-        for (Map.Entry<String, List<Asiento>> entrada : asientosPorFila.entrySet()) {
-            HBox filaVisual = new HBox(9);
-            filaVisual.setAlignment(Pos.CENTER);
-
+        int indiceFila = 0;
+        for (Map.Entry<String, List<Asiento>> entrada : porFila.entrySet()) {
             Label nombreFila = new Label(entrada.getKey());
-            nombreFila.setMinWidth(24);
-            nombreFila.setAlignment(Pos.CENTER);
-            nombreFila.setStyle(
-                    "-fx-text-fill: #f4c34e;"
-                            + "-fx-font-size: 13px;"
-                            + "-fx-font-weight: bold;"
-            );
-            filaVisual.getChildren().add(nombreFila);
+            nombreFila.getStyleClass().add("seat-row-label");
+            mapa.add(nombreFila, 0, indiceFila);
 
-            entrada.getValue().sort(
-                    java.util.Comparator.comparingInt(Asiento::getNumero));
-
+            int columna = 1;
             for (Asiento asiento : entrada.getValue()) {
-                String id = asiento.obtenerIdentificador();
-                boolean disponible = carteleraController.estaDisponible(funcion, asiento);
+                String idAsiento = asiento.obtenerIdentificador();
+                boolean disponible =
+                        carteleraController.estaDisponible(funcion, asiento);
 
-                Label numero = new Label(String.valueOf(asiento.getNumero()));
-                numero.setMouseTransparent(true);
-                numero.setStyle("-fx-text-fill: white; -fx-font-size: 12px;"
-                        + "-fx-font-weight: bold;");
-
-                StackPane asientoVisual = new StackPane(numero);
-                asientoVisual.setMinSize(43, 38);
-                asientoVisual.setPrefSize(43, 38);
-                asientoVisual.setMaxSize(43, 38);
-                asientoVisual.setPickOnBounds(true);
-                asientoVisual.setFocusTraversable(disponible);
-                asientoVisual.setAccessibleText("Asiento " + id
+                // Se usa un Button real para que JavaFX gestione de forma nativa
+                // el clic, el foco y el estado habilitado/deshabilitado.
+                Button botonAsiento = new Button();
+                // La parte visible es un gráfico JavaFX, no un fondo CSS.
+                Rectangle fondoAsiento = new Rectangle(35, 31);
+                fondoAsiento.setArcWidth(10);
+                fondoAsiento.setArcHeight(10);
+                fondoAsiento.setFill(Color.web(disponible ? "#123b51" : "#566272"));
+                fondoAsiento.setStroke(Color.web(disponible ? "#50a994" : "#738092"));
+                fondoAsiento.setStrokeWidth(2);
+                Label textoAsiento = new Label(String.valueOf(asiento.getNumero()));
+                textoAsiento.setTextFill(Color.WHITE);
+                StackPane graficoAsiento = new StackPane(fondoAsiento, textoAsiento);
+                graficoAsiento.setMouseTransparent(true);
+                botonAsiento.setGraphic(graficoAsiento);
+                botonAsiento.setPadding(Insets.EMPTY);
+                botonAsiento.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-padding: 0;");
+                botonAsiento.setMinSize(38, 34);
+                botonAsiento.setPrefSize(38, 34);
+                botonAsiento.setMaxSize(38, 34);
+                botonAsiento.setFocusTraversable(disponible);
+                botonAsiento.setDisable(!disponible);
+                botonAsiento.setAccessibleText("Asiento " + idAsiento
                         + (disponible ? " disponible" : " ocupado"));
 
+                botonAsiento.getStyleClass().add(disponible
+                        ? "seat-tile" : "seat-tile-occupied");
+
                 if (disponible) {
-                    disponibles++;
-                    asientoVisual.setStyle(estiloAsientoTile(false));
-                    asientoVisual.setCursor(javafx.scene.Cursor.HAND);
-                    controlesPorId.put(id, asientoVisual);
+                    botonAsiento.setCursor(javafx.scene.Cursor.HAND);
 
-                    // Control personalizado: el área completa del asiento recibe el clic.
-                    asientoVisual.setOnMouseClicked(event -> {
-                        alternarAsientoVisual(
-                                id, asiento, asientoVisual, seleccionados,
-                                resumen, botonContinuar);
-                        event.consume();
-                    });
-
-                    // También permite seleccionar con Enter o barra espaciadora.
-                    asientoVisual.setOnKeyPressed(event -> {
-                        if (event.getCode() == javafx.scene.input.KeyCode.ENTER
-                                || event.getCode() == javafx.scene.input.KeyCode.SPACE) {
-                            alternarAsientoVisual(
-                                    id, asiento, asientoVisual, seleccionados,
-                                    resumen, botonContinuar);
-                            event.consume();
+                    botonAsiento.setOnMouseEntered(event -> {
+                        if (!seleccionados.containsKey(idAsiento)) {
+                            fondoAsiento.setFill(Color.web("#245d58"));
+                            fondoAsiento.setStroke(Color.web("#8bd5ad"));
                         }
                     });
 
-                    asientoVisual.setOnMouseEntered(event -> {
-                        if (!seleccionados.containsKey(id)) {
-                            asientoVisual.setStyle(estiloAsientoTileHover());
+                    botonAsiento.setOnMouseExited(event -> {
+                        boolean marcado = seleccionados.containsKey(idAsiento);
+                        fondoAsiento.setFill(Color.web(marcado ? "#f2bd39" : "#123b51"));
+                        fondoAsiento.setStroke(Color.web(marcado ? "#ffe08a" : "#50a994"));
+                        textoAsiento.setTextFill(marcado ? Color.web("#101827") : Color.WHITE);
+                    });
+
+                    botonAsiento.setOnAction(event -> {
+                        boolean seleccionado;
+                        if (seleccionados.containsKey(idAsiento)) {
+                            seleccionados.remove(idAsiento);
+                            seleccionado = false;
+                        } else {
+                            seleccionados.put(idAsiento, asiento);
+                            seleccionado = true;
                         }
+
+                        // Actualización síncrona: no se difiere con runLater.
+                        fondoAsiento.setFill(Color.web(seleccionado ? "#f2bd39" : "#123b51"));
+                        fondoAsiento.setStroke(Color.web(seleccionado ? "#ffe08a" : "#50a994"));
+                        textoAsiento.setTextFill(seleccionado ? Color.web("#101827") : Color.WHITE);
+                        botonAsiento.setAccessibleText("Asiento " + idAsiento
+                                + (seleccionado ? " seleccionado" : " disponible"));
+
+                        if (seleccionado) {
+                            botonAsiento.getStyleClass().remove("seat-tile");
+                            if (!botonAsiento.getStyleClass()
+                                    .contains("seat-tile-selected")) {
+                                botonAsiento.getStyleClass().add("seat-tile-selected");
+                            }
+                        } else {
+                            botonAsiento.getStyleClass().remove("seat-tile-selected");
+                            if (!botonAsiento.getStyleClass().contains("seat-tile")) {
+                                botonAsiento.getStyleClass().add("seat-tile");
+                            }
+                        }
+
+                        actualizarResumenAsientos(seleccionados, resumen);
+
+                        Button confirmar = (Button) dialogo.getDialogPane()
+                                .lookupButton(continuar);
+                        confirmar.setDisable(seleccionados.isEmpty());
+
+                        fondoAsiento.setStrokeWidth(seleccionado ? 2.5 : 2);
+                        resumen.applyCss();
+                        contenido.requestLayout();
+
+                        System.out.println("[ASIENTOS] " + idAsiento
+                                + (seleccionado ? " SELECCIONADO" : " DESELECCIONADO"));
+                        System.out.println("[ASIENTOS] TOTAL: "
+                                + seleccionados.size());
+                        System.out.println("[ASIENTOS] CONFIRMAR DESHABILITADO: "
+                                + confirmar.isDisabled());
+
+                        ScaleTransition animacion = new ScaleTransition(
+                                javafx.util.Duration.millis(130), botonAsiento);
+                        animacion.setFromX(1.0);
+                        animacion.setFromY(1.0);
+                        animacion.setToX(1.13);
+                        animacion.setToY(1.13);
+                        animacion.setCycleCount(2);
+                        animacion.setAutoReverse(true);
+                        animacion.play();
                     });
-                    asientoVisual.setOnMouseExited(event -> {
-                        asientoVisual.setStyle(estiloAsientoTile(
-                                seleccionados.containsKey(id)));
-                    });
-                } else {
-                    asientoVisual.setStyle(estiloAsientoTileOcupado());
-                    asientoVisual.setOpacity(0.68);
                 }
 
-                filaVisual.getChildren().add(asientoVisual);
+                mapa.add(botonAsiento, columna++, indiceFila);
             }
-
-            filas.getChildren().add(filaVisual);
+            indiceFila++;
         }
 
-        Label disponibilidad = new Label(
-                "Hay " + disponibles + " asientos disponibles. "
-                        + "Haz clic directamente sobre un asiento para marcarlo.");
-        disponibilidad.setWrapText(true);
-        disponibilidad.setAlignment(Pos.CENTER);
-        disponibilidad.setStyle("-fx-text-fill: #aebed0; -fx-font-size: 12px;");
+        long cantidadDisponibles = carteleraController.consultarAsientos(funcion).stream()
+                .filter(asiento -> carteleraController.estaDisponible(funcion, asiento))
+                .count();
+        Label estadoDisponibilidad = new Label(
+                "Asientos disponibles: " + cantidadDisponibles
+                        + " · Haz clic en uno o varios para seleccionarlos.");
+        estadoDisponibilidad.getStyleClass().add("muted-small");
+        estadoDisponibilidad.setWrapText(true);
 
-        Button limpiar = new Button("Limpiar selección");
-        limpiar.setStyle(
-                "-fx-background-color: #172d45;"
-                        + "-fx-text-fill: #eaf0f7;"
-                        + "-fx-border-color: #49627d;"
-                        + "-fx-border-radius: 8;"
-                        + "-fx-background-radius: 8;"
-                        + "-fx-padding: 8 16;"
-                        + "-fx-cursor: hand;"
-        );
-        limpiar.setOnAction(event -> {
-            seleccionados.clear();
-            controlesPorId.forEach((id, control) -> {
-                control.setStyle(estiloAsientoTile(false));
-                control.setAccessibleText("Asiento " + id + " disponible");
-            });
-            actualizarResumenAsientos(seleccionados, resumen);
-            botonContinuar.setDisable(true);
-        });
-
-        HBox barraAcciones = new HBox(limpiar);
-        barraAcciones.setAlignment(Pos.CENTER_RIGHT);
-
-        contenido.getChildren().addAll(
-                pantalla, leyenda, disponibilidad, filas,
-                new Separator(), resumen, barraAcciones);
+        contenido.getChildren().addAll(pantalla, leyenda, estadoDisponibilidad, mapa,
+                new Separator(), resumen);
 
         ScrollPane scroll = new ScrollPane(contenido);
         scroll.setFitToWidth(true);
-        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scroll.setStyle("-fx-background: #08192b; -fx-background-color: #08192b;");
-        scroll.setPrefViewportHeight(470);
+        scroll.setPrefViewportHeight(390);
         dialogo.getDialogPane().setContent(scroll);
 
         dialogo.setResultConverter(tipo -> tipo == continuar
                 ? List.copyOf(seleccionados.values()) : null);
 
         Optional<List<Asiento>> resultado = dialogo.showAndWait();
-        resultado.ifPresent(asientos ->
-                mostrarResumenSeleccion(funcion, asientos));
+        resultado.ifPresent(asientos -> mostrarResumenSeleccion(funcion, asientos));
     }
 
-    private void alternarAsientoVisual(
-            String id,
-            Asiento asiento,
-            StackPane control,
-            Map<String, Asiento> seleccionados,
-            Label resumen,
-            Button botonContinuar) {
 
-        boolean marcado;
-        if (seleccionados.containsKey(id)) {
-            seleccionados.remove(id);
-            marcado = false;
-        } else {
-            seleccionados.put(id, asiento);
-            marcado = true;
-        }
-
-        control.setStyle(estiloAsientoTile(marcado));
-        control.setAccessibleText("Asiento " + id
-                + (marcado ? " seleccionado" : " disponible"));
-        actualizarResumenAsientos(seleccionados, resumen);
-        botonContinuar.setDisable(seleccionados.isEmpty());
-    }
-
-    private String estiloAsientoTile(boolean seleccionado) {
-        if (seleccionado) {
-            return "-fx-background-color: #f2bd39;"
-                    + "-fx-background-radius: 9;"
-                    + "-fx-border-color: #ffe08a;"
-                    + "-fx-border-width: 2;"
-                    + "-fx-border-radius: 9;";
-        }
+    private String estiloAsientoDisponible() {
         return "-fx-background-color: #183b50;"
                 + "-fx-background-radius: 9;"
                 + "-fx-border-color: #3f947d;"
                 + "-fx-border-width: 1.5;"
-                + "-fx-border-radius: 9;";
+                + "-fx-border-radius: 9;"
+                + "-fx-cursor: hand;";
     }
 
-    private String estiloAsientoTileHover() {
+    private String estiloAsientoHover() {
         return "-fx-background-color: #245d58;"
                 + "-fx-background-radius: 9;"
                 + "-fx-border-color: #8bd5ad;"
                 + "-fx-border-width: 2;"
-                + "-fx-border-radius: 9;";
+                + "-fx-border-radius: 9;"
+                + "-fx-effect: dropshadow(gaussian, rgba(139,213,173,0.45), 8, 0.25, 0, 0);"
+                + "-fx-cursor: hand;";
     }
 
-    private String estiloAsientoTileOcupado() {
+    private String estiloAsientoSeleccionado() {
+        return "-fx-background-color: #f2bd39;"
+                + "-fx-background-radius: 9;"
+                + "-fx-border-color: #ffe08a;"
+                + "-fx-border-width: 2.5;"
+                + "-fx-border-radius: 9;"
+                + "-fx-effect: dropshadow(gaussian, rgba(242,189,57,0.75), 12, 0.35, 0, 0);"
+                + "-fx-cursor: hand;";
+    }
+
+    private String estiloAsientoOcupado() {
         return "-fx-background-color: #3a4655;"
                 + "-fx-background-radius: 9;"
                 + "-fx-border-color: #667386;"
@@ -715,7 +804,7 @@ public class CarteleraViewController {
         mostrarDialogoReserva(funcion, reservas);
     }
 
-    /** Muestra el tiempo de retención y permite pagar o liberar los asientos. */
+    /** Muestra la reserva temporal con un resumen de pago más claro. */
     private void mostrarDialogoReserva(
             Funcion funcion,
             List<ReservaAsiento> reservas
@@ -728,19 +817,18 @@ public class CarteleraViewController {
 
         LocalDateTime fechaExpiracion =
                 reservaController.consultarFechaExpiracion(reservas);
-        String total = FORMATO_MONEDA.format(
-                reservaController.calcularTotalReserva(reservas));
-        int minutos = reservaController.consultarDuracionReservaMinutos();
-        java.math.BigDecimal totalNumerico =
+        java.math.BigDecimal subtotal =
                 reservaController.calcularTotalReserva(reservas);
+        String total = FORMATO_MONEDA.format(subtotal);
+        int minutos = reservaController.consultarDuracionReservaMinutos();
 
         Dialog<ButtonType> dialogo = new Dialog<>();
         prepararDialogo(
                 dialogo,
                 "Reserva temporal",
-                "Tus asientos están retenidos temporalmente",
-                590,
-                430
+                "Revisa tu reserva y completa el pago",
+                650,
+                680
         );
 
         ButtonType continuar = new ButtonType(
@@ -749,38 +837,137 @@ public class CarteleraViewController {
                 "Cancelar reserva", ButtonBar.ButtonData.CANCEL_CLOSE);
         dialogo.getDialogPane().getButtonTypes().addAll(continuar, cancelar);
 
-        VBox contenido = new VBox(12);
-        contenido.setPadding(new Insets(16));
-        contenido.getStyleClass().add("reservation-summary");
+        VBox contenido = new VBox(14);
+        contenido.setPadding(new Insets(18));
+        contenido.setStyle("-fx-background-color: #0b1b2d;");
 
+        // Encabezado de la reserva.
+        VBox encabezado = new VBox(5);
+        Label etiquetaReserva = new Label("RESERVA TEMPORAL");
+        etiquetaReserva.setStyle(
+                "-fx-text-fill: #f2bd39; -fx-font-size: 10px; "
+                        + "-fx-font-weight: bold; -fx-letter-spacing: 1px;");
         Label pelicula = new Label(funcion.getPelicula().getTitulo());
-        pelicula.getStyleClass().add("section-title");
+        pelicula.setStyle(
+                "-fx-text-fill: white; -fx-font-size: 23px; -fx-font-weight: bold;");
+        Label fecha = new Label(FORMATO_FUNCION.format(funcion.getFechaHora()));
+        fecha.setStyle("-fx-text-fill: #b8c9d9; -fx-font-size: 12px;");
+        encabezado.getChildren().addAll(etiquetaReserva, pelicula, fecha);
 
-        Label fecha = new Label(
-                FORMATO_FUNCION.format(funcion.getFechaHora()));
-        fecha.getStyleClass().add("function-meta");
+        // Tarjeta con los asientos y el subtotal.
+        VBox tarjetaReserva = new VBox(10);
+        tarjetaReserva.setPadding(new Insets(15));
+        tarjetaReserva.setStyle(
+                "-fx-background-color: #142b42; -fx-background-radius: 12; "
+                        + "-fx-border-color: #294760; -fx-border-radius: 12;");
 
-        Label asientosLabel = new Label("Asientos seleccionados: " + seleccion);
-        asientosLabel.getStyleClass().add("catalog-synopsis");
+        Label tituloAsientos = new Label("DETALLES DE TU RESERVA");
+        tituloAsientos.setStyle(
+                "-fx-text-fill: #8faec8; -fx-font-size: 10px; -fx-font-weight: bold;");
+        Label asientosLabel = new Label(seleccion);
         asientosLabel.setWrapText(true);
+        asientosLabel.setStyle(
+                "-fx-text-fill: white; -fx-font-size: 15px; -fx-font-weight: bold;");
+        Label textoAsientos = new Label("Asientos seleccionados");
+        textoAsientos.setStyle("-fx-text-fill: #a9bfd2; -fx-font-size: 11px;");
+        Separator separadorReserva = new Separator();
+        separadorReserva.setStyle("-fx-opacity: 0.45;");
 
-        Label precio = new Label("Total de entradas: " + total);
-        precio.getStyleClass().add("function-meta");
+        HBox filaSubtotal = new HBox();
+        filaSubtotal.setAlignment(Pos.CENTER_LEFT);
+        Label textoSubtotal = new Label("Subtotal de entradas");
+        textoSubtotal.setStyle("-fx-text-fill: #c4d3e0; -fx-font-size: 13px;");
+        Region espacioSubtotal = new Region();
+        HBox.setHgrow(espacioSubtotal, Priority.ALWAYS);
+        Label valorSubtotal = new Label(total);
+        valorSubtotal.setStyle(
+                "-fx-text-fill: #f2bd39; -fx-font-size: 18px; -fx-font-weight: bold;");
+        filaSubtotal.getChildren().addAll(textoSubtotal, espacioSubtotal, valorSubtotal);
+        tarjetaReserva.getChildren().addAll(
+                tituloAsientos, asientosLabel, textoAsientos,
+                separadorReserva, filaSubtotal);
 
+        // Temporizador y progreso.
+        VBox tarjetaTiempo = new VBox(9);
+        tarjetaTiempo.setPadding(new Insets(14));
+        tarjetaTiempo.setStyle(
+                "-fx-background-color: #142b42; -fx-background-radius: 12; "
+                        + "-fx-border-color: #294760; -fx-border-radius: 12;");
+
+        HBox filaTiempo = new HBox();
+        filaTiempo.setAlignment(Pos.CENTER_LEFT);
+        Label tituloTiempo = new Label("TIEMPO PARA COMPLETAR EL PAGO");
+        tituloTiempo.setStyle(
+                "-fx-text-fill: #a9bfd2; -fx-font-size: 10px; -fx-font-weight: bold;");
+        Region espacioTiempo = new Region();
+        HBox.setHgrow(espacioTiempo, Priority.ALWAYS);
         Label cuentaRegresiva = new Label();
-        cuentaRegresiva.getStyleClass().add("reservation-countdown");
+        cuentaRegresiva.setStyle(
+                "-fx-text-fill: #ffc247; -fx-font-size: 21px; -fx-font-weight: bold;");
+        filaTiempo.getChildren().addAll(tituloTiempo, espacioTiempo, cuentaRegresiva);
 
+        javafx.scene.control.ProgressBar progreso =
+                new javafx.scene.control.ProgressBar(1);
+        progreso.setMaxWidth(Double.MAX_VALUE);
+        progreso.setPrefHeight(9);
+        progreso.setStyle(
+                "-fx-accent: #f2bd39; -fx-control-inner-background: #294760;");
         Label aviso = new Label(
-                "Los asientos quedan retenidos durante " + minutos
-                        + " minutos. Si no completas el pago, se liberarán automáticamente "
-                        + "al vencer el tiempo.");
+                "Tus asientos estarán retenidos durante " + minutos
+                        + " minutos. Si el tiempo termina, se liberarán automáticamente.");
         aviso.setWrapText(true);
-        aviso.getStyleClass().add("reservation-expiration-note");
+        aviso.setStyle("-fx-text-fill: #b8c9d9; -fx-font-size: 11px;");
+        tarjetaTiempo.getChildren().addAll(filaTiempo, progreso, aviso);
 
+        // Beneficios: el código se valida en el momento de confirmar la compra.
+        VBox tarjetaBeneficios = new VBox(10);
+        tarjetaBeneficios.setPadding(new Insets(14));
+        tarjetaBeneficios.setStyle(
+                "-fx-background-color: #142b42; -fx-background-radius: 12; "
+                        + "-fx-border-color: #294760; -fx-border-radius: 12;");
+
+        HBox tituloBeneficios = new HBox(8);
+        tituloBeneficios.setAlignment(Pos.CENTER_LEFT);
+        Label iconoBeneficios = new Label("✦");
+        iconoBeneficios.setStyle("-fx-text-fill: #ffc247; -fx-font-size: 17px;");
+        Label textoBeneficios = new Label("BENEFICIOS Y DESCUENTOS");
+        textoBeneficios.setStyle(
+                "-fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: bold;");
+        tituloBeneficios.getChildren().addAll(iconoBeneficios, textoBeneficios);
+
+        Label textoCodigo = new Label("¿Tienes un código promocional?");
+        textoCodigo.setStyle("-fx-text-fill: #c4d3e0; -fx-font-size: 12px;");
+        TextField codigoPromocion = new TextField();
+        codigoPromocion.setPromptText("Ej. CINEMA10");
+        codigoPromocion.setPrefHeight(36);
+        codigoPromocion.setStyle(
+                "-fx-background-color: #0b1b2d; -fx-text-fill: white; "
+                        + "-fx-prompt-text-fill: #7891a8; -fx-background-radius: 7; "
+                        + "-fx-border-color: #34536d; -fx-border-radius: 7;");
+
+        Label textoPuntos = new Label("Puntos que deseas redimir");
+        textoPuntos.setStyle("-fx-text-fill: #c4d3e0; -fx-font-size: 12px;");
+        TextField puntosRedimir = new TextField("0");
+        puntosRedimir.setPromptText("0");
+        puntosRedimir.setPrefWidth(110);
+        puntosRedimir.setMaxWidth(140);
+        puntosRedimir.setStyle(
+                "-fx-background-color: #0b1b2d; -fx-text-fill: white; "
+                        + "-fx-prompt-text-fill: #7891a8; -fx-background-radius: 7; "
+                        + "-fx-border-color: #34536d; -fx-border-radius: 7;");
+
+        Label notaPromocion = new Label(
+                "El código y los puntos se validarán al continuar al pago.");
+        notaPromocion.setWrapText(true);
+        notaPromocion.setStyle("-fx-text-fill: #8faec8; -fx-font-size: 10px;");
+        tarjetaBeneficios.getChildren().addAll(
+                tituloBeneficios, textoCodigo, codigoPromocion,
+                textoPuntos, puntosRedimir, notaPromocion);
+
+        // Información de la tarjeta virtual.
         Optional<TarjetaVirtual> tarjeta = reservaController.consultarTarjeta(cliente);
-        String informacionTarjeta;
         boolean tarjetaLista = false;
-
+        String informacionTarjeta;
         if (tarjeta.isEmpty()) {
             informacionTarjeta =
                     "No tienes una tarjeta virtual asociada. Contacta al administrador.";
@@ -788,41 +975,47 @@ public class CarteleraViewController {
             TarjetaVirtual tarjetaCliente = tarjeta.get();
             boolean activa = tarjetaCliente.getEstado()
                     == co.edu.uniquindio.proyectofinal.model.enums.EstadoTarjeta.ACTIVA;
-            informacionTarjeta = "Tarjeta virtual · Saldo disponible: "
+            informacionTarjeta = "Saldo disponible: "
                     + FORMATO_MONEDA.format(tarjetaCliente.getSaldo());
-
             if (!activa) {
-                informacionTarjeta += " · Tarjeta bloqueada.";
+                informacionTarjeta += " · Tarjeta bloqueada";
             }
-
             tarjetaLista = activa;
         }
 
-        Label pago = new Label(informacionTarjeta
-                + "\nPuedes aplicar un código promocional o redimir puntos antes del pago.");
+        Label pago = new Label("TARJETA VIRTUAL\n" + informacionTarjeta);
         pago.setWrapText(true);
-        pago.getStyleClass().add("muted-small");
-
-        TextField codigoPromocion = new TextField();
-        codigoPromocion.setPromptText("Código promocional (opcional)");
-        TextField puntosRedimir = new TextField("0");
-        puntosRedimir.setPromptText("Puntos a redimir");
-
-        HBox descuentos = new HBox(10, codigoPromocion, puntosRedimir);
-        descuentos.setAlignment(Pos.CENTER_LEFT);
+        pago.setMaxWidth(Double.MAX_VALUE);
+        pago.setPadding(new Insets(12));
+        pago.setStyle(
+                "-fx-background-color: #10243a; -fx-background-radius: 9; "
+                        + "-fx-border-color: #294760; -fx-border-radius: 9; "
+                        + "-fx-text-fill: #c4d3e0; -fx-font-size: 11px;");
 
         contenido.getChildren().addAll(
-                pelicula, fecha, new Separator(), asientosLabel,
-                precio, cuentaRegresiva, aviso, descuentos, pago);
-        dialogo.getDialogPane().setContent(contenido);
+                encabezado, tarjetaReserva, tarjetaTiempo,
+                tarjetaBeneficios, pago);
+
+        ScrollPane scroll = new ScrollPane(contenido);
+        scroll.setFitToWidth(true);
+        scroll.setPrefViewportHeight(570);
+        scroll.setStyle("-fx-background: #0b1b2d; -fx-background-color: #0b1b2d;");
+        dialogo.getDialogPane().setContent(scroll);
         dialogo.setResultConverter(tipo -> tipo);
 
         Button botonContinuar = (Button)
                 dialogo.getDialogPane().lookupButton(continuar);
         botonContinuar.setDisable(!tarjetaLista);
+        botonContinuar.setStyle(
+                "-fx-background-color: #f2bd39; -fx-text-fill: #142235; "
+                        + "-fx-font-weight: bold; -fx-background-radius: 7; -fx-padding: 9 16;");
+        Button botonCancelar = (Button)
+                dialogo.getDialogPane().lookupButton(cancelar);
+        botonCancelar.setStyle(
+                "-fx-background-color: #20364b; -fx-text-fill: white; "
+                        + "-fx-background-radius: 7; -fx-padding: 9 16;");
 
-        // Cuenta regresiva visual. La expiración real también se valida
-        // en ReservaService antes de reservar, cancelar o confirmar el pago.
+        // La cuenta regresiva visual se mantiene sincronizada con la expiración real.
         AtomicBoolean reservaExpirada = new AtomicBoolean(false);
         Runnable actualizarTiempo = () -> {
             long segundos = Math.max(0,
@@ -830,9 +1023,14 @@ public class CarteleraViewController {
             long minutosRestantes = segundos / 60;
             long segundosRestantes = segundos % 60;
             cuentaRegresiva.setText(String.format(
-                    "Tiempo restante: %02d:%02d",
-                    minutosRestantes,
-                    segundosRestantes));
+                    "%02d:%02d", minutosRestantes, segundosRestantes));
+            double fraccion = Math.max(0.0,
+                    Math.min(1.0, segundos / (double) (minutos * 60L)));
+            progreso.setProgress(fraccion);
+            if (segundos <= 60) {
+                cuentaRegresiva.setStyle(
+                        "-fx-text-fill: #ff8b70; -fx-font-size: 21px; -fx-font-weight: bold;");
+            }
         };
         actualizarTiempo.run();
 
@@ -845,8 +1043,7 @@ public class CarteleraViewController {
                 dialogo.setResult(cancelar);
                 dialogo.close();
             }
-        }
-        ));
+        }));
         cronometro.setCycleCount(Animation.INDEFINITE);
         cronometro.play();
 
@@ -870,22 +1067,13 @@ public class CarteleraViewController {
         if (respuesta.isPresent() && respuesta.get() == continuar) {
             try {
                 int puntos = Integer.parseInt(puntosRedimir.getText().trim());
+                if (puntos < 0) {
+                    throw new IllegalArgumentException("Los puntos no pueden ser negativos.");
+                }
                 Compra compra = reservaController.confirmarCompra(
                         reservas, cliente, codigoPromocion.getText(), puntos);
-                mostrarAlerta(
-                        Alert.AlertType.INFORMATION,
-                        "¡Compra confirmada!",
-                        "Tu pago fue aprobado correctamente.",
-                        "Código de compra: " + compra.getCodigo()
-                                + "\nPelícula: " + funcion.getPelicula().getTitulo()
-                                + "\nAsientos: " + seleccion
-                                + "\nTotal pagado: "
-                                + FORMATO_MONEDA.format(compra.getTotal())
-                                + "\n\nTus entradas ya quedaron registradas."
-                );
+                mostrarAlertaCompraExitosa(compra, funcion, seleccion);
             } catch (RuntimeException ex) {
-                // Si el pago no se confirma, cancelar libera los asientos.
-                // Si el tiempo venció durante el proceso, se procesará la expiración.
                 try {
                     reservaController.cancelarReserva(reservas, cliente);
                 } catch (RuntimeException ignored) {
@@ -919,6 +1107,117 @@ public class CarteleraViewController {
         }
     }
 
+    /**
+     * Muestra una confirmación personalizada para agregar o quitar favoritas.
+     * Se utiliza un Dialog propio para mantener la identidad visual de CinemaUQ.
+     */
+    private void mostrarAlertaFavorita(Pelicula pelicula, boolean guardada) {
+        Dialog<Void> dialogo = new Dialog<>();
+        prepararDialogo(
+                dialogo,
+                guardada ? "Película guardada" : "Película eliminada",
+                null,
+                430,
+                330
+        );
+        dialogo.setHeaderText(null);
+        dialogo.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+        Button botonAceptar = (Button) dialogo.getDialogPane()
+                .lookupButton(ButtonType.CLOSE);
+        botonAceptar.setText("¡Genial!");
+        botonAceptar.setStyle(
+                "-fx-background-color: #f2bd39; "
+                        + "-fx-text-fill: #142235; "
+                        + "-fx-font-weight: bold; "
+                        + "-fx-background-radius: 8; "
+                        + "-fx-padding: 10 30; "
+                        + "-fx-cursor: hand;"
+        );
+
+        VBox contenido = new VBox(13);
+        contenido.setAlignment(Pos.CENTER);
+        contenido.setPadding(new Insets(25, 28, 22, 28));
+        contenido.setStyle("-fx-background-color: #0b1b2d;");
+
+        StackPane circulo = new StackPane();
+        circulo.setMinSize(76, 76);
+        circulo.setPrefSize(76, 76);
+        circulo.setMaxSize(76, 76);
+        circulo.setStyle(
+                "-fx-background-color: " + (guardada ? "#3b321b" : "#26364a") + "; "
+                        + "-fx-background-radius: 100; "
+                        + "-fx-border-color: " + (guardada ? "#d9a928" : "#52677d") + "; "
+                        + "-fx-border-radius: 100; -fx-border-width: 1.5;"
+        );
+
+        Label corazon = new Label(guardada ? "♥" : "♡");
+        corazon.setStyle(
+                "-fx-font-family: 'Segoe UI Symbol'; "
+                        + "-fx-font-size: 43px; "
+                        + "-fx-font-weight: bold; "
+                        + "-fx-text-fill: " + (guardada ? "#ffc52e" : "#a9bfd2") + ";"
+        );
+        circulo.getChildren().add(corazon);
+
+        Label titulo = new Label(guardada ? "¡Película guardada!" : "Película eliminada");
+        titulo.setStyle(
+                "-fx-text-fill: white; -fx-font-size: 23px; -fx-font-weight: bold;"
+        );
+        titulo.setWrapText(true);
+        titulo.setAlignment(Pos.CENTER);
+
+        Label mensaje = new Label(guardada
+                ? "«" + pelicula.getTitulo() + "» se agregó a tus películas favoritas."
+                : "«" + pelicula.getTitulo() + "» se quitó de tus películas favoritas.");
+        mensaje.setWrapText(true);
+        mensaje.setMaxWidth(340);
+        mensaje.setAlignment(Pos.CENTER);
+        mensaje.setStyle("-fx-text-fill: #b8c9d9; -fx-font-size: 13px;");
+
+        VBox tarjeta = new VBox(6);
+        tarjeta.setAlignment(Pos.CENTER);
+        tarjeta.setMaxWidth(Double.MAX_VALUE);
+        tarjeta.setPadding(new Insets(13, 16, 13, 16));
+        tarjeta.setStyle(
+                "-fx-background-color: #142b42; "
+                        + "-fx-background-radius: 11; "
+                        + "-fx-border-color: #294760; "
+                        + "-fx-border-radius: 11;"
+        );
+        Label marca = new Label("CINEMA UQ  ·  MI COLECCIÓN");
+        marca.setStyle(
+                "-fx-text-fill: #f2bd39; -fx-font-size: 10px; -fx-font-weight: bold;"
+        );
+        Label detalle = new Label(guardada
+                ? "Encuéntrala cuando quieras en Películas guardadas."
+                : "Puedes volver a agregarla desde la cartelera.");
+        detalle.setWrapText(true);
+        detalle.setAlignment(Pos.CENTER);
+        detalle.setStyle("-fx-text-fill: #91a9bf; -fx-font-size: 11px;");
+        tarjeta.getChildren().addAll(marca, detalle);
+
+        contenido.getChildren().addAll(circulo, titulo, mensaje, tarjeta);
+        dialogo.getDialogPane().setContent(contenido);
+        dialogo.getDialogPane().setStyle(
+                "-fx-background-color: #0b1b2d; -fx-border-color: #294760;"
+        );
+
+        // La animación se ejecuta al mostrarse la ventana, no durante el pulso
+        // que finaliza la animación del corazón de la cartelera.
+        dialogo.setOnShown(event -> {
+            ScaleTransition entrada = new ScaleTransition(
+                    javafx.util.Duration.millis(220), circulo);
+            entrada.setFromX(0.72);
+            entrada.setFromY(0.72);
+            entrada.setToX(1.0);
+            entrada.setToY(1.0);
+            entrada.playFromStart();
+        });
+
+        dialogo.showAndWait();
+    }
+
     private void mostrarAlerta(
             Alert.AlertType tipo,
             String titulo,
@@ -933,6 +1232,226 @@ public class CarteleraViewController {
         alerta.setHeaderText(encabezado);
         alerta.setContentText(contenido == null ? "" : contenido);
         alerta.showAndWait();
+    }
+
+
+    /**
+     * Muestra una confirmación visual de la compra realizada.
+     * Presenta el código, la película, los asientos y el total pagado.
+     */
+    private void mostrarAlertaCompraExitosa(
+            Compra compra,
+            Funcion funcion,
+            String asientos
+    ) {
+        Dialog<Void> dialogo = new Dialog<>();
+        prepararDialogo(
+                dialogo,
+                "Compra confirmada",
+                null,
+                480,
+                440
+        );
+
+        dialogo.setHeaderText(null);
+        dialogo.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+        Button botonEntendido = (Button) dialogo.getDialogPane()
+                .lookupButton(ButtonType.CLOSE);
+        botonEntendido.setText("Entendido");
+        botonEntendido.setStyle(
+                "-fx-background-color: #f2bd39; "
+                        + "-fx-text-fill: #142235; "
+                        + "-fx-font-weight: bold; "
+                        + "-fx-background-radius: 8; "
+                        + "-fx-padding: 10 26;"
+        );
+
+        VBox contenido = new VBox(16);
+        contenido.setAlignment(Pos.CENTER);
+        contenido.setPadding(new Insets(24));
+        contenido.setStyle("-fx-background-color: #0b1b2d;");
+
+        StackPane iconoContenedor = new StackPane();
+        iconoContenedor.setMinSize(72, 72);
+        iconoContenedor.setPrefSize(72, 72);
+        iconoContenedor.setMaxSize(72, 72);
+        iconoContenedor.setStyle(
+                "-fx-background-color: #123e36; "
+                        + "-fx-background-radius: 100;"
+        );
+
+        Label icono = new Label("✓");
+        icono.setStyle(
+                "-fx-text-fill: #55d6a4; "
+                        + "-fx-font-size: 38px; "
+                        + "-fx-font-weight: bold;"
+        );
+        iconoContenedor.getChildren().add(icono);
+
+        Label titulo = new Label("¡Compra exitosa!");
+        titulo.setStyle(
+                "-fx-text-fill: white; "
+                        + "-fx-font-size: 25px; "
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label subtitulo = new Label(
+                "Tu pago se ha procesado correctamente."
+        );
+        subtitulo.setWrapText(true);
+        subtitulo.setAlignment(Pos.CENTER);
+        subtitulo.setStyle(
+                "-fx-text-fill: #a9bed2; "
+                        + "-fx-font-size: 13px;"
+        );
+
+        Label estado = new Label("PAGO APROBADO");
+        estado.setStyle(
+                "-fx-background-color: #153d36; "
+                        + "-fx-background-radius: 20; "
+                        + "-fx-text-fill: #67ddb0; "
+                        + "-fx-font-size: 10px; "
+                        + "-fx-font-weight: bold; "
+                        + "-fx-padding: 7 14;"
+        );
+
+        VBox tarjeta = new VBox(12);
+        tarjeta.setMaxWidth(Double.MAX_VALUE);
+        tarjeta.setPadding(new Insets(17));
+        tarjeta.setStyle(
+                "-fx-background-color: #142a40; "
+                        + "-fx-background-radius: 12; "
+                        + "-fx-border-color: #294760; "
+                        + "-fx-border-radius: 12;"
+        );
+
+        Label etiquetaCodigo = new Label("CÓDIGO DE COMPRA");
+        etiquetaCodigo.setStyle(
+                "-fx-text-fill: #8faec8; "
+                        + "-fx-font-size: 10px; "
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label codigo = new Label(compra.getCodigo());
+        codigo.setWrapText(true);
+        codigo.setStyle(
+                "-fx-text-fill: white; "
+                        + "-fx-font-size: 15px; "
+                        + "-fx-font-weight: bold;"
+        );
+
+        Separator separador = new Separator();
+        separador.setStyle("-fx-opacity: 0.45;");
+
+        HBox filaPelicula = crearFilaConfirmacion(
+                "Película",
+                funcion.getPelicula().getTitulo()
+        );
+        HBox filaAsientos = crearFilaConfirmacion(
+                "Asientos",
+                asientos
+        );
+
+        HBox filaTotal = new HBox();
+        filaTotal.setAlignment(Pos.CENTER_LEFT);
+
+        Label textoTotal = new Label("Total pagado");
+        textoTotal.setStyle(
+                "-fx-text-fill: #c4d3e0; -fx-font-size: 13px;"
+        );
+
+        Region espacio = new Region();
+        HBox.setHgrow(espacio, Priority.ALWAYS);
+
+        Label valorTotal = new Label(
+                FORMATO_MONEDA.format(compra.getTotal())
+        );
+        valorTotal.setStyle(
+                "-fx-text-fill: #f2bd39; "
+                        + "-fx-font-size: 20px; "
+                        + "-fx-font-weight: bold;"
+        );
+
+        filaTotal.getChildren().addAll(textoTotal, espacio, valorTotal);
+        tarjeta.getChildren().addAll(
+                etiquetaCodigo,
+                codigo,
+                separador,
+                filaPelicula,
+                filaAsientos,
+                filaTotal
+        );
+
+        HBox mensajeEntradas = new HBox(10);
+        mensajeEntradas.setAlignment(Pos.CENTER_LEFT);
+        mensajeEntradas.setPadding(new Insets(4, 2, 2, 2));
+
+        Label iconoEntrada = new Label("▣");
+        iconoEntrada.setStyle(
+                "-fx-text-fill: #55d6a4; -fx-font-size: 22px;"
+        );
+
+        VBox textoEntradas = new VBox(3);
+        Label tituloEntradas = new Label("Tus entradas están listas");
+        tituloEntradas.setStyle(
+                "-fx-text-fill: white; "
+                        + "-fx-font-size: 12px; "
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label detalleEntradas = new Label(
+                "Ya quedaron registradas en tu cuenta."
+        );
+        detalleEntradas.setWrapText(true);
+        detalleEntradas.setStyle(
+                "-fx-text-fill: #a9bed2; -fx-font-size: 11px;"
+        );
+
+        textoEntradas.getChildren().addAll(tituloEntradas, detalleEntradas);
+        mensajeEntradas.getChildren().addAll(iconoEntrada, textoEntradas);
+
+        contenido.getChildren().addAll(
+                iconoContenedor,
+                titulo,
+                subtitulo,
+                estado,
+                tarjeta,
+                mensajeEntradas
+        );
+
+        dialogo.getDialogPane().setContent(contenido);
+        dialogo.getDialogPane().setStyle(
+                "-fx-background-color: #0b1b2d; "
+                        + "-fx-border-color: #294760;"
+        );
+        dialogo.showAndWait();
+    }
+
+    /** Construye una fila de dato para el resumen de compra. */
+    private HBox crearFilaConfirmacion(String etiqueta, String valor) {
+        HBox fila = new HBox(12);
+        fila.setAlignment(Pos.CENTER_LEFT);
+
+        Label nombre = new Label(etiqueta);
+        nombre.setStyle(
+                "-fx-text-fill: #a9bfd2; -fx-font-size: 12px;"
+        );
+
+        Region espacio = new Region();
+        HBox.setHgrow(espacio, Priority.ALWAYS);
+
+        Label dato = new Label(valor == null ? "—" : valor);
+        dato.setWrapText(true);
+        dato.setMaxWidth(230);
+        dato.setStyle(
+                "-fx-text-fill: white; "
+                        + "-fx-font-size: 12px; "
+                        + "-fx-font-weight: bold;"
+        );
+
+        fila.getChildren().addAll(nombre, espacio, dato);
+        return fila;
     }
 
     private VBox tarjetaDato(Label contenido) {
