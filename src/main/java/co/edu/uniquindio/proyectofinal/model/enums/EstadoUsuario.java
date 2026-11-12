@@ -1,4 +1,3 @@
-
 package co.edu.uniquindio.proyectofinal.model.enums;
 
 /**

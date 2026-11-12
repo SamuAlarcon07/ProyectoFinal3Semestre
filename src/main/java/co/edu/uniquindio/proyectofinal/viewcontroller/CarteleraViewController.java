@@ -86,6 +86,16 @@ public class CarteleraViewController {
             "PEL-009", "JurassicPark.jpg",
             "PEL-010", "Whiplash.jpg"
     );
+    /** Archivos de póster para estrenos futuros, ubicados en resources/images. */
+    private static final String[] PORTADAS_PROXIMAMENTE = {
+            "HungerGamesSunrise.jpg",
+            "AvengersDoomsday.jpg",
+            "DunePartThree.jpg",
+            "JumanjiOpenWorld.jpg",
+            "Zelda.jpg",
+            "SpiderVerseBeyond.jpg"
+    };
+
     private static final DateTimeFormatter FORMATO_FUNCION =
             DateTimeFormatter.ofPattern("EEEE d 'de' MMMM · HH:mm", LOCALE);
     private static final NumberFormat FORMATO_MONEDA =
@@ -145,7 +155,8 @@ public class CarteleraViewController {
         contenedorPeliculas.getStyleClass().add("catalog-movies-flow");
 
         principal.getChildren().addAll(encabezado, filtros, etiquetaResultados,
-                new Separator(), contenedorPeliculas);
+                new Separator(), contenedorPeliculas,
+                construirSeccionProximamente());
         refrescarPeliculas();
         return principal;
     }
@@ -282,6 +293,227 @@ public class CarteleraViewController {
 
         tarjeta.getChildren().addAll(poster, titulo, datos, detalles);
         return tarjeta;
+    }
+
+    /**
+     * Sección editorial independiente del catálogo activo. Las fechas son
+     * fechas de estreno anunciadas internacionalmente y pueden variar por país.
+     */
+    private VBox construirSeccionProximamente() {
+        VBox seccion = new VBox(13);
+        seccion.setPadding(new Insets(8, 0, 10, 0));
+
+        HBox encabezado = new HBox(10);
+        encabezado.setAlignment(Pos.CENTER_LEFT);
+
+        Label icono = new Label("✦");
+        icono.setStyle("-fx-text-fill: #ffc52e; -fx-font-size: 20px; -fx-font-weight: bold;");
+
+        VBox textos = new VBox(3);
+        Label titulo = new Label("Próximamente");
+        titulo.getStyleClass().add("section-title");
+        Label subtitulo = new Label(
+                "Los próximos estrenos que llegarán a la pantalla de CinemaUQ.");
+        subtitulo.getStyleClass().add("page-subtitle");
+        subtitulo.setWrapText(true);
+        textos.getChildren().addAll(titulo, subtitulo);
+        encabezado.getChildren().addAll(icono, textos);
+
+        FlowPane tarjetas = new FlowPane();
+        tarjetas.setHgap(16);
+        tarjetas.setVgap(18);
+        tarjetas.getStyleClass().add("catalog-movies-flow");
+
+        List<EstrenoProximo> estrenos = List.of(
+                new EstrenoProximo("The Hunger Games: Sunrise on the Reaping",
+                        "20 NOV 2026", "Ciencia ficción · Acción",
+                        "El regreso al universo de Panem con la historia del joven Haymitch."),
+                new EstrenoProximo("Avengers: Doomsday",
+                        "18 DIC 2026", "Acción · Ciencia ficción",
+                        "Los héroes del universo Marvel se enfrentan a una nueva amenaza."),
+                new EstrenoProximo("Dune: Part Three",
+                        "18 DIC 2026", "Ciencia ficción · Aventura",
+                        "La continuación de la historia de Paul Atreides."),
+                new EstrenoProximo("Jumanji: Open World",
+                        "25 DIC 2026", "Aventura · Fantasía",
+                        "Una nueva aventura en el mundo de Jumanji."),
+                new EstrenoProximo("The Legend of Zelda",
+                        "30 ABR 2027", "Aventura · Fantasía",
+                        "La adaptación cinematográfica del popular universo de videojuegos."),
+                new EstrenoProximo("Spider-Man: Beyond the Spider-Verse",
+                        "18 JUN 2027", "Animación · Acción",
+                        "Miles Morales continúa su aventura a través del multiverso.")
+        );
+
+        int indice = 0;
+        for (EstrenoProximo estreno : estrenos) {
+            tarjetas.getChildren().add(crearTarjetaEstreno(estreno, indice++));
+        }
+
+        Label nota = new Label(
+                "Fechas de estreno anunciadas internacionalmente. La programación local de CinemaUQ puede variar.");
+        nota.getStyleClass().add("muted-small");
+        nota.setWrapText(true);
+
+        seccion.getChildren().addAll(new Separator(), encabezado, tarjetas, nota);
+        return seccion;
+    }
+
+    /** Tarjeta visual de un estreno que todavía no está habilitado para compra. */
+    private VBox crearTarjetaEstreno(EstrenoProximo estreno, int indice) {
+        VBox tarjeta = new VBox(8);
+        tarjeta.setPrefWidth(190);
+        tarjeta.setMinWidth(175);
+        tarjeta.setMaxWidth(210);
+        tarjeta.setPadding(new Insets(8));
+        tarjeta.setStyle(
+                "-fx-background-color: #0e2034;"
+                        + "-fx-background-radius: 13;"
+                        + "-fx-border-color: #294760;"
+                        + "-fx-border-radius: 13;"
+                        + "-fx-border-width: 1;"
+        );
+
+        StackPane poster = new StackPane();
+        poster.setMinSize(166, 220);
+        poster.setPrefSize(166, 220);
+        poster.setMaxSize(166, 220);
+        poster.setStyle(
+                "-fx-background-color: " + coloresEstreno(indice) + ";"
+                        + "-fx-background-radius: 9;"
+                        + "-fx-border-color: #52677d;"
+                        + "-fx-border-radius: 9;"
+        );
+
+        VBox arte = new VBox(12);
+        arte.setAlignment(Pos.CENTER);
+        arte.setPadding(new Insets(14));
+
+        Label marca = new Label("CINEMA UQ  ·  EXCLUSIVE");
+        marca.setStyle(
+                "-fx-text-fill: #ffd36a; -fx-font-size: 8px; -fx-font-weight: bold;"
+                        + "-fx-letter-spacing: 1px;"
+        );
+
+        Label simbolo = new Label(indice == 1 ? "✦" : indice == 4 ? "⚔" : "✧");
+        simbolo.setStyle(
+                "-fx-text-fill: rgba(255,255,255,0.88);"
+                        + "-fx-font-size: 42px; -fx-font-weight: bold;"
+        );
+
+        Label nombre = new Label(estreno.titulo);
+        nombre.setWrapText(true);
+        nombre.setAlignment(Pos.CENTER);
+        nombre.setStyle(
+                "-fx-text-fill: white; -fx-font-size: 15px;"
+                        + "-fx-font-weight: bold; -fx-text-alignment: center;"
+        );
+
+        Region linea = new Region();
+        linea.setPrefHeight(2);
+        linea.setMaxWidth(55);
+        linea.setStyle("-fx-background-color: #ffc52e;");
+
+        arte.getChildren().addAll(marca, simbolo, nombre, linea);
+        // Cargar la portada real desde los recursos del proyecto. Si aún no
+        // existe, conservar el póster tipográfico para evitar tarjetas vacías.
+        ImageView portadaEstreno = crearPortadaEstreno(indice);
+        if (portadaEstreno != null) {
+            poster.getChildren().add(portadaEstreno);
+        } else {
+            poster.getChildren().add(arte);
+        }
+
+        Label cinta = new Label("PRÓXIMAMENTE");
+        cinta.setStyle(
+                "-fx-background-color: #f2bd39;"
+                        + "-fx-background-radius: 5;"
+                        + "-fx-text-fill: #142235;"
+                        + "-fx-font-size: 8px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-padding: 5 8;"
+        );
+        StackPane.setAlignment(cinta, Pos.TOP_LEFT);
+        StackPane.setMargin(cinta, new Insets(8));
+        poster.getChildren().add(cinta);
+
+        Label fecha = new Label("ESTRENO · " + estreno.fecha);
+        fecha.setStyle(
+                "-fx-text-fill: #ffc52e; -fx-font-size: 9px; -fx-font-weight: bold;"
+        );
+
+        Label titulo = new Label(estreno.titulo);
+        titulo.getStyleClass().add("movie-title");
+        titulo.setWrapText(true);
+        titulo.setMinHeight(Region.USE_PREF_SIZE);
+
+        Label genero = new Label(estreno.genero);
+        genero.getStyleClass().add("muted-small");
+        genero.setWrapText(true);
+
+        Label descripcion = new Label(estreno.descripcion);
+        descripcion.setStyle("-fx-text-fill: #9fb4c8; -fx-font-size: 10px;");
+        descripcion.setWrapText(true);
+        descripcion.setMinHeight(42);
+
+        tarjeta.getChildren().addAll(poster, fecha, titulo, genero, descripcion);
+        return tarjeta;
+    }
+
+    /** Lee la portada local sin afectar la cartelera si falta un archivo. */
+    private ImageView crearPortadaEstreno(int indice) {
+        if (indice < 0 || indice >= PORTADAS_PROXIMAMENTE.length) {
+            return null;
+        }
+        String ruta = RUTA_PORTADAS + PORTADAS_PROXIMAMENTE[indice];
+        try (InputStream archivo = CarteleraViewController.class.getResourceAsStream(ruta)) {
+            if (archivo == null) {
+                return null;
+            }
+            Image imagen = new Image(archivo);
+            if (imagen.isError()) {
+                return null;
+            }
+            ImageView vista = new ImageView(imagen);
+            vista.setFitWidth(164);
+            vista.setFitHeight(218);
+            vista.setPreserveRatio(false);
+            vista.setSmooth(true);
+            Rectangle recorte = new Rectangle(164, 218);
+            recorte.setArcWidth(16);
+            recorte.setArcHeight(16);
+            vista.setClip(recorte);
+            return vista;
+        } catch (IOException | RuntimeException ex) {
+            return null;
+        }
+    }
+
+    private String coloresEstreno(int indice) {
+        String[] fondos = {
+                "linear-gradient(to bottom right, #203b50, #101827 72%)",
+                "linear-gradient(to bottom right, #4b3420, #171c2c 72%)",
+                "linear-gradient(to bottom right, #32435d, #101827 72%)",
+                "linear-gradient(to bottom right, #285044, #101827 72%)",
+                "linear-gradient(to bottom right, #4a3d67, #101827 72%)",
+                "linear-gradient(to bottom right, #174b60, #101827 72%)"
+        };
+        return fondos[Math.floorMod(indice, fondos.length)];
+    }
+
+    private static final class EstrenoProximo {
+        private final String titulo;
+        private final String fecha;
+        private final String genero;
+        private final String descripcion;
+
+        private EstrenoProximo(String titulo, String fecha,
+                               String genero, String descripcion) {
+            this.titulo = titulo;
+            this.fecha = fecha;
+            this.genero = genero;
+            this.descripcion = descripcion;
+        }
     }
 
     /** Comprueba si la película ya pertenece a la lista de Favoritas. */

@@ -27,6 +27,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.util.EnumSet;
 import java.util.Objects;
@@ -185,6 +186,10 @@ public class App extends Application {
         // Catálogo inicial: películas activas de demostración visibles en la cartelera.
         DatosInicialesCinemaUQ.cargarPeliculas(catalogoService);
 
+        // Productos y combos de demostración para que Confitería tenga catálogo
+        // desde el primer inicio. Se registran una sola vez por instancia de App.
+        registrarConfiteriaDemo();
+
         // Opiniones ficticias de demostración para todas las películas del catálogo.
         // No sustituyen ni alteran las validaciones de las reseñas de clientes reales.
         resenaService.cargarResenasDemostracion(
@@ -270,6 +275,79 @@ public class App extends Application {
 
         // Deja creada la cuenta de puntos desde el primer ingreso.
         puntosService.obtenerOCrearCuenta(cliente);
+    }
+
+
+    /**
+     * Registra el catálogo inicial de confitería con existencias de demostración.
+     * Los combos se componen de productos reales para que InventarioService
+     * descuente correctamente las unidades base al confirmar una compra.
+     */
+    private void registrarConfiteriaDemo() {
+        if (!catalogoService.consultarProductos().isEmpty()
+                || !confiteriaService.consultarCombos().isEmpty()) {
+            return;
+        }
+
+        catalogoService.registrarProducto(new co.edu.uniquindio.proyectofinal.model.principal.Producto(
+                "CONF-PAL-G", "Palomitas grandes",
+                "Palomitas de maíz tamaño grande.", new BigDecimal("14000"),
+                80, 10, "unidad"));
+        catalogoService.registrarProducto(new co.edu.uniquindio.proyectofinal.model.principal.Producto(
+                "CONF-PAL-M", "Palomitas medianas",
+                "Palomitas de maíz tamaño mediano.", new BigDecimal("10000"),
+                100, 15, "unidad"));
+        catalogoService.registrarProducto(new co.edu.uniquindio.proyectofinal.model.principal.Producto(
+                "CONF-GAS-G", "Gaseosa grande",
+                "Bebida gaseosa tamaño grande.", new BigDecimal("9000"),
+                100, 15, "unidad"));
+        catalogoService.registrarProducto(new co.edu.uniquindio.proyectofinal.model.principal.Producto(
+                "CONF-GAS-M", "Gaseosa mediana",
+                "Bebida gaseosa tamaño mediano.", new BigDecimal("7000"),
+                120, 20, "unidad"));
+        catalogoService.registrarProducto(new co.edu.uniquindio.proyectofinal.model.principal.Producto(
+                "CONF-PERRO", "Perro caliente",
+                "Pan suave con salchicha y salsas.", new BigDecimal("12000"),
+                60, 10, "unidad"));
+        catalogoService.registrarProducto(new co.edu.uniquindio.proyectofinal.model.principal.Producto(
+                "CONF-NACHOS", "Nachos con queso",
+                "Nachos crocantes acompañados de queso.", new BigDecimal("13000"),
+                60, 10, "unidad"));
+        catalogoService.registrarProducto(new co.edu.uniquindio.proyectofinal.model.principal.Producto(
+                "CONF-AGUA", "Agua",
+                "Botella de agua personal.", new BigDecimal("5000"),
+                100, 15, "unidad"));
+        catalogoService.registrarProducto(new co.edu.uniquindio.proyectofinal.model.principal.Producto(
+                "CONF-CHOC", "Chocolatina",
+                "Barra de chocolate.", new BigDecimal("4500"),
+                100, 15, "unidad"));
+
+        confiteriaService.registrarCombo(crearComboDemo(
+                "COMBO-CLASICO", "Combo clásico", "20000",
+                "CONF-PAL-G", 1, "CONF-GAS-G", 1));
+        confiteriaService.registrarCombo(crearComboDemo(
+                "COMBO-PAREJA", "Combo pareja", "30000",
+                "CONF-PAL-M", 2, "CONF-GAS-M", 2));
+        confiteriaService.registrarCombo(crearComboDemo(
+                "COMBO-FAMILIAR", "Combo familiar", "52000",
+                "CONF-PAL-M", 4, "CONF-GAS-M", 4));
+        confiteriaService.registrarCombo(crearComboDemo(
+                "COMBO-NACHOS", "Combo nachos", "26000",
+                "CONF-NACHOS", 1, "CONF-GAS-M", 2));
+    }
+
+    private co.edu.uniquindio.proyectofinal.model.principal.Combo crearComboDemo(
+            String codigo, String nombre, String precio,
+            String codigoProducto1, int cantidad1,
+            String codigoProducto2, int cantidad2) {
+        co.edu.uniquindio.proyectofinal.model.principal.Combo combo =
+                new co.edu.uniquindio.proyectofinal.model.principal.Combo(
+                        codigo, nombre, new BigDecimal(precio));
+        combo.agregarComponente(catalogoService.buscarProducto(codigoProducto1)
+                .orElseThrow(), cantidad1);
+        combo.agregarComponente(catalogoService.buscarProducto(codigoProducto2)
+                .orElseThrow(), cantidad2);
+        return combo;
     }
 
     private void registrarTipoSalaBase(
