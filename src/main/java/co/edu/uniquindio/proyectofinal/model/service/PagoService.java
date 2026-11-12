@@ -1,25 +1,15 @@
 package co.edu.uniquindio.proyectofinal.model.service;
 
 
-
 import co.edu.uniquindio.proyectofinal.model.principal.Compra;
-
 import co.edu.uniquindio.proyectofinal.model.principal.MovimientoTarjeta;
-
 import co.edu.uniquindio.proyectofinal.model.principal.TarjetaVirtual;
 
-
-
 import java.math.BigDecimal;
-
-import java.util.List;
-
-import java.util.Objects;
-
 import java.util.HashSet;
-
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
-
 
 
 /** Ejecuta el cobro de una compra mediante una tarjeta virtual. */

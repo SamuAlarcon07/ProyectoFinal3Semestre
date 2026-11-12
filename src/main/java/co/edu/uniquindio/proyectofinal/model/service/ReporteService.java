@@ -1,39 +1,18 @@
 package co.edu.uniquindio.proyectofinal.model.service;
 
-import co.edu.uniquindio.proyectofinal.model.enums.EstadoCancelacion;
-import co.edu.uniquindio.proyectofinal.model.enums.EstadoEntrada;
-import co.edu.uniquindio.proyectofinal.model.enums.EstadoReembolso;
-import co.edu.uniquindio.proyectofinal.model.enums.TipoMovimientoPuntos;
-import co.edu.uniquindio.proyectofinal.model.enums.TipoMovimientoTarjeta;
+import co.edu.uniquindio.proyectofinal.model.enums.*;
 import co.edu.uniquindio.proyectofinal.model.interfaces.ElementoConfiteria;
 import co.edu.uniquindio.proyectofinal.model.interfaces.ElementoVendible;
 import co.edu.uniquindio.proyectofinal.model.interfaces.ExportadorReporte;
 import co.edu.uniquindio.proyectofinal.model.patrones.estructurales.decorator.ElementoVendibleDecorador;
-import co.edu.uniquindio.proyectofinal.model.principal.Cancelacion;
-import co.edu.uniquindio.proyectofinal.model.principal.Compra;
-import co.edu.uniquindio.proyectofinal.model.principal.CuentaPuntos;
-import co.edu.uniquindio.proyectofinal.model.principal.DetalleCompra;
-import co.edu.uniquindio.proyectofinal.model.principal.Entrada;
-import co.edu.uniquindio.proyectofinal.model.principal.Funcion;
-import co.edu.uniquindio.proyectofinal.model.principal.MovimientoPuntos;
-import co.edu.uniquindio.proyectofinal.model.principal.MovimientoTarjeta;
-import co.edu.uniquindio.proyectofinal.model.principal.Reembolso;
-import co.edu.uniquindio.proyectofinal.model.principal.TarjetaVirtual;
+import co.edu.uniquindio.proyectofinal.model.principal.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 /** Construye reportes operativos y los delega al exportador seleccionado. */
 public class ReporteService {

@@ -7,12 +7,7 @@ import co.edu.uniquindio.proyectofinal.model.principal.Entrada;
 import co.edu.uniquindio.proyectofinal.model.principal.RegistroAcceso;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 /** Valida entradas digitales y registra los intentos de ingreso. */
 public class ControlAccesoService {

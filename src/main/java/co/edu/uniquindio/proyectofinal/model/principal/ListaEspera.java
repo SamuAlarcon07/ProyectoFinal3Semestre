@@ -1,12 +1,9 @@
 package co.edu.uniquindio.proyectofinal.model.principal;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import co.edu.uniquindio.proyectofinal.model.enums.EstadoSolicitudEspera;
+
+import java.time.LocalDateTime;
+import java.util.*;
 
 /** Agrupa las solicitudes de espera asociadas a una función. */
 public class ListaEspera {

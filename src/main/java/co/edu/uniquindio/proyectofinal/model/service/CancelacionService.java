@@ -2,12 +2,7 @@ package co.edu.uniquindio.proyectofinal.model.service;
 
 import co.edu.uniquindio.proyectofinal.model.enums.EstadoCancelacion;
 import co.edu.uniquindio.proyectofinal.model.interfaces.PoliticaCancelacion;
-import co.edu.uniquindio.proyectofinal.model.principal.Cancelacion;
-import co.edu.uniquindio.proyectofinal.model.principal.Compra;
-import co.edu.uniquindio.proyectofinal.model.principal.Funcion;
-import co.edu.uniquindio.proyectofinal.model.principal.MovimientoTarjeta;
-import co.edu.uniquindio.proyectofinal.model.principal.Reembolso;
-import co.edu.uniquindio.proyectofinal.model.principal.TarjetaVirtual;
+import co.edu.uniquindio.proyectofinal.model.principal.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
