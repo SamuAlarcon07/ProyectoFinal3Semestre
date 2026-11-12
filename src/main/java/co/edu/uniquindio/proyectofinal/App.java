@@ -6,7 +6,12 @@ import co.edu.uniquindio.proyectofinal.controller.CinemaOperationsController;
 import co.edu.uniquindio.proyectofinal.controller.DashboardController;
 import co.edu.uniquindio.proyectofinal.controller.ReservaController;
 import co.edu.uniquindio.proyectofinal.model.enums.FormatoProyeccion;
-import co.edu.uniquindio.proyectofinal.model.principal.*;
+import co.edu.uniquindio.proyectofinal.model.principal.Administrador;
+import co.edu.uniquindio.proyectofinal.model.principal.Cine;
+import co.edu.uniquindio.proyectofinal.model.principal.Cliente;
+import co.edu.uniquindio.proyectofinal.model.principal.TipoSala;
+import co.edu.uniquindio.proyectofinal.model.principal.TarjetaVirtual;
+import co.edu.uniquindio.proyectofinal.model.principal.Usuario;
 import co.edu.uniquindio.proyectofinal.model.service.*;
 import co.edu.uniquindio.proyectofinal.model.util.DatosInicialesCinemaUQ;
 import co.edu.uniquindio.proyectofinal.model.util.DatosInicialesFuncionesCinemaUQ;
@@ -22,7 +27,6 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.net.URL;
 import java.util.EnumSet;
 import java.util.Objects;
@@ -177,10 +181,15 @@ public class App extends Application {
 
         // Cliente de demostración disponible desde cada inicio del proyecto.
         registrarClienteDemo();
-        cargarConfiteriaDemo();
 
         // Catálogo inicial: películas activas de demostración visibles en la cartelera.
         DatosInicialesCinemaUQ.cargarPeliculas(catalogoService);
+
+        // Opiniones ficticias de demostración para todas las películas del catálogo.
+        // No sustituyen ni alteran las validaciones de las reseñas de clientes reales.
+        resenaService.cargarResenasDemostracion(
+                catalogoService.consultarPeliculasActivas()
+        );
 
         // Tipos de sala base; las salas físicas se registran desde Administración.
         registrarTipoSalaBase(
@@ -259,84 +268,8 @@ public class App extends Application {
             );
         }
 
-        // Saldo inicial de demostración para probar reservas y confitería.
-        TarjetaVirtual tarjetaDemo = tarjetaVirtualService
-                .buscarTarjetaPorCliente(cliente).orElseThrow();
-        if (tarjetaDemo.getSaldo().compareTo(BigDecimal.ZERO) == 0) {
-            Administrador administrador = (Administrador) autenticacionService
-                    .buscarUsuario("ADMIN001").orElseThrow();
-            tarjetaVirtualService.recargar(tarjetaDemo.getNumero(),
-                    new BigDecimal("50000"), administrador);
-        }
-
         // Deja creada la cuenta de puntos desde el primer ingreso.
         puntosService.obtenerOCrearCuenta(cliente);
-    }
-
-    /**
-     * Precarga un catálogo de confitería para que el módulo esté listo
-     * desde el primer inicio de la aplicación.
-     */
-    private void cargarConfiteriaDemo() {
-        if (!catalogoService.consultarProductos().isEmpty()
-                || !confiteriaService.consultarCombos().isEmpty()) {
-            return;
-        }
-
-        Producto palomitas = new Producto("CF-001", "Palomitas grandes",
-                "Palomitas de maíz tamaño grande.", new BigDecimal("12000"),
-                80, 10, "unidad");
-        Producto palomitasMed = new Producto("CF-002", "Palomitas medianas",
-                "Palomitas de maíz tamaño mediano.", new BigDecimal("9000"),
-                100, 15, "unidad");
-        Producto gaseosa = new Producto("CF-003", "Gaseosa grande",
-                "Bebida gaseosa de 900 ml.", new BigDecimal("8000"),
-                100, 15, "unidad");
-        Producto gaseosaMed = new Producto("CF-004", "Gaseosa mediana",
-                "Bebida gaseosa de 600 ml.", new BigDecimal("6000"),
-                120, 20, "unidad");
-        Producto perro = new Producto("CF-005", "Perro caliente",
-                "Pan, salchicha y salsas.", new BigDecimal("11000"),
-                60, 10, "unidad");
-        Producto nachos = new Producto("CF-006", "Nachos con queso",
-                "Nachos acompañados de salsa de queso.", new BigDecimal("13000"),
-                60, 10, "unidad");
-        Producto agua = new Producto("CF-007", "Agua",
-                "Botella de agua 600 ml.", new BigDecimal("4500"),
-                100, 15, "unidad");
-        Producto chocolatina = new Producto("CF-008", "Chocolatina",
-                "Barra de chocolate.", new BigDecimal("5000"),
-                80, 10, "unidad");
-
-        for (Producto producto : java.util.List.of(palomitas, palomitasMed,
-                gaseosa, gaseosaMed, perro, nachos, agua, chocolatina)) {
-            catalogoService.registrarProducto(producto);
-        }
-
-        Combo pareja = new Combo("CB-001", "Combo Pareja",
-                new BigDecimal("26000"));
-        pareja.agregarComponente(palomitas, 1);
-        pareja.agregarComponente(gaseosaMed, 2);
-        confiteriaService.registrarCombo(pareja);
-
-        Combo clasico = new Combo("CB-002", "Combo Clásico",
-                new BigDecimal("18000"));
-        clasico.agregarComponente(palomitasMed, 1);
-        clasico.agregarComponente(gaseosaMed, 1);
-        confiteriaService.registrarCombo(clasico);
-
-        Combo familiar = new Combo("CB-003", "Combo Familiar",
-                new BigDecimal("39000"));
-        familiar.agregarComponente(palomitas, 2);
-        familiar.agregarComponente(gaseosa, 2);
-        confiteriaService.registrarCombo(familiar);
-
-        Combo comboNachos = new Combo("CB-004", "Combo Nachos",
-                new BigDecimal("19000"));
-        comboNachos.agregarComponente(this.catalogoService.buscarProducto("CF-006")
-                .orElseThrow(), 1);
-        comboNachos.agregarComponente(gaseosaMed, 1);
-        confiteriaService.registrarCombo(comboNachos);
     }
 
     private void registrarTipoSalaBase(

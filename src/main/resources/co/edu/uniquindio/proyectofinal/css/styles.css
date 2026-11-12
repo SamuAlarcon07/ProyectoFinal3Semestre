@@ -419,3 +419,169 @@
 .combo-box .list-cell {
     -fx-text-fill: #eef3f8;
 }
+
+
+/* Asientos disponibles */
+.seat-tile {
+    -fx-background-color: #263f50;
+    -fx-border-color: #4d9b88;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 7px;
+    -fx-background-radius: 7px;
+    -fx-cursor: hand;
+}
+
+/* Número del asiento */
+.seat-tile-number {
+    -fx-text-fill: #e8f3f5;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+/* Efecto al pasar el mouse */
+.seat-tile:hover {
+    -fx-background-color: #347b70;
+    -fx-border-color: #75e0bd;
+    -fx-border-width: 2px;
+}
+
+/* Asiento seleccionado */
+.seat-tile-selected {
+    -fx-background-color: #f5b82e;
+    -fx-border-color: #ffe18a;
+    -fx-border-width: 2.5px;
+    -fx-border-radius: 7px;
+    -fx-background-radius: 7px;
+    -fx-effect: dropshadow(gaussian, rgba(245,184,46,0.75), 12, 0.35, 0, 0);
+}
+
+.seat-tile-selected .seat-tile-number {
+    -fx-text-fill: #172235;
+    -fx-font-weight: bold;
+}
+
+/* Asientos ocupados */
+.seat-tile-occupied {
+    -fx-background-color: #647386;
+    -fx-border-color: #8491a2;
+    -fx-border-radius: 7px;
+    -fx-background-radius: 7px;
+    -fx-opacity: 0.65;
+}
+
+
+/* ==========================================================
+   MIS ENTRADAS - TARJETAS DIGITALES
+   ========================================================== */
+.tickets-summary {
+    -fx-background-color: linear-gradient(to right, #142b45, #0d1d30);
+    -fx-background-radius: 13px;
+    -fx-border-color: #2a4563;
+    -fx-border-radius: 13px;
+    -fx-padding: 14px 18px;
+}
+.tickets-summary-label {
+    -fx-text-fill: #aebed0;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+}
+.tickets-summary-number {
+    -fx-text-fill: #f4c34e;
+    -fx-font-size: 25px;
+    -fx-font-weight: bold;
+}
+.ticket-card {
+    -fx-background-color: linear-gradient(to right, #10243a, #0c1b2e);
+    -fx-background-radius: 14px;
+    -fx-border-color: #2b4562;
+    -fx-border-radius: 14px;
+    -fx-padding: 16px 18px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 10, 0.08, 0, 3);
+}
+.ticket-card:hover {
+    -fx-border-color: #b88a2a;
+    -fx-background-color: #142a42;
+}
+.ticket-movie-title {
+    -fx-text-fill: #f6f8fb;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+.ticket-code {
+    -fx-text-fill: #92a8bf;
+    -fx-font-size: 9px;
+}
+.ticket-status {
+    -fx-background-radius: 20px;
+    -fx-padding: 6px 10px;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+}
+.ticket-status-active {
+    -fx-background-color: rgba(67, 183, 137, 0.16);
+    -fx-text-fill: #7ee0b5;
+    -fx-border-color: #347d67;
+    -fx-border-radius: 20px;
+}
+.ticket-status-used {
+    -fx-background-color: rgba(93, 143, 190, 0.17);
+    -fx-text-fill: #9bc9f0;
+    -fx-border-color: #456b8b;
+    -fx-border-radius: 20px;
+}
+.ticket-status-cancelled {
+    -fx-background-color: rgba(220, 95, 95, 0.15);
+    -fx-text-fill: #ff9a9a;
+    -fx-border-color: #8d4c4c;
+    -fx-border-radius: 20px;
+}
+.ticket-details {
+    -fx-background-color: #0a192a;
+    -fx-background-radius: 10px;
+    -fx-padding: 11px 8px;
+    -fx-spacing: 0;
+}
+.ticket-detail {
+    -fx-padding: 2px 10px;
+    -fx-border-color: transparent #263e58 transparent transparent;
+    -fx-border-width: 0 1px 0 0;
+}
+.ticket-detail-icon {
+    -fx-text-fill: #e9b63d;
+    -fx-font-size: 14px;
+}
+.ticket-detail-label {
+    -fx-text-fill: #8299b0;
+    -fx-font-size: 8px;
+    -fx-font-weight: bold;
+}
+.ticket-detail-value {
+    -fx-text-fill: #e5edf6;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+.ticket-hint {
+    -fx-text-fill: #8fa4ba;
+    -fx-font-size: 9px;
+}
+.tickets-empty {
+    -fx-background-color: #0d1d30;
+    -fx-background-radius: 14px;
+    -fx-border-color: #263f5c;
+    -fx-border-radius: 14px;
+    -fx-padding: 38px 22px;
+}
+.tickets-empty-icon {
+    -fx-text-fill: #e9b63d;
+    -fx-font-size: 38px;
+}
+.tickets-empty-title {
+    -fx-text-fill: #f4f6fa;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+.tickets-empty-text {
+    -fx-text-fill: #9eafc2;
+    -fx-font-size: 11px;
+    -fx-text-alignment: center;
+}

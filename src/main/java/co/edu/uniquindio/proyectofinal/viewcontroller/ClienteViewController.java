@@ -5,6 +5,7 @@ import co.edu.uniquindio.proyectofinal.model.enums.EstadoCancelacion;
 import co.edu.uniquindio.proyectofinal.model.enums.TipoListaPelicula;
 import co.edu.uniquindio.proyectofinal.model.interfaces.ElementoConfiteria;
 import co.edu.uniquindio.proyectofinal.model.principal.*;
+import co.edu.uniquindio.proyectofinal.model.util.QrCodeGenerator;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -54,31 +55,199 @@ public class ClienteViewController {
 
     private Node vistaEntradas() {
         VBox root = pagina("Mis entradas",
-                "Consulta tus entradas emitidas y los códigos QR asociados.");
+                "Tus entradas digitales, listas para disfrutar la experiencia CinemaUQ.");
 
-        List<Entrada> entradas = operaciones.consultarEntradas(cliente);
-        TableView<Entrada> tabla = tabla();
-        tabla.getColumns().addAll(
-                columna("Código", Entrada::getCodigo),
-                columna("Película", e -> e.getFuncion().getPelicula().getTitulo()),
-                columna("Función", e -> e.getFuncion().getFechaHora().toString().replace('T', ' ')),
-                columna("Sala", e -> e.getFuncion().getSala().getNombre()),
-                columna("Asiento", e -> e.getAsiento().obtenerIdentificador()),
-                columna("Estado", e -> e.getEstado().name()),
-                columna("Código QR", Entrada::getCodigoQR)
-        );
-        refrescar(tabla, entradas);
-        Button actualizar = boton("Actualizar", "button-small-outline");
-        actualizar.setOnAction(e -> refrescar(tabla, operaciones.consultarEntradas(cliente)));
-        Button verQr = boton("Ver código QR", "button-gold");
-        verQr.setOnAction(e -> {
-            Entrada seleccion = tabla.getSelectionModel().getSelectedItem();
-            if (seleccion == null) { aviso("Selecciona una entrada."); return; }
-            aviso("Código QR de la entrada:\n\n" + seleccion.getCodigoQR()
-                    + "\n\nPresenta este código en el control de acceso.");
+        List<Entrada> entradas = new ArrayList<>(operaciones.consultarEntradas(cliente));
+
+        HBox resumen = new HBox(12);
+        resumen.getStyleClass().add("tickets-summary");
+        resumen.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        VBox resumenTexto = new VBox(4);
+        Label resumenTitulo = new Label("ENTRADAS ADQUIRIDAS");
+        resumenTitulo.getStyleClass().add("tickets-summary-label");
+        Label resumenCantidad = new Label(String.valueOf(entradas.size()));
+        resumenCantidad.getStyleClass().add("tickets-summary-number");
+        resumenTexto.getChildren().addAll(resumenTitulo, resumenCantidad);
+
+        Region separador = new Region();
+        HBox.setHgrow(separador, Priority.ALWAYS);
+        // La lista se declara antes del evento para que pueda utilizarse dentro de la lambda.
+        VBox lista = new VBox(13);
+        Button actualizar = boton("↻  Actualizar", "button-small-outline");
+        actualizar.setOnAction(e -> {
+            entradas.clear();
+            entradas.addAll(operaciones.consultarEntradas(cliente));
+            actualizarListaEntradas(lista, entradas, resumenCantidad);
         });
-        root.getChildren().addAll(barra(actualizar, verQr), tabla);
+        resumen.getChildren().addAll(resumenTexto, separador, actualizar);
+
+        lista.setFillWidth(true);
+        lista.setId("lista-entradas");
+        root.getChildren().addAll(resumen, lista);
+        actualizarListaEntradas(lista, entradas, resumenCantidad);
         return root;
+    }
+
+    private void actualizarListaEntradas(VBox lista, List<Entrada> entradas, Label contador) {
+        contador.setText(String.valueOf(entradas.size()));
+        lista.getChildren().clear();
+
+        if (entradas.isEmpty()) {
+            VBox vacio = new VBox(9);
+            vacio.setAlignment(javafx.geometry.Pos.CENTER);
+            vacio.getStyleClass().add("tickets-empty");
+            Label icono = new Label("🎟");
+            icono.getStyleClass().add("tickets-empty-icon");
+            Label titulo = new Label("Aún no tienes entradas");
+            titulo.getStyleClass().add("tickets-empty-title");
+            Label texto = new Label("Cuando compres una entrada, aparecerá aquí con su código QR.");
+            texto.getStyleClass().add("tickets-empty-text");
+            texto.setWrapText(true);
+            texto.setMaxWidth(360);
+            texto.setAlignment(javafx.geometry.Pos.CENTER);
+            vacio.getChildren().addAll(icono, titulo, texto);
+            lista.getChildren().add(vacio);
+            return;
+        }
+
+        for (Entrada entrada : entradas) {
+            lista.getChildren().add(crearTarjetaEntrada(entrada));
+        }
+    }
+
+    private Node crearTarjetaEntrada(Entrada entrada) {
+        VBox tarjeta = new VBox(12);
+        tarjeta.getStyleClass().add("ticket-card");
+
+        HBox encabezado = new HBox(10);
+        encabezado.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        VBox peliculaInfo = new VBox(4);
+        Label pelicula = new Label(entrada.getFuncion().getPelicula().getTitulo());
+        pelicula.getStyleClass().add("ticket-movie-title");
+        Label codigo = new Label("CÓDIGO  ·  " + entrada.getCodigo());
+        codigo.getStyleClass().add("ticket-code");
+        peliculaInfo.getChildren().addAll(pelicula, codigo);
+
+        Region espacio = new Region();
+        HBox.setHgrow(espacio, Priority.ALWAYS);
+        Label estado = new Label(entrada.getEstado().name().replace('_', ' '));
+        estado.getStyleClass().add("ticket-status");
+        if (entrada.getEstado().name().equals("EMITIDA")) {
+            estado.getStyleClass().add("ticket-status-active");
+        } else if (entrada.getEstado().name().equals("UTILIZADA")) {
+            estado.getStyleClass().add("ticket-status-used");
+        } else {
+            estado.getStyleClass().add("ticket-status-cancelled");
+        }
+        encabezado.getChildren().addAll(peliculaInfo, espacio, estado);
+
+        HBox detalles = new HBox(0);
+        detalles.getStyleClass().add("ticket-details");
+        detalles.getChildren().addAll(
+                detalleEntrada("◷", "FECHA Y HORA",
+                        entrada.getFuncion().getFechaHora().toString().replace('T', ' ')),
+                detalleEntrada("▣", "SALA",
+                        entrada.getFuncion().getSala().getNombre()),
+                detalleEntrada("⌖", "ASIENTO",
+                        entrada.getAsiento().obtenerIdentificador())
+        );
+
+        HBox pie = new HBox(10);
+        pie.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        Label nota = new Label("Presenta el QR en el ingreso a la sala");
+        nota.getStyleClass().add("ticket-hint");
+        Region espacioPie = new Region();
+        HBox.setHgrow(espacioPie, Priority.ALWAYS);
+        Button qr = boton("▦  Ver código QR", "button-gold");
+        qr.setOnAction(e -> mostrarCodigoQR(entrada));
+        pie.getChildren().addAll(nota, espacioPie, qr);
+
+        tarjeta.getChildren().addAll(encabezado, detalles, pie);
+        return tarjeta;
+    }
+
+    private VBox detalleEntrada(String icono, String titulo, String valor) {
+        VBox detalle = new VBox(5);
+        detalle.getStyleClass().add("ticket-detail");
+        Label simbolo = new Label(icono);
+        simbolo.getStyleClass().add("ticket-detail-icon");
+        Label etiqueta = new Label(titulo);
+        etiqueta.getStyleClass().add("ticket-detail-label");
+        Label contenido = new Label(valor);
+        contenido.getStyleClass().add("ticket-detail-value");
+        contenido.setWrapText(true);
+        detalle.getChildren().addAll(simbolo, etiqueta, contenido);
+        HBox.setHgrow(detalle, Priority.ALWAYS);
+        return detalle;
+    }
+
+    /**
+     * Presenta una imagen QR escaneable y los datos principales de la entrada.
+     * El contenido del QR es el identificador que valida ControlAccesoService.
+     */
+    private void mostrarCodigoQR(Entrada entrada) {
+        Dialog<Void> dialogo = new Dialog<>();
+        dialogo.setTitle("Entrada digital · CinemaUQ");
+        if (owner != null) dialogo.initOwner(owner);
+        dialogo.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+        Button cerrar = (Button) dialogo.getDialogPane().lookupButton(ButtonType.CLOSE);
+        cerrar.setText("Cerrar");
+        cerrar.setStyle("-fx-background-color: #f5b91b; -fx-text-fill: #101827;"
+                + "-fx-font-weight: bold; -fx-background-radius: 8;");
+
+        VBox contenido = new VBox(12);
+        contenido.setAlignment(javafx.geometry.Pos.CENTER);
+        contenido.setPadding(new Insets(22));
+        contenido.setStyle("-fx-background-color: #0b1b2d;");
+
+        Label titulo = new Label("Tu entrada CinemaUQ");
+        titulo.setStyle("-fx-text-fill: white; -fx-font-size: 21px; -fx-font-weight: bold;");
+        Label subtitulo = new Label("Presenta este código en el control de acceso");
+        subtitulo.setStyle("-fx-text-fill: #b7c8d9; -fx-font-size: 12px;");
+
+        ImageView imagenQR = new ImageView(QrCodeGenerator.generar(entrada.getCodigoQR(), 300));
+        imagenQR.setFitWidth(250);
+        imagenQR.setFitHeight(250);
+        imagenQR.setPreserveRatio(true);
+        imagenQR.setSmooth(false);
+
+        StackPane marcoQR = new StackPane(imagenQR);
+        marcoQR.setPadding(new Insets(12));
+        marcoQR.setStyle("-fx-background-color: white; -fx-background-radius: 12;");
+
+        VBox datos = new VBox(6);
+        datos.setMaxWidth(Double.MAX_VALUE);
+        datos.setPadding(new Insets(13));
+        datos.setStyle("-fx-background-color: #142a40; -fx-background-radius: 10;"
+                + "-fx-border-color: #294760; -fx-border-radius: 10;");
+
+        Label pelicula = new Label(entrada.getFuncion().getPelicula().getTitulo());
+        pelicula.setStyle("-fx-text-fill: white; -fx-font-size: 15px; -fx-font-weight: bold;");
+        Label funcion = new Label("Función: "
+                + entrada.getFuncion().getFechaHora().toString().replace('T', ' '));
+        funcion.setStyle("-fx-text-fill: #c4d3e0; -fx-font-size: 11px;");
+        Label asiento = new Label("Asiento: " + entrada.getAsiento().obtenerIdentificador());
+        asiento.setStyle("-fx-text-fill: #c4d3e0; -fx-font-size: 11px;");
+        Label codigo = new Label("Entrada: " + entrada.getCodigo());
+        codigo.setWrapText(true);
+        codigo.setStyle("-fx-text-fill: #f5c242; -fx-font-size: 10px;");
+        Label estado = new Label("Estado: " + entrada.getEstado().name());
+        estado.setStyle("-fx-text-fill: #72d6a8; -fx-font-size: 11px; -fx-font-weight: bold;");
+        datos.getChildren().addAll(pelicula, funcion, asiento, codigo, estado);
+
+        Label nota = new Label("Cada código es único y solo puede utilizarse una vez.");
+        nota.setStyle("-fx-text-fill: #91a9bf; -fx-font-size: 10px;");
+        nota.setWrapText(true);
+
+        contenido.getChildren().addAll(titulo, subtitulo, marcoQR, datos, nota);
+        dialogo.getDialogPane().setContent(contenido);
+        dialogo.getDialogPane().setStyle("-fx-background-color: #0b1b2d;"
+                + "-fx-border-color: #294760;");
+        dialogo.getDialogPane().setPrefWidth(390);
+        dialogo.showAndWait();
     }
 
     private Node vistaCompras() {
@@ -719,10 +888,46 @@ public class ClienteViewController {
         ComboBox<TipoListaPelicula> tipo = new ComboBox<>(
                 FXCollections.observableArrayList(TipoListaPelicula.values()));
         tipo.setValue(TipoListaPelicula.FAVORITA);
+        configurarCombo(tipo, valor -> valor.name().replace('_', ' '));
 
         TableView<PeliculaGuardada> tabla = tabla();
+        tabla.setFixedCellSize(76);
+
+        // Columna visual: portada y título de la película.
+        TableColumn<PeliculaGuardada, PeliculaGuardada> columnaPelicula =
+                new TableColumn<>("Película");
+        columnaPelicula.setCellValueFactory(data ->
+                new javafx.beans.property.ReadOnlyObjectWrapper<>(data.getValue()));
+        columnaPelicula.setCellFactory(columna -> new TableCell<>() {
+            @Override
+            protected void updateItem(PeliculaGuardada guardada, boolean vacia) {
+                super.updateItem(guardada, vacia);
+                if (vacia || guardada == null) {
+                    setGraphic(null);
+                    setText(null);
+                    return;
+                }
+
+                Pelicula peliculaGuardada = guardada.getPelicula();
+                HBox contenido = new HBox(12);
+                contenido.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+                ImageView portada = crearPortadaGuardada(peliculaGuardada);
+                Label titulo = new Label(peliculaGuardada.getTitulo());
+                titulo.setWrapText(true);
+                titulo.setStyle("-fx-text-fill: #f5f7fb; -fx-font-size: 13px; "
+                        + "-fx-font-weight: bold;");
+
+                contenido.getChildren().addAll(portada, titulo);
+                setGraphic(contenido);
+                setText(null);
+            }
+        });
+        columnaPelicula.setPrefWidth(280);
+        columnaPelicula.setMinWidth(220);
+
         tabla.getColumns().addAll(
-                columna("Película", p -> p.getPelicula().getTitulo()),
+                columnaPelicula,
                 columna("Género", p -> p.getPelicula().getGenero()),
                 columna("Lista", p -> p.getTipoLista().name()),
                 columna("Agregada", p -> p.getFechaAgregada().toString())
@@ -738,7 +943,10 @@ public class ClienteViewController {
 
         Button agregar = boton("＋ Guardar película", "button-gold");
         agregar.setOnAction(e -> {
-            if (pelicula.getValue() == null) { aviso("Selecciona una película."); return; }
+            if (pelicula.getValue() == null) {
+                aviso("Selecciona una película.");
+                return;
+            }
             try {
                 operaciones.guardarPelicula(cliente, pelicula.getValue(), tipo.getValue());
                 cargar.run();
@@ -750,13 +958,18 @@ public class ClienteViewController {
 
         Button eliminar = boton("Quitar de la lista", "button-small-outline");
         eliminar.setOnAction(e -> {
-            PeliculaGuardada p = tabla.getSelectionModel().getSelectedItem();
-            if (p == null) { aviso("Selecciona una película guardada."); return; }
+            PeliculaGuardada seleccionada = tabla.getSelectionModel().getSelectedItem();
+            if (seleccionada == null) {
+                aviso("Selecciona una película guardada.");
+                return;
+            }
             try {
                 operaciones.quitarPeliculaGuardada(
-                        cliente, p.getPelicula(), p.getTipoLista());
+                        cliente, seleccionada.getPelicula(), seleccionada.getTipoLista());
                 cargar.run();
-            } catch (RuntimeException ex) { mostrarError(ex); }
+            } catch (RuntimeException ex) {
+                mostrarError(ex);
+            }
         });
 
         cargar.run();
@@ -764,57 +977,240 @@ public class ClienteViewController {
         return root;
     }
 
+    /**
+     * Carga la misma portada local utilizada en Cartelera.
+     * Si no existe una imagen para el código, conserva un recuadro de respaldo.
+     */
+    private ImageView crearPortadaGuardada(Pelicula pelicula) {
+        Map<String, String> portadas = Map.of(
+                "PEL-001", "Interstellar.jpg",
+                "PEL-002", "Inception.jpg",
+                "PEL-003", "Batman.jpg",
+                "PEL-004", "Coco.jpg",
+                "PEL-005", "SpiderVerse.jpg",
+                "PEL-006", "Duna.jpg",
+                "PEL-007", "TheMartian.jpg",
+                "PEL-008", "Parasite.jpg",
+                "PEL-009", "JurassicPark.jpg",
+                "PEL-010", "Whiplash.jpg"
+        );
+
+        ImageView vista = new ImageView();
+        vista.setFitWidth(43);
+        vista.setFitHeight(62);
+        vista.setPreserveRatio(false);
+        vista.setSmooth(true);
+
+        String archivo = portadas.get(pelicula.getCodigo());
+        if (archivo != null) {
+            String ruta = "/co/edu/uniquindio/proyectofinal/images/" + archivo;
+            var recurso = getClass().getResource(ruta);
+            if (recurso != null) {
+                Image imagen = new Image(recurso.toExternalForm(), true);
+                if (!imagen.isError()) {
+                    vista.setImage(imagen);
+                }
+            }
+        }
+        return vista;
+    }
+
     private Node vistaResenas() {
         VBox root = pagina("Reseñas",
-                "Publica tu opinión sobre películas cuya función ya haya finalizado y para las que tengas una entrada pagada.");
+                "Comparte tu experiencia y consulta las opiniones de otros espectadores.");
 
+        // Selector de película: conserva las validaciones del servicio de operaciones.
         ComboBox<Pelicula> pelicula = new ComboBox<>(
                 FXCollections.observableArrayList(operaciones.consultarPeliculas()));
         configurarCombo(pelicula, Pelicula::getTitulo);
+        pelicula.setPromptText("Selecciona una película");
+        pelicula.setPrefWidth(330);
 
+        // Calificación con estrellas visuales.
         ComboBox<Integer> calificacion = new ComboBox<>(
                 FXCollections.observableArrayList(1, 2, 3, 4, 5));
         calificacion.setValue(5);
+        calificacion.setPrefWidth(105);
+        configurarCombo(calificacion, valor -> "★".repeat(valor) + "  " + valor + "/5");
+
+        Label promedio = new Label("Selecciona una película para consultar sus reseñas.");
+        promedio.setStyle("-fx-text-fill: #a9bdd2; -fx-font-size: 12px;");
+
         TextArea comentario = new TextArea();
-        comentario.setPromptText("Escribe tu reseña...");
-        comentario.setPrefRowCount(3);
+        comentario.setPromptText("Cuéntanos qué te pareció la película...");
+        comentario.setWrapText(true);
+        comentario.setPrefRowCount(4);
+        comentario.setMinHeight(105);
+        comentario.setStyle(
+                "-fx-control-inner-background: #10243a;" +
+                        "-fx-background-color: #10243a;" +
+                        "-fx-text-fill: #f5f7fb;" +
+                        "-fx-prompt-text-fill: #8fa6bd;" +
+                        "-fx-highlight-fill: #f5b91b;" +
+                        "-fx-highlight-text-fill: #101827;" +
+                        "-fx-background-radius: 10;" +
+                        "-fx-border-color: #294765;" +
+                        "-fx-border-radius: 10;" +
+                        "-fx-font-size: 13px;");
 
-        Button publicar = boton("Publicar reseña", "button-gold");
-        Label promedio = new Label("Selecciona una película para ver sus reseñas.");
-        promedio.getStyleClass().add("muted-small");
+        VBox formulario = new VBox(11);
+        formulario.setPadding(new Insets(18));
+        formulario.setStyle(
+                "-fx-background-color: linear-gradient(to bottom right, #10243a, #0b1b2d);" +
+                        "-fx-background-radius: 14;" +
+                        "-fx-border-color: #294765;" +
+                        "-fx-border-radius: 14;");
 
-        TableView<ResenaPelicula> tabla = tabla();
-        tabla.getColumns().addAll(
-                columna("Cliente", r -> r.getCliente().getNombre()),
-                columna("Calificación", r -> r.getCalificacion() + "/5"),
-                columna("Comentario", ResenaPelicula::getComentario),
-                columna("Fecha", r -> r.getFechaPublicacion().toString())
-        );
+        Label tituloFormulario = new Label("✎  Escribe tu reseña");
+        tituloFormulario.setStyle("-fx-text-fill: white; -fx-font-size: 17px; -fx-font-weight: bold;");
+
+        Label etiquetaPelicula = new Label("PELÍCULA");
+        etiquetaPelicula.setStyle("-fx-text-fill: #a9bdd2; -fx-font-size: 10px; -fx-font-weight: bold;");
+        Label etiquetaCalificacion = new Label("TU CALIFICACIÓN");
+        etiquetaCalificacion.setStyle("-fx-text-fill: #a9bdd2; -fx-font-size: 10px; -fx-font-weight: bold;");
+        Label etiquetaComentario = new Label("COMENTARIO");
+        etiquetaComentario.setStyle("-fx-text-fill: #a9bdd2; -fx-font-size: 10px; -fx-font-weight: bold;");
+
+        VBox selectorPelicula = new VBox(5, etiquetaPelicula, pelicula);
+        VBox selectorCalificacion = new VBox(5, etiquetaCalificacion, calificacion);
+        HBox filaSelectores = new HBox(14, selectorPelicula, selectorCalificacion);
+        filaSelectores.setAlignment(javafx.geometry.Pos.BOTTOM_LEFT);
+        HBox.setHgrow(selectorPelicula, Priority.ALWAYS);
+
+        Button publicar = boton("★  Publicar reseña", "button-gold");
+        publicar.setPrefHeight(40);
+        publicar.setMinWidth(175);
+
+        formulario.getChildren().addAll(tituloFormulario, filaSelectores,
+                etiquetaComentario, comentario, publicar);
+
+        // Resumen y listado visual de opiniones.
+        VBox panelResenas = new VBox(12);
+        panelResenas.setPadding(new Insets(17));
+        panelResenas.setStyle(
+                "-fx-background-color: #0b1b2d;" +
+                        "-fx-background-radius: 14;" +
+                        "-fx-border-color: #294765;" +
+                        "-fx-border-radius: 14;");
+
+        HBox encabezadoResenas = new HBox(10);
+        encabezadoResenas.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        Label tituloListado = new Label("Opiniones de la comunidad");
+        tituloListado.setStyle("-fx-text-fill: white; -fx-font-size: 17px; -fx-font-weight: bold;");
+        Region espacio = new Region();
+        HBox.setHgrow(espacio, Priority.ALWAYS);
+        Button actualizar = boton("↻  Actualizar", "button-small-outline");
+        encabezadoResenas.getChildren().addAll(tituloListado, espacio, actualizar);
+
+        VBox listaResenas = new VBox(10);
+        Label vacio = new Label("Selecciona una película para ver las opiniones.");
+        vacio.setWrapText(true);
+        vacio.setStyle("-fx-text-fill: #8fa6bd; -fx-font-size: 12px;");
+        listaResenas.getChildren().add(vacio);
 
         Runnable cargar = () -> {
-            if (pelicula.getValue() == null) return;
-            refrescar(tabla, operaciones.consultarResenas(pelicula.getValue()));
+            listaResenas.getChildren().clear();
+
+            Pelicula seleccionada = pelicula.getValue();
+            if (seleccionada == null) {
+                promedio.setText("Selecciona una película para consultar sus reseñas.");
+                listaResenas.getChildren().add(estadoVacio(
+                        "Elige una película",
+                        "Cuando selecciones una película, aquí aparecerán las reseñas publicadas."));
+                return;
+            }
+
+            List<ResenaPelicula> resenas =
+                    operaciones.consultarResenas(seleccionada);
+            double valorPromedio = operaciones.promedioResenas(seleccionada);
+
             promedio.setText(String.format(Locale.ROOT,
-                    "Promedio: %.1f / 5", operaciones.promedioResenas(pelicula.getValue())));
+                    "★  Promedio de la película: %.1f / 5    ·    %d reseña(s)",
+                    valorPromedio, resenas.size()));
+
+            if (resenas.isEmpty()) {
+                listaResenas.getChildren().add(estadoVacio(
+                        "Todavía no hay reseñas",
+                        "Sé el primero en compartir tu opinión sobre esta película."));
+                return;
+            }
+
+            for (ResenaPelicula resena : resenas) {
+                VBox tarjeta = new VBox(8);
+                tarjeta.setPadding(new Insets(14));
+                tarjeta.setStyle(
+                        "-fx-background-color: #10243a;" +
+                                "-fx-background-radius: 11;" +
+                                "-fx-border-color: #294765;" +
+                                "-fx-border-radius: 11;");
+
+                HBox encabezado = new HBox(10);
+                encabezado.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+                Label inicial = new Label(
+                        resena.getCliente().getNombre().isBlank()
+                                ? "C" : resena.getCliente().getNombre().substring(0, 1).toUpperCase(Locale.ROOT));
+                inicial.setMinSize(34, 34);
+                inicial.setAlignment(javafx.geometry.Pos.CENTER);
+                inicial.setStyle(
+                        "-fx-background-color: #f5b91b;" +
+                                "-fx-background-radius: 20;" +
+                                "-fx-text-fill: #101827;" +
+                                "-fx-font-weight: bold;");
+
+                VBox datosAutor = new VBox(3);
+                Label autor = new Label(resena.getCliente().getNombre());
+                autor.setStyle("-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;");
+                Label fecha = new Label(resena.getFechaPublicacion().toString().replace('T', ' '));
+                fecha.setStyle("-fx-text-fill: #8fa6bd; -fx-font-size: 10px;");
+                datosAutor.getChildren().addAll(autor, fecha);
+
+                Region separador = new Region();
+                HBox.setHgrow(separador, Priority.ALWAYS);
+                Label estrellas = new Label(
+                        "★".repeat(Math.max(0, Math.min(5, resena.getCalificacion())))
+                                + "☆".repeat(Math.max(0, 5 - Math.min(5, resena.getCalificacion())))
+                                + "  " + resena.getCalificacion() + "/5");
+                estrellas.setStyle("-fx-text-fill: #f5c242; -fx-font-size: 13px; -fx-font-weight: bold;");
+
+                encabezado.getChildren().addAll(inicial, datosAutor, separador, estrellas);
+
+                Label texto = new Label(resena.getComentario());
+                texto.setWrapText(true);
+                texto.setStyle("-fx-text-fill: #d5dfec; -fx-font-size: 12px;");
+
+                tarjeta.getChildren().addAll(encabezado, texto);
+                listaResenas.getChildren().add(tarjeta);
+            }
         };
+
         pelicula.setOnAction(e -> cargar.run());
+        actualizar.setOnAction(e -> cargar.run());
 
         publicar.setOnAction(e -> {
-            if (pelicula.getValue() == null) { aviso("Selecciona una película."); return; }
+            if (pelicula.getValue() == null) {
+                aviso("Selecciona una película.");
+                return;
+            }
+            if (comentario.getText() == null || comentario.getText().trim().isEmpty()) {
+                aviso("Escribe un comentario antes de publicar.");
+                comentario.requestFocus();
+                return;
+            }
             try {
                 operaciones.publicarResena(cliente, pelicula.getValue(),
-                        calificacion.getValue(), comentario.getText());
+                        calificacion.getValue(), comentario.getText().trim());
                 comentario.clear();
                 cargar.run();
-                aviso("Reseña publicada.");
+                aviso("¡Tu reseña se publicó correctamente!");
             } catch (RuntimeException ex) {
                 mostrarError(ex);
             }
         });
 
+        panelResenas.getChildren().addAll(encabezadoResenas, promedio, listaResenas);
+        root.getChildren().addAll(formulario, panelResenas);
         cargar.run();
-        root.getChildren().addAll(barra(pelicula, calificacion, publicar),
-                comentario, promedio, tabla);
         return root;
     }
 
@@ -948,16 +1344,56 @@ public class ClienteViewController {
             @Override public String toString(T obj) { return obj == null ? "" : texto.apply(obj); }
             @Override public T fromString(String value) { return null; }
         });
-        combo.setCellFactory(list -> new ListCell<>() {
-            @Override protected void updateItem(T item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : texto.apply(item));
-            }
+        // Estilo del selector cerrado: azul oscuro y texto claro.
+        combo.setStyle(
+                "-fx-background-color: #10243a; " +
+                        "-fx-border-color: #294765; " +
+                        "-fx-border-radius: 7; " +
+                        "-fx-background-radius: 7; " +
+                        "-fx-mark-color: #f5b91b; " +
+                        "-fx-font-size: 12px;"
+        );
+
+        // Estilo de las opciones desplegadas (evita el menú blanco de JavaFX).
+        combo.setCellFactory(list -> {
+            ListCell<T> cell = new ListCell<>() {
+                @Override protected void updateItem(T item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? null : texto.apply(item));
+                    setTextFill(javafx.scene.paint.Color.web("#f5f7fb"));
+                    setStyle("-fx-background-color: #0d2035; " +
+                            "-fx-padding: 8 10 8 10; " +
+                            "-fx-font-size: 12px;");
+                }
+            };
+            cell.hoverProperty().addListener((obs, anterior, hover) -> {
+                if (!cell.isEmpty()) {
+                    cell.setStyle(hover
+                            ? "-fx-background-color: #1b3b5a; -fx-text-fill: #ffffff; " +
+                              "-fx-padding: 8 10 8 10; -fx-font-size: 12px;"
+                            : "-fx-background-color: #0d2035; -fx-text-fill: #f5f7fb; " +
+                              "-fx-padding: 8 10 8 10; -fx-font-size: 12px;");
+                }
+            });
+            cell.selectedProperty().addListener((obs, anterior, seleccionado) -> {
+                if (!cell.isEmpty() && seleccionado) {
+                    cell.setStyle("-fx-background-color: #f5b91b; " +
+                            "-fx-text-fill: #101827; -fx-padding: 8 10 8 10; " +
+                            "-fx-font-size: 12px; -fx-font-weight: bold;");
+                    cell.setTextFill(javafx.scene.paint.Color.web("#101827"));
+                }
+            });
+            return cell;
         });
+
+        // Texto visible cuando el ComboBox está cerrado.
         combo.setButtonCell(new ListCell<>() {
             @Override protected void updateItem(T item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? null : texto.apply(item));
+                setTextFill(javafx.scene.paint.Color.web("#f5f7fb"));
+                setStyle("-fx-background-color: transparent; " +
+                        "-fx-text-fill: #f5f7fb; -fx-font-size: 12px;");
             }
         });
         combo.setMaxWidth(Double.MAX_VALUE);
@@ -991,3 +1427,5 @@ public class ClienteViewController {
                 : "•••• •••• " + numero.substring(numero.length() - 4);
     }
 }
+
+
