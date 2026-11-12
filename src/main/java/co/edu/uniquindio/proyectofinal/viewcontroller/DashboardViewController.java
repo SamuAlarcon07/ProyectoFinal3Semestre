@@ -5,10 +5,7 @@ import co.edu.uniquindio.proyectofinal.controller.CarteleraController;
 import co.edu.uniquindio.proyectofinal.controller.CinemaOperationsController;
 import co.edu.uniquindio.proyectofinal.controller.DashboardController;
 import co.edu.uniquindio.proyectofinal.controller.ReservaController;
-import co.edu.uniquindio.proyectofinal.model.principal.Administrador;
-import co.edu.uniquindio.proyectofinal.model.principal.Cliente;
-import co.edu.uniquindio.proyectofinal.model.principal.Pelicula;
-import co.edu.uniquindio.proyectofinal.model.principal.Usuario;
+import co.edu.uniquindio.proyectofinal.model.principal.*;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -23,6 +20,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Controlador visual del Dashboard compartido.
@@ -98,6 +96,12 @@ public class DashboardViewController {
             clienteView = new ClienteViewController(
                     operaciones, (Cliente) usuario,
                     aplicacion.getEscenarioPrincipal());
+            clienteView.setAlActualizarPerfil(() -> {
+                if (!rightPanel.getChildren().isEmpty()) {
+                    rightPanel.getChildren().set(0, crearTarjetaPerfil());
+                }
+            });
+            clienteView.setAlActualizarResumen(this::actualizarResumenCliente);
         }
 
         construirMenu();
@@ -202,35 +206,112 @@ public class DashboardViewController {
     }
 
     private VBox crearPanelPuntos() {
-        VBox card = new VBox(8);
-        card.getStyleClass().add("side-card");
-        Label title = new Label("★  Mis puntos");
+        VBox card = new VBox(9);
+        card.getStyleClass().addAll("side-card", "side-metric-card", "side-points-card");
+
+        HBox encabezado = new HBox(8);
+        encabezado.setAlignment(Pos.CENTER_LEFT);
+
+        Label icono = new Label("★");
+        icono.getStyleClass().add("side-metric-icon");
+
+        Label title = new Label("Mis puntos");
         title.getStyleClass().add("side-card-title");
-        int saldo = dashboardController.consultarPuntos(usuario);
-        Label value = new Label(String.format("%,d pts", saldo));
-        value.getStyleClass().add("points-value");
-        card.getChildren().addAll(title, value,
-                new Label("Puntos disponibles de tu cuenta."));
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Label chip = new Label("RECOMPENSAS");
+        chip.getStyleClass().add("side-card-chip");
+        encabezado.getChildren().addAll(icono, title, spacer, chip);
+
+        int saldo = Math.max(0, dashboardController.consultarPuntos(usuario));
+
+        Label value = new Label(String.format("%,d", saldo));
+        value.getStyleClass().addAll("points-value", "side-metric-value");
+
+        Label unidad = new Label(saldo == 1 ? "punto disponible" : "puntos disponibles");
+        unidad.getStyleClass().add("muted-small");
+
+        Region separador = new Region();
+        separador.getStyleClass().add("side-card-separator");
+
+        Label descripcion = new Label("Acumula puntos con tus compras y canjéalos por beneficios.");
+        descripcion.getStyleClass().add("side-metric-description");
+        descripcion.setWrapText(true);
+
+        card.getChildren().addAll(encabezado, value, unidad, separador, descripcion);
         return card;
     }
 
     private VBox crearPanelTarjetaVirtual() {
-        VBox card = new VBox(8);
-        card.getStyleClass().add("side-card");
-        Label title = new Label("▣  Mi tarjeta virtual");
+        VBox card = new VBox(9);
+        card.getStyleClass().addAll("side-card", "side-metric-card", "side-credit-card");
+
+        HBox encabezado = new HBox(8);
+        encabezado.setAlignment(Pos.CENTER_LEFT);
+
+        Label icono = new Label("▣");
+        icono.getStyleClass().add("side-metric-icon");
+
+        Label title = new Label("Mi tarjeta virtual");
         title.getStyleClass().add("side-card-title");
-        String detail = operaciones.consultarTarjeta((Cliente) usuario)
-                .map(t -> "•••• " + t.getNumero().substring(
-                        Math.max(0, t.getNumero().length() - 4))
-                        + "\nSaldo: " + java.text.NumberFormat
-                        .getCurrencyInstance(new Locale("es", "CO"))
-                        .format(t.getSaldo()))
-                .orElse("No hay tarjeta registrada.");
-        Label text = new Label(detail);
-        text.getStyleClass().add("muted-small");
-        text.setWrapText(true);
-        card.getChildren().addAll(title, text);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Label chip = new Label("CINEMA UQ");
+        chip.getStyleClass().add("side-card-chip");
+        encabezado.getChildren().addAll(icono, title, spacer, chip);
+
+        Optional<TarjetaVirtual> tarjetaOpt = operaciones.consultarTarjeta((Cliente) usuario);
+        if (tarjetaOpt.isEmpty()) {
+            Label sinTarjeta = new Label("No hay una tarjeta registrada.");
+            sinTarjeta.getStyleClass().add("muted-small");
+            sinTarjeta.setWrapText(true);
+            card.getChildren().addAll(encabezado, sinTarjeta);
+            return card;
+        }
+
+        TarjetaVirtual tarjeta = tarjetaOpt.get();
+        String numero = tarjeta.getNumero() == null ? "••••" :
+                "•••• " + tarjeta.getNumero().substring(
+                        Math.max(0, tarjeta.getNumero().length() - 4));
+
+        Label numeroLabel = new Label(numero);
+        numeroLabel.getStyleClass().add("side-card-number");
+
+        Label saldoTitulo = new Label("SALDO DISPONIBLE");
+        saldoTitulo.getStyleClass().add("side-card-overline");
+
+        Label saldo = new Label(java.text.NumberFormat
+                .getCurrencyInstance(new Locale("es", "CO"))
+                .format(tarjeta.getSaldo()));
+        saldo.getStyleClass().add("side-credit-value");
+
+        HBox estadoFila = new HBox(6);
+        estadoFila.setAlignment(Pos.CENTER_LEFT);
+        Label estadoPunto = new Label("●");
+        estadoPunto.getStyleClass().add("side-status-dot");
+        Label estado = new Label(tarjeta.getEstado() == null
+                ? "Estado no disponible" : tarjeta.getEstado().name());
+        estado.getStyleClass().add("side-card-status");
+        estadoFila.getChildren().addAll(estadoPunto, estado);
+
+        card.getChildren().addAll(encabezado, numeroLabel, saldoTitulo, saldo, estadoFila);
         return card;
+    }
+
+    /**
+     * Reconstruye los indicadores laterales desde las fuentes reales del cliente.
+     * No mantiene saldos ni puntos duplicados en variables locales.
+     */
+    private void actualizarResumenCliente() {
+        if (administrador || rightPanel.getChildren().size() < 3) {
+            return;
+        }
+        rightPanel.getChildren().set(1, crearPanelPuntos());
+        rightPanel.getChildren().set(2, crearPanelTarjetaVirtual());
     }
 
     private VBox crearPanelResumenAdmin() {
@@ -292,6 +373,8 @@ public class DashboardViewController {
 
         contentHost.getChildren().setAll(contenido);
         contentScroll.setVvalue(0);
+        // También sincroniza los indicadores al volver de Cartelera u otra sección.
+        actualizarResumenCliente();
     }
 
     private Node construirCartelera(String filtro) {
@@ -336,10 +419,10 @@ public class DashboardViewController {
 
         HBox accesos = new HBox(10);
         accesos.getStyleClass().add("quick-access-row");
-        agregarAcceso(accesos, "▣", "Cartelera");
-        agregarAcceso(accesos, "♢", "Mis entradas");
-        agregarAcceso(accesos, "▤", "Mis compras");
-        agregarAcceso(accesos, "☆", "Mis puntos");
+        agregarAcceso(accesos, "🎞", "Cartelera");
+        agregarAcceso(accesos, "🎟", "Mis entradas");
+        agregarAcceso(accesos, "🛍", "Mis compras");
+        agregarAcceso(accesos, "⭐", "Mis puntos");
 
         Label tituloPeliculas = new Label("Cartelera destacada");
         tituloPeliculas.getStyleClass().add("section-title");
@@ -474,10 +557,10 @@ public class DashboardViewController {
         Label quickTitle = new Label("Accesos de administración");
         quickTitle.getStyleClass().add("section-title");
         HBox quick = new HBox(10);
-        agregarAccesoAdmin(quick, "▣", "Películas", "Gestión de películas");
-        agregarAccesoAdmin(quick, "▦", "Funciones y salas", "Funciones y salas");
-        agregarAccesoAdmin(quick, "♙", "Usuarios", "Gestión de usuarios");
-        agregarAccesoAdmin(quick, "▤", "Inventario", "Inventario");
+        agregarAccesoAdmin(quick, "🎬", "Películas", "Gestión de películas");
+        agregarAccesoAdmin(quick, "🗓", "Funciones y salas", "Funciones y salas");
+        agregarAccesoAdmin(quick, "👥", "Usuarios", "Gestión de usuarios");
+        agregarAccesoAdmin(quick, "📦", "Inventario", "Inventario");
 
         root.getChildren().addAll(hero, stats, quickTitle, quick);
         return root;
@@ -496,21 +579,36 @@ public class DashboardViewController {
     }
 
     private void agregarAcceso(HBox fila, String icono, String texto) {
-        Button b = new Button(icono + "\n" + texto);
-        b.getStyleClass().add("quick-access-button");
-        b.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(b, Priority.ALWAYS);
+        Button b = crearBotonAcceso(icono, texto);
         b.setOnAction(e -> mostrarSeccion(texto, ""));
         fila.getChildren().add(b);
     }
 
     private void agregarAccesoAdmin(HBox fila, String icono, String texto, String seccion) {
-        Button b = new Button(icono + "\n" + texto);
-        b.getStyleClass().add("quick-access-button");
-        b.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(b, Priority.ALWAYS);
+        Button b = crearBotonAcceso(icono, texto);
         b.setOnAction(e -> mostrarSeccion(seccion, ""));
         fila.getChildren().add(b);
+    }
+
+    /** Construye el acceso con nodos gráficos reales; evita que graphic-only oculte el texto. */
+    private Button crearBotonAcceso(String icono, String texto) {
+        Label simbolo = new Label(icono);
+        simbolo.getStyleClass().add("quick-access-icon");
+        Label nombre = new Label(texto);
+        nombre.getStyleClass().add("quick-access-label");
+        VBox contenido = new VBox(7, simbolo, nombre);
+        contenido.setAlignment(Pos.CENTER);
+        contenido.setMouseTransparent(true);
+
+        Button boton = new Button();
+        boton.getStyleClass().add("quick-access-button");
+        boton.setGraphic(contenido);
+        boton.setContentDisplay(javafx.scene.control.ContentDisplay.GRAPHIC_ONLY);
+        boton.setAlignment(Pos.CENTER);
+        boton.setMaxWidth(Double.MAX_VALUE);
+        boton.setMinHeight(86);
+        HBox.setHgrow(boton, Priority.ALWAYS);
+        return boton;
     }
 
     private VBox construirPerfilAdmin() {

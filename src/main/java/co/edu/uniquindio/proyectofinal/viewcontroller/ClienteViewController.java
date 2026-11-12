@@ -27,6 +27,8 @@ public class ClienteViewController {
     private final CinemaOperationsController operaciones;
     private final Cliente cliente;
     private final Window owner;
+    private Runnable alActualizarPerfil = () -> { };
+    private Runnable alActualizarResumen = () -> { };
 
     public ClienteViewController(
             CinemaOperationsController operaciones,
@@ -35,6 +37,15 @@ public class ClienteViewController {
         this.operaciones = Objects.requireNonNull(operaciones);
         this.cliente = Objects.requireNonNull(cliente);
         this.owner = owner;
+    }
+
+    public void setAlActualizarPerfil(Runnable callback) {
+        this.alActualizarPerfil = callback == null ? () -> { } : callback;
+    }
+
+    /** Notifica al Dashboard que debe sincronizar saldo y puntos del panel lateral. */
+    public void setAlActualizarResumen(Runnable callback) {
+        this.alActualizarResumen = callback == null ? () -> { } : callback;
     }
 
     public Node construir(String seccion) {
@@ -252,9 +263,25 @@ public class ClienteViewController {
 
     private Node vistaCompras() {
         VBox root = pagina("Mis compras",
-                "Consulta tus transacciones, detalles de compra y solicita cancelaciones cuando la política lo permita.");
+                "Revisa tu historial de transacciones, consulta los detalles y gestiona solicitudes de cancelación.");
+        root.setSpacing(15);
+
+        List<Compra> compras = new ArrayList<>(operaciones.consultarCompras(cliente));
+
+        // Indicadores rápidos del historial de compras.
+        Label totalCompras = new Label();
+        Label comprasPagadas = new Label();
+        Label totalGastado = new Label();
+
+        HBox resumen = new HBox(12,
+                tarjetaResumenCompra("COMPRAS REGISTRADAS", totalCompras, "▤"),
+                tarjetaResumenCompra("COMPRAS PAGADAS", comprasPagadas, "✓"),
+                tarjetaResumenCompra("TOTAL PAGADO", totalGastado, "$"));
+        resumen.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        resumen.setFillHeight(true);
 
         TableView<Compra> tabla = tabla();
+        tabla.setPrefHeight(430);
         tabla.getColumns().addAll(
                 columna("Código", Compra::getCodigo),
                 columna("Fecha", c -> c.getFecha().toString().replace('T', ' ')),
@@ -264,33 +291,115 @@ public class ClienteViewController {
                 columna("Total", c -> moneda(c.getTotal())),
                 columna("Estado", Compra::consultarNombreEstado)
         );
-        refrescar(tabla, operaciones.consultarCompras(cliente));
 
-        Button detalle = boton("Ver detalle", "button-small-outline");
+        Runnable cargar = () -> {
+            compras.clear();
+            compras.addAll(operaciones.consultarCompras(cliente));
+            refrescar(tabla, compras);
+
+            long pagadas = compras.stream()
+                    .filter(c -> "PAGADA".equals(c.consultarNombreEstado()))
+                    .count();
+            BigDecimal gastado = compras.stream()
+                    .filter(c -> "PAGADA".equals(c.consultarNombreEstado()))
+                    .map(Compra::getTotal)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            totalCompras.setText(String.valueOf(compras.size()));
+            comprasPagadas.setText(String.valueOf(pagadas));
+            totalGastado.setText(moneda(gastado));
+        };
+        cargar.run();
+
+        Button detalle = boton("▤  Ver detalle", "button-small-outline");
+        Button cancelar = boton("↶  Solicitar cancelación", "button-gold");
+        Button actualizar = boton("↻  Actualizar", "button-small-outline");
+
+        detalle.setDisable(true);
+        cancelar.setDisable(true);
+        tabla.getSelectionModel().selectedItemProperty().addListener(
+                (obs, anterior, seleccionada) -> {
+                    detalle.setDisable(seleccionada == null);
+                    cancelar.setDisable(seleccionada == null);
+                });
+
         detalle.setOnAction(e -> {
             Compra compra = tabla.getSelectionModel().getSelectedItem();
-            if (compra == null) { aviso("Selecciona una compra."); return; }
-            StringBuilder texto = new StringBuilder();
-            for (DetalleCompra d : compra.getDetalles()) {
-                texto.append(d.getElemento().consultarDescripcion())
-                        .append(" x").append(d.getCantidad())
-                        .append(" — ").append(moneda(d.getSubtotal())).append('\n');
+            if (compra == null) {
+                aviso("Selecciona una compra para consultar sus detalles.");
+                return;
             }
-            texto.append("\nSubtotal: ").append(moneda(compra.calcularSubtotal()))
-                    .append("\nDescuentos: ").append(moneda(compra.getDescuentos()))
-                    .append("\nPuntos redimidos: ").append(moneda(compra.getValorPuntosRedimidos()))
-                    .append("\nTotal: ").append(moneda(compra.getTotal()));
-            aviso(texto.toString());
+
+            Dialog<Void> dialogo = new Dialog<>();
+            if (owner != null) dialogo.initOwner(owner);
+            dialogo.setTitle("Detalle de compra · CinemaUQ");
+            dialogo.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+            dialogo.getDialogPane().setStyle(
+                    "-fx-background-color: #081a2d; -fx-border-color: #294764;");
+            dialogo.getDialogPane().setPrefWidth(430);
+
+            Button cerrar = (Button) dialogo.getDialogPane().lookupButton(ButtonType.CLOSE);
+            cerrar.setText("Cerrar");
+            cerrar.setStyle("-fx-background-color: #f5b91b; -fx-text-fill: #101827;"
+                    + "-fx-font-weight: bold; -fx-background-radius: 8;");
+
+            VBox contenido = new VBox(12);
+            contenido.setPadding(new Insets(20));
+            contenido.setStyle("-fx-background-color: #081a2d;");
+
+            Label titulo = new Label("Resumen de tu compra");
+            titulo.setStyle("-fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold;");
+            Label codigo = new Label(compra.getCodigo());
+            codigo.setStyle("-fx-text-fill: #f5c242; -fx-font-size: 12px; -fx-font-weight: bold;");
+
+            VBox articulos = new VBox(8);
+            articulos.setPadding(new Insets(13));
+            articulos.setStyle("-fx-background-color: #102943; -fx-background-radius: 10;"
+                    + "-fx-border-color: #294764; -fx-border-radius: 10;");
+            Label etiquetaArticulos = new Label("ARTÍCULOS");
+            etiquetaArticulos.setStyle("-fx-text-fill: #f5c242; -fx-font-size: 10px;"
+                    + "-fx-font-weight: bold;");
+            articulos.getChildren().add(etiquetaArticulos);
+
+            for (DetalleCompra d : compra.getDetalles()) {
+                Label linea = new Label(d.getElemento().consultarDescripcion()
+                        + "  × " + d.getCantidad() + "     " + moneda(d.getSubtotal()));
+                linea.setWrapText(true);
+                linea.setMaxWidth(Double.MAX_VALUE);
+                linea.setStyle("-fx-text-fill: #e7eef7; -fx-font-size: 12px;");
+                articulos.getChildren().add(linea);
+            }
+
+            VBox totales = new VBox(7);
+            totales.setPadding(new Insets(13));
+            totales.setStyle("-fx-background-color: #10243a; -fx-background-radius: 10;"
+                    + "-fx-border-color: #294764; -fx-border-radius: 10;");
+            Label subtotal = new Label("Subtotal:  " + moneda(compra.calcularSubtotal()));
+            Label descuentos = new Label("Descuentos:  " + moneda(compra.getDescuentos()));
+            Label puntos = new Label("Puntos redimidos:  " + moneda(compra.getValorPuntosRedimidos()));
+            Label total = new Label("TOTAL PAGADO:  " + moneda(compra.getTotal()));
+            for (Label dato : List.of(subtotal, descuentos, puntos)) {
+                dato.setStyle("-fx-text-fill: #c4d3e0; -fx-font-size: 12px;");
+            }
+            total.setStyle("-fx-text-fill: #f5c242; -fx-font-size: 15px; -fx-font-weight: bold;");
+            totales.getChildren().addAll(subtotal, descuentos, puntos, new Separator(), total);
+
+            contenido.getChildren().addAll(titulo, codigo, articulos, totales);
+            dialogo.getDialogPane().setContent(contenido);
+            dialogo.showAndWait();
         });
 
-        Button cancelar = boton("Solicitar cancelación", "button-gold");
         cancelar.setOnAction(e -> {
             Compra compra = tabla.getSelectionModel().getSelectedItem();
-            if (compra == null) { aviso("Selecciona una compra."); return; }
+            if (compra == null) {
+                aviso("Selecciona una compra.");
+                return;
+            }
             if (!"PAGADA".equals(compra.consultarNombreEstado())) {
                 aviso("Solo se pueden cancelar compras pagadas.");
                 return;
             }
+
             TextInputDialog motivo = new TextInputDialog("No podré asistir a la función");
             motivo.setTitle("Solicitud de cancelación");
             motivo.setHeaderText("Compra " + compra.getCodigo());
@@ -308,22 +417,37 @@ public class ClienteViewController {
                     } else {
                         aviso("La política no permite la cancelación solicitada.");
                     }
-                    refrescar(tabla, operaciones.consultarCompras(cliente));
+                    cargar.run();
                 } catch (RuntimeException ex) {
                     mostrarError(ex);
                 }
             });
         });
 
-        Button actualizar = boton("Actualizar", "button-small-outline");
-        actualizar.setOnAction(e -> refrescar(tabla, operaciones.consultarCompras(cliente)));
-        root.getChildren().addAll(barra(detalle, cancelar, actualizar), tabla);
+        actualizar.setOnAction(e -> {
+            cargar.run();
+            aviso("Tu historial de compras se ha actualizado.");
+        });
+
+        HBox acciones = barra(detalle, cancelar, actualizar);
+        VBox tablaContenedor = new VBox(10);
+        tablaContenedor.setPadding(new Insets(13));
+        tablaContenedor.setStyle("-fx-background-color: #0b1d31; -fx-background-radius: 14;"
+                + "-fx-border-color: #294764; -fx-border-radius: 14;");
+        Label tituloHistorial = new Label("Historial de transacciones");
+        tituloHistorial.setStyle("-fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;");
+        Label ayuda = new Label("Selecciona una compra para ver su detalle o solicitar una cancelación.");
+        ayuda.setStyle("-fx-text-fill: #9fb3c9; -fx-font-size: 11px;");
+        tablaContenedor.getChildren().addAll(tituloHistorial, ayuda, tabla);
+
+        root.getChildren().addAll(resumen, acciones, tablaContenedor);
         return root;
     }
 
     private Node vistaTarjeta() {
         VBox root = pagina("Mi tarjeta virtual",
-                "Consulta el saldo, el estado y los movimientos de tu tarjeta CinemaUQ.");
+                "Administra tu saldo, realiza recargas y consulta cada movimiento de tu tarjeta.");
+        root.setSpacing(18);
 
         Optional<TarjetaVirtual> opcional = operaciones.consultarTarjeta(cliente);
         if (opcional.isEmpty()) {
@@ -334,40 +458,151 @@ public class ClienteViewController {
         }
 
         TarjetaVirtual tarjeta = opcional.get();
-        VBox tarjetaVisual = new VBox(9);
-        tarjetaVisual.getStyleClass().add("virtual-card-face");
-        Label marca = new Label("🎬 CINEMA UQ");
-        marca.getStyleClass().add("virtual-card-brand");
-        Label numero = new Label(mascara(tarjeta.getNumero()));
-        numero.getStyleClass().add("virtual-card-number");
-        Label titular = new Label(cliente.getNombre());
-        titular.getStyleClass().add("virtual-card-holder");
-        Label saldo = new Label("Saldo disponible: " + moneda(tarjeta.getSaldo()));
-        saldo.getStyleClass().add("virtual-card-balance");
-        Label estado = new Label("Estado: " + tarjeta.getEstado().name());
-        tarjetaVisual.getChildren().addAll(marca, numero, titular, saldo, estado);
 
-        Label movimientosLabel = new Label("Movimientos");
+        // Tarjeta digital principal.
+        VBox tarjetaVisual = new VBox(15);
+        tarjetaVisual.setPadding(new Insets(22, 25, 22, 25));
+        tarjetaVisual.setMinHeight(205);
+        tarjetaVisual.setMaxWidth(Double.MAX_VALUE);
+        tarjetaVisual.setStyle(
+                "-fx-background-color: linear-gradient(to right, #10243d 0%, #142b46 52%, #49351c 100%);"
+                        + "-fx-background-radius: 18; -fx-border-color: #d9a928;"
+                        + "-fx-border-width: 1.2; -fx-border-radius: 18;");
+
+        HBox marcaFila = new HBox(10);
+        marcaFila.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        Label marcaIcono = new Label("▣");
+        marcaIcono.setStyle("-fx-text-fill: #ffd04a; -fx-font-size: 25px; -fx-font-weight: bold;");
+        Label marca = new Label("CINEMA UQ");
+        marca.setStyle("-fx-text-fill: #ffd04a; -fx-font-size: 17px; -fx-font-weight: bold;");
+        Region espacioMarca = new Region();
+        HBox.setHgrow(espacioMarca, Priority.ALWAYS);
+        Label tipoTarjeta = new Label("TARJETA DIGITAL");
+        tipoTarjeta.setStyle("-fx-text-fill: #d5dfeb; -fx-font-size: 10px; -fx-font-weight: bold;"
+                + "-fx-background-color: #ffffff18; -fx-background-radius: 12; -fx-padding: 6 10;");
+        marcaFila.getChildren().addAll(marcaIcono, marca, espacioMarca, tipoTarjeta);
+
+        Label numero = new Label(mascara(tarjeta.getNumero()));
+        numero.setStyle("-fx-text-fill: white; -fx-font-size: 22px; -fx-font-weight: bold;"
+                + "-fx-padding: 7 0 2 0;");
+
+        HBox datosFila = new HBox(20);
+        datosFila.setAlignment(javafx.geometry.Pos.BOTTOM_LEFT);
+        VBox titularBox = new VBox(5);
+        Label titularEtiqueta = new Label("TITULAR");
+        titularEtiqueta.setStyle("-fx-text-fill: #aebfd1; -fx-font-size: 9px; -fx-font-weight: bold;");
+        Label titular = new Label(cliente.getNombre());
+        titular.setStyle("-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold;");
+        titularBox.getChildren().addAll(titularEtiqueta, titular);
+
+        Region espacioDatos = new Region();
+        HBox.setHgrow(espacioDatos, Priority.ALWAYS);
+        VBox saldoBox = new VBox(4);
+        saldoBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+        Label saldoEtiqueta = new Label("SALDO DISPONIBLE");
+        saldoEtiqueta.setStyle("-fx-text-fill: #f1d99a; -fx-font-size: 9px; -fx-font-weight: bold;");
+        Label saldo = new Label(moneda(tarjeta.getSaldo()));
+        saldo.setStyle("-fx-text-fill: #ffd04a; -fx-font-size: 23px; -fx-font-weight: bold;");
+        saldoBox.getChildren().addAll(saldoEtiqueta, saldo);
+
+        HBox pieTarjeta = new HBox(8);
+        pieTarjeta.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        Label estadoPunto = new Label("●");
+        estadoPunto.setStyle("-fx-text-fill: #70e0ae; -fx-font-size: 11px;");
+        Label estado = new Label("TARJETA " + tarjeta.getEstado().name());
+        estado.setStyle("-fx-text-fill: #dce8f3; -fx-font-size: 10px; -fx-font-weight: bold;");
+        pieTarjeta.getChildren().addAll(estadoPunto, estado);
+
+        tarjetaVisual.getChildren().addAll(marcaFila, numero, datosFila, pieTarjeta);
+        datosFila.getChildren().addAll(titularBox, espacioDatos, saldoBox);
+
+        // Indicadores rápidos.
+        int cantidadMovimientos = tarjeta.getMovimientos().size();
+        HBox indicadores = new HBox(12);
+        indicadores.setFillHeight(true);
+
+        VBox indicadorSaldo = new VBox(6);
+        indicadorSaldo.setPadding(new Insets(14, 17, 14, 17));
+        indicadorSaldo.setStyle("-fx-background-color: #0d2138; -fx-background-radius: 13;"
+                + "-fx-border-color: #29445f; -fx-border-radius: 13;");
+        Label saldoTitulo = new Label("SALDO ACTUAL");
+        saldoTitulo.setStyle("-fx-text-fill: #9eb2c8; -fx-font-size: 10px; -fx-font-weight: bold;");
+        Label saldoIndicador = new Label(moneda(tarjeta.getSaldo()));
+        saldoIndicador.setStyle("-fx-text-fill: #ffd04a; -fx-font-size: 17px; -fx-font-weight: bold;");
+        indicadorSaldo.getChildren().addAll(saldoTitulo, saldoIndicador);
+
+        VBox indicadorMovimientos = new VBox(6);
+        indicadorMovimientos.setPadding(new Insets(14, 17, 14, 17));
+        indicadorMovimientos.setStyle("-fx-background-color: #0d2138; -fx-background-radius: 13;"
+                + "-fx-border-color: #29445f; -fx-border-radius: 13;");
+        Label movimientosTitulo = new Label("MOVIMIENTOS");
+        movimientosTitulo.setStyle("-fx-text-fill: #9eb2c8; -fx-font-size: 10px; -fx-font-weight: bold;");
+        Label movimientosValor = new Label(String.valueOf(cantidadMovimientos));
+        movimientosValor.setStyle("-fx-text-fill: white; -fx-font-size: 17px; -fx-font-weight: bold;");
+        indicadorMovimientos.getChildren().addAll(movimientosTitulo, movimientosValor);
+
+        VBox indicadorEstado = new VBox(6);
+        indicadorEstado.setPadding(new Insets(14, 17, 14, 17));
+        indicadorEstado.setStyle("-fx-background-color: #0d2138; -fx-background-radius: 13;"
+                + "-fx-border-color: #29445f; -fx-border-radius: 13;");
+        Label estadoTitulo = new Label("ESTADO");
+        estadoTitulo.setStyle("-fx-text-fill: #9eb2c8; -fx-font-size: 10px; -fx-font-weight: bold;");
+        Label estadoValor = new Label(tarjeta.getEstado().name());
+        estadoValor.setStyle("-fx-text-fill: #75d6ae; -fx-font-size: 17px; -fx-font-weight: bold;");
+        indicadorEstado.getChildren().addAll(estadoTitulo, estadoValor);
+
+        for (VBox indicador : List.of(indicadorSaldo, indicadorMovimientos, indicadorEstado)) {
+            HBox.setHgrow(indicador, Priority.ALWAYS);
+            indicador.setMaxWidth(Double.MAX_VALUE);
+        }
+        indicadores.getChildren().addAll(indicadorSaldo, indicadorMovimientos, indicadorEstado);
+
+        // Panel de recargas.
+        VBox panelRecarga = new VBox(11);
+        panelRecarga.setPadding(new Insets(16, 18, 16, 18));
+        panelRecarga.setStyle("-fx-background-color: #0d2035; -fx-background-radius: 14;"
+                + "-fx-border-color: #29445f; -fx-border-radius: 14;");
+        HBox encabezadoRecarga = new HBox(8);
+        encabezadoRecarga.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        Label iconoRecarga = new Label("＋");
+        iconoRecarga.setStyle("-fx-text-fill: #ffd04a; -fx-font-size: 19px; -fx-font-weight: bold;");
+        Label tituloRecarga = new Label("Agregar saldo");
+        tituloRecarga.setStyle("-fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;");
+        encabezadoRecarga.getChildren().addAll(iconoRecarga, tituloRecarga);
+
+        Label descripcionRecarga = new Label("Selecciona un monto para recargar tu tarjeta virtual.");
+        descripcionRecarga.setStyle("-fx-text-fill: #aebfd1; -fx-font-size: 11px;");
+
+        // Historial de movimientos.
+        Label movimientosLabel = new Label("Historial de movimientos");
         movimientosLabel.getStyleClass().add("section-title");
+        Label movimientosSubtitulo = new Label("Consulta las recargas, pagos y reembolsos realizados.");
+        movimientosSubtitulo.getStyleClass().add("muted-small");
 
         TableView<MovimientoTarjeta> tabla = tabla();
         tabla.getColumns().addAll(
                 columna("Fecha", m -> m.getFecha().toString().replace('T', ' ')),
                 columna("Tipo", m -> m.getTipo().name()),
-                columna("Valor", m -> moneda(m.getValor())),
+                columna("Valor", m -> {
+                    boolean esPago = m.getTipo().name().equalsIgnoreCase("PAGO");
+                    String signo = esPago ? "- " : "+ ";
+                    return signo + moneda(m.getValor().abs());
+                }),
                 columna("Saldo", m -> moneda(m.getSaldoResultante())),
                 columna("Referencia", MovimientoTarjeta::getReferenciaOperacion)
         );
         refrescar(tabla, tarjeta.getMovimientos());
 
-        // Recargas de demostración: simulan el flujo de una pasarela de pago.
+        // Recargas de demostración: se conserva el flujo de operaciones existente.
         java.util.function.Consumer<BigDecimal> ejecutarRecarga = valor -> {
             try {
                 operaciones.recargarTarjetaCliente(cliente, valor);
-                saldo.setText("Saldo disponible: "
-                        + moneda(operaciones.consultarTarjeta(cliente)
-                        .orElseThrow().getSaldo()));
-                refrescar(tabla, tarjeta.getMovimientos());
+                TarjetaVirtual actualizada = operaciones.consultarTarjeta(cliente).orElseThrow();
+                saldo.setText(moneda(actualizada.getSaldo()));
+                saldoIndicador.setText(moneda(actualizada.getSaldo()));
+                movimientosValor.setText(String.valueOf(actualizada.getMovimientos().size()));
+                refrescar(tabla, actualizada.getMovimientos());
+                alActualizarResumen.run();
                 aviso("Recarga realizada correctamente por " + moneda(valor)
                         + ". El nuevo saldo ya está disponible.");
             } catch (RuntimeException ex) {
@@ -398,14 +633,23 @@ public class ClienteViewController {
                 }
             });
         });
+
         HBox accionesRecarga = barra(recarga10, recarga20, recarga50, otraRecarga);
         Label notaRecarga = new Label(
-                "Recargas de demostración: no se realiza un cobro bancario real.");
+                "ⓘ  Recargas de demostración: no se realiza un cobro bancario real.");
         notaRecarga.getStyleClass().add("muted-small");
 
-        root.getChildren().addAll(tarjetaVisual,
-                new Label("Agregar saldo"), accionesRecarga, notaRecarga,
-                movimientosLabel, tabla);
+        panelRecarga.getChildren().addAll(encabezadoRecarga, descripcionRecarga,
+                accionesRecarga, notaRecarga);
+
+        VBox panelHistorial = new VBox(9);
+        panelHistorial.setPadding(new Insets(15));
+        panelHistorial.setStyle("-fx-background-color: #0b1e33; -fx-background-radius: 14;"
+                + "-fx-border-color: #29445f; -fx-border-radius: 14;");
+        panelHistorial.getChildren().addAll(movimientosLabel, movimientosSubtitulo, tabla);
+        VBox.setVgrow(tabla, Priority.ALWAYS);
+
+        root.getChildren().addAll(tarjetaVisual, indicadores, panelRecarga, panelHistorial);
         return root;
     }
 
@@ -578,6 +822,7 @@ public class ClienteViewController {
                 refrescarCarrito.run();
                 operaciones.consultarTarjeta(cliente).ifPresent(tarjeta ->
                         saldoTarjeta.setText("Saldo disponible: " + moneda(tarjeta.getSaldo())));
+                alActualizarResumen.run();
                 mostrarConfirmacionPedido(compra);
             } catch (RuntimeException ex) {
                 mostrarError(ex);
@@ -853,31 +1098,105 @@ public class ClienteViewController {
 
     private Node vistaPuntos() {
         VBox root = pagina("Mis puntos",
-                "Consulta tu saldo, acumulaciones, redenciones y vencimientos.");
+                "Acumula beneficios con tus compras y disfruta de recompensas en CinemaUQ.");
+        root.setSpacing(16);
 
         int saldo = operaciones.consultarPuntos(cliente);
-        Label numero = new Label(String.format("%,d puntos disponibles", saldo));
-        numero.getStyleClass().add("points-value-large");
+        List<MovimientoPuntos> movimientos =
+                new ArrayList<>(operaciones.consultarMovimientosPuntos(cliente));
 
-        Label regla = new Label(
-                "Regla actual: 1 punto por cada $10.000 efectivamente pagados. "
-                        + "Cada punto equivale a $50 y la redención está limitada al 50 % del subtotal."
+        // Tarjeta principal de puntos.
+        HBox hero = new HBox(18);
+        hero.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        hero.setPadding(new Insets(22, 25, 22, 25));
+        hero.setMinHeight(150);
+        hero.setStyle("-fx-background-color: linear-gradient(to right, #102b49, #172b43, #49351c);"
+                + "-fx-background-radius: 16; -fx-border-color: #d99e18;"
+                + "-fx-border-radius: 16;");
+
+        VBox heroTexto = new VBox(7);
+        Label marca = new Label("★  CINEMA UQ  ·  CLUB DE BENEFICIOS");
+        marca.setStyle("-fx-text-fill: #ffd04a; -fx-font-size: 11px; -fx-font-weight: bold;");
+        Label heroTitulo = new Label("Tus puntos, tus beneficios");
+        heroTitulo.setStyle("-fx-text-fill: white; -fx-font-size: 21px; -fx-font-weight: bold;");
+        Label heroDescripcion = new Label("Sigue disfrutando del cine mientras acumulas recompensas.");
+        heroDescripcion.setStyle("-fx-text-fill: #c3d2e1; -fx-font-size: 11px;");
+        heroDescripcion.setWrapText(true);
+        heroTexto.getChildren().addAll(marca, heroTitulo, heroDescripcion);
+
+        Region espacioHero = new Region();
+        HBox.setHgrow(espacioHero, Priority.ALWAYS);
+
+        VBox puntosHero = new VBox(3);
+        puntosHero.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+        Label etiquetaPuntos = new Label("PUNTOS DISPONIBLES");
+        etiquetaPuntos.setStyle("-fx-text-fill: #e7d5a4; -fx-font-size: 10px; -fx-font-weight: bold;");
+        Label numeroHero = new Label(String.format(Locale.ROOT, "%,d", saldo));
+        numeroHero.setStyle("-fx-text-fill: #ffd04a; -fx-font-size: 38px; -fx-font-weight: bold;");
+        Label unidadHero = new Label("puntos");
+        unidadHero.setStyle("-fx-text-fill: #f5e7c5; -fx-font-size: 12px;");
+        puntosHero.getChildren().addAll(etiquetaPuntos, numeroHero, unidadHero);
+        hero.getChildren().addAll(heroTexto, espacioHero, puntosHero);
+
+        // Indicadores secundarios.
+        BigDecimal valorPuntos = BigDecimal.valueOf(saldo).multiply(new BigDecimal("50"));
+        HBox indicadores = new HBox(10);
+        indicadores.setAlignment(javafx.geometry.Pos.CENTER);
+        indicadores.getChildren().addAll(
+                crearIndicadorPuntos("SALDO DE PUNTOS",
+                        String.format(Locale.ROOT, "%,d pts", saldo), "★", "#ffd04a"),
+                crearIndicadorPuntos("VALOR EQUIVALENTE",
+                        moneda(valorPuntos), "$", "#75d6ae"),
+                crearIndicadorPuntos("MOVIMIENTOS REGISTRADOS",
+                        String.valueOf(movimientos.size()), "↕", "#8fc8ff")
         );
-        regla.setWrapText(true);
-        regla.getStyleClass().add("muted-small");
+
+        // Reglas del programa.
+        VBox reglas = new VBox(9);
+        reglas.setPadding(new Insets(16));
+        reglas.setStyle("-fx-background-color: #0e2238; -fx-background-radius: 13;"
+                + "-fx-border-color: #294760; -fx-border-radius: 13;");
+        Label reglasTitulo = new Label("✦  ¿Cómo funciona tu programa de puntos?");
+        reglasTitulo.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;");
+        Label reglaAcumulacion = new Label("•  Acumulas 1 punto por cada $10.000 efectivamente pagados.");
+        Label reglaValor = new Label("•  Cada punto equivale a $50 pesos colombianos.");
+        Label reglaRedencion = new Label("•  Puedes redimir puntos hasta por el 50 % del subtotal.");
+        for (Label regla : List.of(reglaAcumulacion, reglaValor, reglaRedencion)) {
+            regla.setStyle("-fx-text-fill: #b9cadd; -fx-font-size: 11px;");
+            regla.setWrapText(true);
+        }
+        reglas.getChildren().addAll(reglasTitulo, reglaAcumulacion, reglaValor, reglaRedencion);
+
+        // Historial de movimientos.
+        VBox historial = new VBox(10);
+        historial.setPadding(new Insets(14));
+        historial.setStyle("-fx-background-color: #0b1e33; -fx-background-radius: 14;"
+                + "-fx-border-color: #294760; -fx-border-radius: 14;");
+        Label historialTitulo = new Label("Historial de puntos");
+        historialTitulo.setStyle("-fx-text-fill: white; -fx-font-size: 17px; -fx-font-weight: bold;");
+        Label historialSubtitulo = new Label("Consulta las acumulaciones, redenciones y otros movimientos de tu cuenta.");
+        historialSubtitulo.setStyle("-fx-text-fill: #9fb4c9; -fx-font-size: 10px;");
+        historialSubtitulo.setWrapText(true);
 
         TableView<MovimientoPuntos> tabla = tabla();
+        tabla.setPrefHeight(390);
+        tabla.setPlaceholder(new Label("Todavía no tienes movimientos de puntos."));
         tabla.getColumns().addAll(
-                columna("Fecha", m -> m.getFecha().toString()),
-                columna("Movimiento", m -> m.getTipo().name()),
-                columna("Cantidad", m -> String.valueOf(m.getCantidad())),
+                columna("Fecha", m -> m.getFecha().toString().replace('T', ' ')),
+                columna("Movimiento", m -> m.getTipo().name().replace('_', ' ')),
+                columna("Cantidad", m -> {
+                    String tipo = m.getTipo().name().toUpperCase(Locale.ROOT);
+                    boolean salida = tipo.contains("REDENC") || tipo.contains("VENC");
+                    String signo = salida ? "- " : "+ ";
+                    return signo + Math.abs(m.getCantidad());
+                }),
                 columna("Descripción", MovimientoPuntos::getDescripcion),
                 columna("Referencia", MovimientoPuntos::getCodigoReferencia)
         );
-        refrescar(tabla, operaciones.consultarMovimientosPuntos(cliente));
+        refrescar(tabla, movimientos);
 
-        root.getChildren().addAll(numero, regla,
-                new Label("Historial de puntos"), tabla);
+        historial.getChildren().addAll(historialTitulo, historialSubtitulo, tabla);
+        root.getChildren().addAll(hero, indicadores, reglas, historial);
         return root;
     }
 
@@ -1215,30 +1534,165 @@ public class ClienteViewController {
     }
 
     private Node vistaPerfil() {
-        VBox root = pagina("Mi perfil", "Consulta y actualiza tus datos personales.");
+        VBox root = pagina("Mi perfil", "Administra tu información personal de CinemaUQ.");
+        root.setSpacing(16);
 
-        TextField id = new TextField(cliente.getId());
-        id.setEditable(false);
+        // Encabezado de identidad: conserva la paleta y los componentes del tema actual.
+        HBox identidad = new HBox(16);
+        identidad.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        identidad.setPadding(new Insets(18));
+        identidad.setStyle("-fx-background-color: linear-gradient(to right, #172b43, #102238);"
+                + "-fx-border-color: #294765; -fx-border-radius: 14; -fx-background-radius: 14;");
+
+        Label avatar = new Label(inicialesPerfil(cliente.getNombre()));
+        avatar.setMinSize(66, 66);
+        avatar.setPrefSize(66, 66);
+        avatar.setAlignment(javafx.geometry.Pos.CENTER);
+        avatar.setStyle("-fx-background-color: linear-gradient(to bottom right, #ffd45a, #e99a08);"
+                + "-fx-background-radius: 40; -fx-text-fill: #101827; -fx-font-size: 21px;"
+                + "-fx-font-weight: bold;");
+
+        VBox identidadTexto = new VBox(5);
+        Label nombreVisible = new Label(cliente.getNombre());
+        nombreVisible.setStyle("-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;");
+        Label correoVisible = new Label(cliente.getCorreo());
+        correoVisible.setStyle("-fx-text-fill: #b8c9dc; -fx-font-size: 12px;");
+        Label marca = new Label("CLIENTE CINEMAUQ");
+        marca.setStyle("-fx-text-fill: #ffc43d; -fx-font-size: 10px; -fx-font-weight: bold;");
+        identidadTexto.getChildren().addAll(nombreVisible, correoVisible, marca);
+        identidad.getChildren().addAll(avatar, identidadTexto);
+
+        VBox datosCard = new VBox(14);
+        datosCard.setPadding(new Insets(18));
+        datosCard.setStyle("-fx-background-color: #0e2033; -fx-border-color: #294765;"
+                + "-fx-border-radius: 14; -fx-background-radius: 14;");
+        Label tituloDatos = new Label("Información personal");
+        tituloDatos.setStyle("-fx-text-fill: white; -fx-font-size: 15px; -fx-font-weight: bold;");
+        Label ayuda = new Label("Consulta tus datos y activa la edición cuando quieras realizar cambios.");
+        ayuda.setWrapText(true);
+        ayuda.setStyle("-fx-text-fill: #9fb2c8; -fx-font-size: 11px;");
+
+        TextField identificacion = new TextField(cliente.getId());
+        identificacion.setEditable(false);
+        identificacion.setFocusTraversable(false);
         TextField nombre = new TextField(cliente.getNombre());
         TextField correo = new TextField(cliente.getCorreo());
+        configurarCampoPerfil(identificacion);
+        configurarCampoPerfil(nombre);
+        configurarCampoPerfil(correo);
+        nombre.setEditable(false);
+        correo.setEditable(false);
+        nombre.setPromptText("Nombre completo");
+        correo.setPromptText("correo@ejemplo.com");
 
-        GridPane grid = formulario();
-        fila(grid, 0, "Identificación", id);
-        fila(grid, 1, "Nombre", nombre);
-        fila(grid, 2, "Correo electrónico", correo);
+        GridPane formulario = new GridPane();
+        formulario.setHgap(14);
+        formulario.setVgap(10);
+        formulario.setPadding(new Insets(4, 0, 2, 0));
+        ColumnConstraints colEtiqueta = new ColumnConstraints();
+        colEtiqueta.setMinWidth(105);
+        ColumnConstraints colCampo = new ColumnConstraints();
+        colCampo.setHgrow(Priority.ALWAYS);
+        formulario.getColumnConstraints().addAll(colEtiqueta, colCampo);
+        agregarFilaPerfil(formulario, 0, "Identificación", identificacion);
+        agregarFilaPerfil(formulario, 1, "Nombre completo", nombre);
+        agregarFilaPerfil(formulario, 2, "Correo electrónico", correo);
 
-        Button guardar = boton("Guardar cambios", "button-gold");
+        HBox acciones = new HBox(9);
+        acciones.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        Button editar = boton("✎  Editar perfil", "button-gold");
+        Button guardar = boton("✓  Guardar cambios", "button-gold");
+        Button cancelar = boton("Cancelar", "button-small-outline");
+        guardar.setVisible(false);
+        guardar.setManaged(false);
+        cancelar.setVisible(false);
+        cancelar.setManaged(false);
+        Label estadoEdicion = new Label("Tus datos están protegidos. La identificación no se puede modificar.");
+        estadoEdicion.setWrapText(true);
+        estadoEdicion.setStyle("-fx-text-fill: #91a8c2; -fx-font-size: 10px;");
+
+        Runnable modoEdicion = () -> {
+            nombre.setEditable(true);
+            correo.setEditable(true);
+            nombre.setStyle("-fx-control-inner-background: #ffffff; -fx-background-radius: 6;");
+            correo.setStyle("-fx-control-inner-background: #ffffff; -fx-background-radius: 6;");
+            editar.setVisible(false); editar.setManaged(false);
+            guardar.setVisible(true); guardar.setManaged(true);
+            cancelar.setVisible(true); cancelar.setManaged(true);
+            estadoEdicion.setText("Edita tu nombre y correo. La identificación permanece protegida.");
+            nombre.requestFocus();
+        };
+        editar.setOnAction(e -> modoEdicion.run());
+        cancelar.setOnAction(e -> {
+            nombre.setText(cliente.getNombre());
+            correo.setText(cliente.getCorreo());
+            nombre.setEditable(false); correo.setEditable(false);
+            editar.setVisible(true); editar.setManaged(true);
+            guardar.setVisible(false); guardar.setManaged(false);
+            cancelar.setVisible(false); cancelar.setManaged(false);
+            estadoEdicion.setText("No se realizaron cambios.");
+        });
         guardar.setOnAction(e -> {
+            String nuevoNombre = nombre.getText() == null ? "" : nombre.getText().trim();
+            String nuevoCorreo = correo.getText() == null ? "" : correo.getText().trim();
+            if (nuevoNombre.isBlank()) {
+                aviso("Escribe tu nombre completo."); nombre.requestFocus(); return;
+            }
+            if (!nuevoCorreo.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+                aviso("Escribe un correo electrónico válido."); correo.requestFocus(); return;
+            }
             try {
-                operaciones.actualizarPerfil(cliente, nombre.getText(), correo.getText());
-                aviso("Perfil actualizado.");
+                operaciones.actualizarPerfil(cliente, nuevoNombre, nuevoCorreo);
+                nombre.setText(cliente.getNombre());
+                correo.setText(cliente.getCorreo());
+                nombreVisible.setText(cliente.getNombre());
+                correoVisible.setText(cliente.getCorreo());
+                avatar.setText(inicialesPerfil(cliente.getNombre()));
+                nombre.setEditable(false); correo.setEditable(false);
+                editar.setVisible(true); editar.setManaged(true);
+                guardar.setVisible(false); guardar.setManaged(false);
+                cancelar.setVisible(false); cancelar.setManaged(false);
+                estadoEdicion.setText("✓  Tus datos se actualizaron correctamente.");
+                alActualizarPerfil.run();
+                aviso("Perfil actualizado correctamente.");
             } catch (RuntimeException ex) {
                 mostrarError(ex);
             }
         });
+        acciones.getChildren().addAll(editar, guardar, cancelar);
 
-        root.getChildren().addAll(grid, guardar);
+        HBox metadatos = new HBox(10);
+        metadatos.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        Label registro = new Label("▣  Cliente desde: " + cliente.getFechaRegistro());
+        registro.setStyle("-fx-text-fill: #a9bdd2; -fx-font-size: 10px;");
+        Label estado = new Label("●  " + (cliente.getEstado() == null ? "ACTIVO" : cliente.getEstado().name()));
+        estado.setStyle("-fx-text-fill: #65d6a0; -fx-font-size: 10px; -fx-font-weight: bold;");
+        metadatos.getChildren().addAll(registro, estado);
+
+        datosCard.getChildren().addAll(tituloDatos, ayuda, formulario, acciones, estadoEdicion, new Separator(), metadatos);
+        root.getChildren().addAll(identidad, datosCard);
         return root;
+    }
+
+    private void configurarCampoPerfil(TextField campo) {
+        campo.setPrefHeight(34);
+        campo.setStyle("-fx-background-radius: 6; -fx-border-radius: 6; -fx-border-color: #36516d;"
+                + "-fx-font-size: 12px; -fx-padding: 6 9;");
+    }
+
+    private void agregarFilaPerfil(GridPane grid, int fila, String etiqueta, TextField campo) {
+        Label label = new Label(etiqueta);
+        label.setStyle("-fx-text-fill: #c7d5e5; -fx-font-size: 11px; -fx-font-weight: bold;");
+        grid.add(label, 0, fila);
+        grid.add(campo, 1, fila);
+        GridPane.setHgrow(campo, Priority.ALWAYS);
+    }
+
+    private String inicialesPerfil(String nombre) {
+        if (nombre == null || nombre.isBlank()) return "CU";
+        String[] partes = nombre.trim().split("\\s+");
+        if (partes.length == 1) return partes[0].substring(0, 1).toUpperCase(Locale.ROOT);
+        return (partes[0].substring(0, 1) + partes[partes.length - 1].substring(0, 1)).toUpperCase(Locale.ROOT);
     }
 
     private Node vistaNotificaciones() {
@@ -1426,6 +1880,44 @@ public class ClienteViewController {
         return numero.length() <= 4 ? numero
                 : "•••• •••• " + numero.substring(numero.length() - 4);
     }
+
+    private VBox tarjetaResumenCompra(String titulo, Label valor, String icono) {
+        VBox tarjeta = new VBox(8);
+        tarjeta.setPadding(new Insets(13, 16, 13, 16));
+        tarjeta.setMinHeight(88);
+        tarjeta.setMaxWidth(Double.MAX_VALUE);
+        tarjeta.setStyle("-fx-background-color: linear-gradient(to bottom right, #132c46, #0c1d31);"
+                + "-fx-background-radius: 12; -fx-border-color: #294764; -fx-border-radius: 12;");
+        HBox encabezado = new HBox(8);
+        encabezado.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        Label simbolo = new Label(icono);
+        simbolo.setStyle("-fx-text-fill: #f5c242; -fx-font-size: 16px; -fx-font-weight: bold;");
+        Label etiqueta = new Label(titulo);
+        etiqueta.setStyle("-fx-text-fill: #9fb3c9; -fx-font-size: 9px; -fx-font-weight: bold;");
+        encabezado.getChildren().addAll(simbolo, etiqueta);
+        valor.setStyle("-fx-text-fill: white; -fx-font-size: 19px; -fx-font-weight: bold;");
+        tarjeta.getChildren().addAll(encabezado, valor);
+        HBox.setHgrow(tarjeta, Priority.ALWAYS);
+        tarjeta.setPrefWidth(220);
+        return tarjeta;
+    }
+
+
+    private VBox crearIndicadorPuntos(String titulo, String valor, String icono, String color) {
+        VBox tarjeta = new VBox(7);
+        tarjeta.setPadding(new Insets(14));
+        tarjeta.setMinHeight(83);
+        tarjeta.setStyle("-fx-background-color: #10243a; -fx-background-radius: 12;"
+                + "-fx-border-color: #294760; -fx-border-radius: 12;");
+        Label encabezado = new Label(icono + "  " + titulo);
+        encabezado.setStyle("-fx-text-fill: #a9bfd4; -fx-font-size: 9px; -fx-font-weight: bold;");
+        Label dato = new Label(valor);
+        dato.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 17px; -fx-font-weight: bold;");
+        dato.setWrapText(true);
+        tarjeta.getChildren().addAll(encabezado, dato);
+        HBox.setHgrow(tarjeta, Priority.ALWAYS);
+        tarjeta.setMaxWidth(Double.MAX_VALUE);
+        return tarjeta;
+    }
+
 }
-
-

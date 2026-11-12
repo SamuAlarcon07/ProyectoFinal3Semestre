@@ -585,3 +585,192 @@
     -fx-font-size: 11px;
     -fx-text-alignment: center;
 }
+
+
+/* Panel lateral del cliente: indicadores de puntos y tarjeta virtual */
+.side-metric-card {
+    -fx-spacing: 8px;
+    -fx-padding: 15px;
+    -fx-background-color: linear-gradient(to bottom right, #10243a, #0b1b2e);
+    -fx-border-color: #294765;
+    -fx-border-radius: 15px;
+    -fx-background-radius: 15px;
+}
+.side-metric-icon {
+    -fx-text-fill: #f5c34e;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+.side-card-chip {
+    -fx-text-fill: #f5c34e;
+    -fx-font-size: 8px;
+    -fx-font-weight: bold;
+    -fx-background-color: rgba(245, 195, 78, 0.12);
+    -fx-background-radius: 10px;
+    -fx-padding: 4px 7px;
+}
+.side-metric-value {
+    -fx-text-fill: #f5c34e;
+    -fx-font-size: 27px;
+    -fx-font-weight: bold;
+}
+.side-metric-description {
+    -fx-text-fill: #a9bdd0;
+    -fx-font-size: 9px;
+    -fx-line-spacing: 2px;
+}
+.side-card-separator {
+    -fx-min-height: 1px;
+    -fx-pref-height: 1px;
+    -fx-max-height: 1px;
+    -fx-background-color: #29415a;
+}
+.side-card-number {
+    -fx-text-fill: #dce8f5;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1px;
+}
+.side-card-overline {
+    -fx-text-fill: #91a9c0;
+    -fx-font-size: 8px;
+    -fx-font-weight: bold;
+}
+.side-credit-value {
+    -fx-text-fill: #f5c34e;
+    -fx-font-size: 21px;
+    -fx-font-weight: bold;
+}
+.side-status-dot {
+    -fx-text-fill: #54d6a0;
+    -fx-font-size: 8px;
+}
+.side-card-status {
+    -fx-text-fill: #a9bdd0;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+}
+
+/* Accesos rápidos del inicio: iconografía clara y jerarquía tipográfica. */
+.quick-access-button {
+    -fx-background-color: linear-gradient(to bottom, #172f4b, #0d1d31);
+    -fx-background-radius: 14px;
+    -fx-border-color: #2b4969;
+    -fx-border-radius: 14px;
+    -fx-padding: 13px 10px;
+    -fx-min-height: 86px;
+    -fx-cursor: hand;
+    -fx-content-display: graphic-only;
+    -fx-alignment: center;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 8, 0.08, 0, 3);
+}
+.quick-access-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #1d3c5e, #122944);
+    -fx-border-color: #f4b323;
+    -fx-effect: dropshadow(gaussian, rgba(244,179,35,0.16), 12, 0.12, 0, 3);
+}
+.quick-access-button:pressed { -fx-background-color: #203d5b; }
+.quick-access-icon { -fx-font-size: 25px; -fx-text-fill: #ffc43d; }
+.quick-access-label { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #f3f6fa; }
+
+/* ==========================================================
+   SCROLLBARS GLOBALES - CINEMAUQ
+   Estilo unificado para ScrollPane, listas, tablas y controles.
+   ========================================================== */
+
+/* Base de las barras verticales y horizontales */
+.scroll-bar:vertical,
+.scroll-bar:horizontal {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 2px;
+}
+
+/* Grosor de cada orientación */
+.scroll-bar:vertical {
+    -fx-pref-width: 11px;
+    -fx-min-width: 11px;
+    -fx-max-width: 11px;
+}
+
+.scroll-bar:horizontal {
+    -fx-pref-height: 11px;
+    -fx-min-height: 11px;
+    -fx-max-height: 11px;
+}
+
+/* Canal por donde se desplaza el control */
+.scroll-bar:vertical .track,
+.scroll-bar:horizontal .track {
+    -fx-background-color: #0a192b;
+    -fx-background-radius: 20px;
+    -fx-border-color: #1b344d;
+    -fx-border-radius: 20px;
+    -fx-background-insets: 1px;
+    -fx-border-insets: 1px;
+}
+
+/* Control deslizante dorado */
+.scroll-bar:vertical .thumb,
+.scroll-bar:horizontal .thumb {
+    -fx-background-color: linear-gradient(to bottom, #f8cf59, #d99a1b);
+    -fx-background-radius: 20px;
+    -fx-background-insets: 1px;
+    -fx-border-color: rgba(255, 224, 138, 0.45);
+    -fx-border-radius: 20px;
+    -fx-border-insets: 1px;
+}
+
+/* Realce al pasar el cursor */
+.scroll-bar:vertical .thumb:hover,
+.scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: linear-gradient(to bottom, #ffe18a, #f0b52e);
+    -fx-effect: dropshadow(gaussian, rgba(244, 179, 35, 0.28), 6, 0.12, 0, 0);
+}
+
+/* Estado mientras se arrastra */
+.scroll-bar:vertical .thumb:pressed,
+.scroll-bar:horizontal .thumb:pressed {
+    -fx-background-color: #ffd45c;
+    -fx-border-color: #fff0bd;
+}
+
+/* Oculta los botones de flecha para un acabado limpio */
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-padding: 0;
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+    -fx-min-width: 0;
+    -fx-min-height: 0;
+    -fx-opacity: 0;
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-shape: "";
+}
+
+/* Esquina cuando coinciden ambas barras */
+.scroll-pane .corner {
+    -fx-background-color: #071323;
+}
+
+/* Evita fondos claros en las áreas desplazables */
+.scroll-pane,
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+/* Listas y tablas: conserva el tema oscuro en sus barras */
+.list-view .virtual-flow,
+.table-view .virtual-flow,
+.tree-view .virtual-flow {
+    -fx-background-color: transparent;
+}
+
