@@ -7,12 +7,7 @@ import co.edu.uniquindio.proyectofinal.model.principal.ListaEspera;
 import co.edu.uniquindio.proyectofinal.model.principal.SolicitudEspera;
 
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 /** Administra las listas de espera y las ofertas de asientos liberados. */
 public class ListaEsperaService {

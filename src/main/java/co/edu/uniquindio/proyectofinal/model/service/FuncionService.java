@@ -1,27 +1,12 @@
 package co.edu.uniquindio.proyectofinal.model.service;
 
 
-
 import co.edu.uniquindio.proyectofinal.model.enums.EstadoFuncion;
-
 import co.edu.uniquindio.proyectofinal.model.principal.BloqueoSala;
-
 import co.edu.uniquindio.proyectofinal.model.principal.Funcion;
 
-
-
 import java.time.LocalDateTime;
-
-import java.util.ArrayList;
-
-import java.util.LinkedHashMap;
-
-import java.util.List;
-
-import java.util.Map;
-
-import java.util.Optional;
-
+import java.util.*;
 
 
 /** Programa y administra las funciones cinematográficas. */

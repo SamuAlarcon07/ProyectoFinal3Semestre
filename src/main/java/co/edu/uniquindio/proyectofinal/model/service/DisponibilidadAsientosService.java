@@ -2,18 +2,10 @@ package co.edu.uniquindio.proyectofinal.model.service;
 
 import co.edu.uniquindio.proyectofinal.model.enums.EstadoEntrada;
 import co.edu.uniquindio.proyectofinal.model.enums.EstadoReserva;
-import co.edu.uniquindio.proyectofinal.model.principal.Asiento;
-import co.edu.uniquindio.proyectofinal.model.principal.Entrada;
-import co.edu.uniquindio.proyectofinal.model.principal.Funcion;
-import co.edu.uniquindio.proyectofinal.model.principal.ReservaAsiento;
+import co.edu.uniquindio.proyectofinal.model.principal.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /** Consulta y controla la disponibilidad de asientos por función. */
 public class DisponibilidadAsientosService {
@@ -25,6 +17,7 @@ public class DisponibilidadAsientosService {
             Funcion funcion, LocalDateTime instante) {
         Objects.requireNonNull(funcion, "La función es obligatoria.");
         Objects.requireNonNull(instante, "El instante es obligatorio.");
+        expirarReservas(instante);
 
         return funcion.getSala().getAsientos().stream()
                 .filter(Asiento::isActivo)
@@ -37,6 +30,7 @@ public class DisponibilidadAsientosService {
         Objects.requireNonNull(funcion, "La función es obligatoria.");
         Objects.requireNonNull(asiento, "El asiento es obligatorio.");
         Objects.requireNonNull(instante, "El instante es obligatorio.");
+        expirarReservas(instante);
 
         if (!funcion.getSala().contieneAsiento(asiento) || !asiento.isActivo()) {
             return false;
@@ -56,16 +50,196 @@ public class DisponibilidadAsientosService {
         return !tieneReserva && !tieneEntrada;
     }
 
+    /** Registra una reserva individual. */
     public synchronized void registrarReserva(ReservaAsiento reserva,
                                               LocalDateTime instante) {
-        Objects.requireNonNull(reserva, "La reserva es obligatoria.");
-        Objects.requireNonNull(instante, "El instante es obligatorio.");
+        registrarReservasAtomicas(List.of(Objects.requireNonNull(reserva)), instante);
+    }
 
-        if (!estaDisponible(reserva.getFuncion(), reserva.getAsiento(), instante)) {
-            throw new IllegalStateException(
-                    "El asiento ya no está disponible para esta función.");
+    /**
+     * Registra todas las reservas de una selección de asientos como una sola
+     * operación. Si un asiento no está disponible, no se registra ninguno.
+     */
+    public synchronized void registrarReservasAtomicas(
+            Collection<ReservaAsiento> nuevasReservas,
+            LocalDateTime instante) {
+        Objects.requireNonNull(nuevasReservas,
+                "La colección de reservas es obligatoria.");
+        Objects.requireNonNull(instante, "El instante es obligatorio.");
+        expirarReservas(instante);
+
+        List<ReservaAsiento> copia = List.copyOf(nuevasReservas);
+        if (copia.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Debes seleccionar al menos un asiento.");
         }
-        reservas.add(reserva);
+
+        Set<String> codigos = new HashSet<>();
+        Set<String> asientosDelGrupo = new HashSet<>();
+
+        for (ReservaAsiento reserva : copia) {
+            Objects.requireNonNull(reserva, "No se permiten reservas nulas.");
+
+            if (reserva.getEstado() != EstadoReserva.ACTIVA
+                    || !reserva.estaVigente(instante)) {
+                throw new IllegalStateException(
+                        "La reserva nueva no está vigente.");
+            }
+
+            if (!codigos.add(reserva.getCodigo())
+                    || reservas.stream().anyMatch(actual ->
+                    actual.getCodigo().equals(reserva.getCodigo()))) {
+                throw new IllegalArgumentException(
+                        "Ya existe una reserva con ese código.");
+            }
+
+            String identificador = claveAsiento(
+                    reserva.getFuncion(), reserva.getAsiento());
+            if (!asientosDelGrupo.add(identificador)) {
+                throw new IllegalArgumentException(
+                        "La selección contiene el mismo asiento más de una vez.");
+            }
+
+            if (!reserva.getFuncion().puedeVenderEntradas(instante)) {
+                throw new IllegalStateException(
+                        "La función ya no está disponible para la venta.");
+            }
+
+            if (!estaDisponible(reserva.getFuncion(), reserva.getAsiento(), instante)) {
+                throw new IllegalStateException(
+                        "El asiento " + reserva.getAsiento().obtenerIdentificador()
+                                + " ya no está disponible.");
+            }
+        }
+
+        reservas.addAll(copia);
+    }
+
+    /** Comprueba que todas las reservas siguen activas y pertenecen al cliente. */
+    public synchronized void validarReservasActivas(
+            Collection<ReservaAsiento> reservasAValidar,
+            Cliente cliente,
+            LocalDateTime instante) {
+        Objects.requireNonNull(reservasAValidar,
+                "La colección de reservas es obligatoria.");
+        Objects.requireNonNull(cliente, "El cliente es obligatorio.");
+        Objects.requireNonNull(instante, "El instante es obligatorio.");
+        expirarReservas(instante);
+
+        List<ReservaAsiento> copia = List.copyOf(reservasAValidar);
+        if (copia.isEmpty()) {
+            throw new IllegalArgumentException("No hay reservas para validar.");
+        }
+
+        Set<String> codigos = new HashSet<>();
+        for (ReservaAsiento reserva : copia) {
+            Objects.requireNonNull(reserva, "No se permiten reservas nulas.");
+
+            if (!codigos.add(reserva.getCodigo())) {
+                throw new IllegalArgumentException(
+                        "La reserva contiene elementos duplicados.");
+            }
+            boolean registrada = reservas.stream().anyMatch(actual -> actual == reserva);
+            if (!registrada) {
+                throw new IllegalStateException(
+                        "Una de las reservas ya no está registrada.");
+            }
+            if (!reserva.getCliente().getId().equals(cliente.getId())) {
+                throw new SecurityException(
+                        "La reserva no pertenece al cliente autenticado.");
+            }
+            if (reserva.getEstado() != EstadoReserva.ACTIVA
+                    || !reserva.estaVigente(instante)) {
+                throw new IllegalStateException(
+                        "La reserva del asiento "
+                                + reserva.getAsiento().obtenerIdentificador()
+                                + " expiró o dejó de estar activa.");
+            }
+        }
+    }
+
+    /** Cancela un grupo completo de reservas activas. */
+    public synchronized void cancelarReservasAtomicas(
+            Collection<ReservaAsiento> reservasACancelar,
+            Cliente cliente,
+            LocalDateTime instante) {
+        validarReservasActivas(reservasACancelar, cliente, instante);
+        for (ReservaAsiento reserva : reservasACancelar) {
+            reserva.cancelar();
+        }
+    }
+
+    /**
+     * Convierte las reservas activas en entradas emitidas después de que
+     * CompraService confirma el pago. La conversión es atómica para el inventario
+     * de asientos: primero valida todo y luego sustituye reservas por entradas.
+     */
+    public synchronized void convertirReservasEnEntradas(
+            Collection<ReservaAsiento> reservasAConvertir,
+            Collection<Entrada> nuevasEntradas,
+            Cliente cliente,
+            LocalDateTime instante) {
+        Objects.requireNonNull(nuevasEntradas,
+                "La colección de entradas es obligatoria.");
+        validarReservasActivas(reservasAConvertir, cliente, instante);
+
+        List<ReservaAsiento> reservasCopia = List.copyOf(reservasAConvertir);
+        List<Entrada> entradasCopia = List.copyOf(nuevasEntradas);
+
+        if (reservasCopia.size() != entradasCopia.size()) {
+            throw new IllegalArgumentException(
+                    "Debe existir una entrada por cada asiento reservado.");
+        }
+
+        Map<String, ReservaAsiento> reservasPorAsiento = new HashMap<>();
+        for (ReservaAsiento reserva : reservasCopia) {
+            String clave = claveAsiento(reserva.getFuncion(), reserva.getAsiento());
+            if (reservasPorAsiento.putIfAbsent(clave, reserva) != null) {
+                throw new IllegalArgumentException(
+                        "Hay reservas duplicadas para el mismo asiento.");
+            }
+        }
+
+        Set<String> codigosEntrada = new HashSet<>();
+        for (Entrada entrada : entradasCopia) {
+            Objects.requireNonNull(entrada, "No se permiten entradas nulas.");
+
+            if (entrada.getEstado() != EstadoEntrada.EMITIDA) {
+                throw new IllegalStateException(
+                        "Solo se pueden registrar entradas emitidas.");
+            }
+            if (!codigosEntrada.add(entrada.getCodigo())
+                    || entradas.stream().anyMatch(actual ->
+                    actual.getCodigo().equals(entrada.getCodigo()))) {
+                throw new IllegalArgumentException(
+                        "El código de entrada ya está registrado.");
+            }
+            if (!entrada.getFuncion().puedeVenderEntradas(instante)) {
+                throw new IllegalStateException(
+                        "La función ya no está disponible para la venta.");
+            }
+
+            String clave = claveAsiento(entrada.getFuncion(), entrada.getAsiento());
+            ReservaAsiento reserva = reservasPorAsiento.remove(clave);
+            if (reserva == null
+                    || reserva.getFuncion() != entrada.getFuncion()
+                    || reserva.getAsiento() != entrada.getAsiento()) {
+                throw new IllegalArgumentException(
+                        "La entrada no corresponde a uno de los asientos reservados.");
+            }
+        }
+
+        if (!reservasPorAsiento.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Faltan entradas para algunos asientos reservados.");
+        }
+
+        // Todas las validaciones terminaron. Se ejecutan las transiciones.
+        for (ReservaAsiento reserva : reservasCopia) {
+            reserva.confirmar(instante);
+        }
+        reservas.removeAll(reservasCopia);
+        entradas.addAll(entradasCopia);
     }
 
     /** Compatibilidad con el registro individual anterior. */
@@ -73,30 +247,25 @@ public class DisponibilidadAsientosService {
         registrarEntradas(List.of(Objects.requireNonNull(entrada)), LocalDateTime.now());
     }
 
-    /**
-     * Valida un grupo completo de entradas y lo registra de forma conjunta.
-     * Si una entrada falla, ninguna de las entradas del grupo se agrega.
-     */
+    /** Valida un grupo completo de entradas y lo registra de forma conjunta. */
     public synchronized void registrarEntradas(Collection<Entrada> nuevasEntradas,
                                                LocalDateTime instante) {
-        Objects.requireNonNull(nuevasEntradas, "La colección de entradas es obligatoria.");
+        Objects.requireNonNull(nuevasEntradas,
+                "La colección de entradas es obligatoria.");
         Objects.requireNonNull(instante, "El instante es obligatorio.");
-
         List<Entrada> copia = List.copyOf(nuevasEntradas);
         Set<String> codigos = new HashSet<>();
         Set<String> asientosDelGrupo = new HashSet<>();
 
         for (Entrada entrada : copia) {
             Objects.requireNonNull(entrada, "No se permiten entradas nulas.");
-
             if (!codigos.add(entrada.getCodigo())) {
                 throw new IllegalArgumentException(
                         "El grupo contiene códigos de entrada duplicados.");
             }
             if (entradas.stream().anyMatch(actual ->
                     actual.getCodigo().equals(entrada.getCodigo()))) {
-                throw new IllegalArgumentException(
-                        "La entrada ya está registrada.");
+                throw new IllegalArgumentException("La entrada ya está registrada.");
             }
             if (entrada.getEstado() != EstadoEntrada.EMITIDA) {
                 throw new IllegalStateException(
@@ -106,8 +275,8 @@ public class DisponibilidadAsientosService {
                 throw new IllegalStateException(
                         "La función no está disponible para la venta.");
             }
-
-            String identificadorAsiento = identificadorAsiento(entrada);
+            String identificadorAsiento = claveAsiento(
+                    entrada.getFuncion(), entrada.getAsiento());
             if (!asientosDelGrupo.add(identificadorAsiento)) {
                 throw new IllegalArgumentException(
                         "El grupo intenta registrar dos entradas para el mismo asiento.");
@@ -117,15 +286,12 @@ public class DisponibilidadAsientosService {
                         "El asiento ya no está disponible para esta función.");
             }
         }
-
         entradas.addAll(copia);
     }
 
-    /**
-     * Revierte únicamente las instancias que acaba de registrar una operación.
-     * Se usa como compensación si el pago de una compra no llega a completarse.
-     */
-    public synchronized void eliminarEntradasRegistradas(Collection<Entrada> entradasAEliminar) {
+    /** Elimina solo las instancias de entrada indicadas, como compensación. */
+    public synchronized void eliminarEntradasRegistradas(
+            Collection<Entrada> entradasAEliminar) {
         Objects.requireNonNull(entradasAEliminar,
                 "La colección de entradas es obligatoria.");
         Set<Entrada> referencias = java.util.Collections.newSetFromMap(
@@ -134,6 +300,7 @@ public class DisponibilidadAsientosService {
         entradas.removeIf(referencias::contains);
     }
 
+    /** Marca como expiradas las reservas cuyo tiempo terminó. */
     public synchronized int expirarReservas(LocalDateTime instante) {
         Objects.requireNonNull(instante, "El instante es obligatorio.");
         int expiradas = 0;
@@ -147,10 +314,10 @@ public class DisponibilidadAsientosService {
         return expiradas;
     }
 
-    private String identificadorAsiento(Entrada entrada) {
-        return entrada.getFuncion().getCodigo()
-                + "|" + entrada.getAsiento().getFila().toUpperCase()
-                + "|" + entrada.getAsiento().getNumero();
+    private String claveAsiento(Funcion funcion, Asiento asiento) {
+        return funcion.getCodigo() + "|"
+                + asiento.getFila().toUpperCase(java.util.Locale.ROOT)
+                + "|" + asiento.getNumero();
     }
 
     private boolean mismoAsiento(Asiento primero, Asiento segundo) {

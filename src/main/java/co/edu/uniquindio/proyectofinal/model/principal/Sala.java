@@ -1,9 +1,10 @@
 package co.edu.uniquindio.proyectofinal.model.principal;
 
+import co.edu.uniquindio.proyectofinal.model.enums.FormatoProyeccion;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import co.edu.uniquindio.proyectofinal.model.enums.FormatoProyeccion;
 
 /** Representa una sala física perteneciente a CinemaUQ. */
 public class Sala {

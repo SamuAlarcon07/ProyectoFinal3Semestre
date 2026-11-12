@@ -2,14 +2,9 @@ package co.edu.uniquindio.proyectofinal.model.principal;
 
 import co.edu.uniquindio.proyectofinal.model.enums.EstadoProducto;
 import co.edu.uniquindio.proyectofinal.model.interfaces.ElementoConfiteria;
+
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /** Representa un combo compuesto por uno o varios elementos de confitería. */
 public class Combo implements ElementoConfiteria {

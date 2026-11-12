@@ -3,25 +3,14 @@ package co.edu.uniquindio.proyectofinal.model.patrones.estructurales.facade;
 
 import co.edu.uniquindio.proyectofinal.model.enums.EstadoEntrada;
 import co.edu.uniquindio.proyectofinal.model.interfaces.ElementoVendible;
-import co.edu.uniquindio.proyectofinal.model.principal.Asiento;
-import co.edu.uniquindio.proyectofinal.model.principal.Compra;
-import co.edu.uniquindio.proyectofinal.model.principal.DetalleCompra;
-import co.edu.uniquindio.proyectofinal.model.principal.Entrada;
-import co.edu.uniquindio.proyectofinal.model.principal.Funcion;
-import co.edu.uniquindio.proyectofinal.model.principal.TarjetaVirtual;
 import co.edu.uniquindio.proyectofinal.model.patrones.estructurales.decorator.ElementoVendibleDecorador;
+import co.edu.uniquindio.proyectofinal.model.principal.*;
 import co.edu.uniquindio.proyectofinal.model.service.CompraService;
 import co.edu.uniquindio.proyectofinal.model.service.DisponibilidadAsientosService;
+import co.edu.uniquindio.proyectofinal.model.service.ReservaService;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Fachada que simplifica la consulta de asientos
@@ -31,20 +20,30 @@ public class CheckoutFacade {
 
     private final DisponibilidadAsientosService disponibilidadService;
     private final CompraService compraService;
+    private final ReservaService reservaService;
 
     public CheckoutFacade(
             DisponibilidadAsientosService disponibilidadService,
             CompraService compraService
     ) {
+        this(disponibilidadService, compraService, null);
+    }
+
+    /** Constructor usado cuando el proceso de compra parte de una reserva temporal. */
+    public CheckoutFacade(
+            DisponibilidadAsientosService disponibilidadService,
+            CompraService compraService,
+            ReservaService reservaService
+    ) {
         this.disponibilidadService = Objects.requireNonNull(
                 disponibilidadService,
                 "El servicio de disponibilidad es obligatorio."
         );
-
         this.compraService = Objects.requireNonNull(
                 compraService,
                 "El servicio de compras es obligatorio."
         );
+        this.reservaService = reservaService;
     }
 
     /**
@@ -136,6 +135,144 @@ public class CheckoutFacade {
      * Comprueba que las entradas recibidas correspondan
      * exactamente con las entradas de los detalles de compra.
      */
+    /**
+     * Finaliza una compra cuyos asientos ya están retenidos mediante reservas temporales.
+     * Si el pago falla, las reservas permanecen activas hasta que se cancelen o expiren.
+     */
+    public synchronized Compra finalizarCompraConReserva(
+            Compra compra,
+            TarjetaVirtual tarjeta,
+            Collection<Entrada> entradas,
+            Collection<ReservaAsiento> reservas,
+            Cliente cliente,
+            LocalDateTime instante
+    ) {
+        Objects.requireNonNull(compra, "La compra es obligatoria.");
+        Objects.requireNonNull(tarjeta, "La tarjeta es obligatoria.");
+        Objects.requireNonNull(entradas, "Las entradas son obligatorias.");
+        Objects.requireNonNull(reservas, "Las reservas son obligatorias.");
+        Objects.requireNonNull(cliente, "El cliente es obligatorio.");
+        Objects.requireNonNull(instante, "El instante es obligatorio.");
+
+        if (reservaService == null) {
+            throw new IllegalStateException(
+                    "CheckoutFacade no fue configurada con ReservaService.");
+        }
+        if (!"PENDIENTE".equals(compra.consultarNombreEstado())) {
+            throw new IllegalStateException(
+                    "Solo se puede finalizar una compra pendiente.");
+        }
+        if (!tarjeta.getTitular().getId().equals(cliente.getId())) {
+            throw new SecurityException(
+                    "La tarjeta no pertenece al cliente autenticado.");
+        }
+
+        // El orden de bloqueo siempre es ReservaService -> DisponibilidadAsientosService.
+        // Así se evita que otra reserva cambie la ocupación entre la validación y la conversión.
+        synchronized (reservaService) {
+            synchronized (disponibilidadService) {
+                // El controlador entrega un instante actual justo antes de pagar;
+                // se conserva para facilitar pruebas reproducibles.
+                LocalDateTime momentoConfirmacion = instante;
+
+                reservaService.validarReservasActivas(
+                        reservas, cliente, momentoConfirmacion);
+
+                List<Entrada> entradasValidadas = validarEntradasDeReserva(
+                        compra, entradas, reservas, momentoConfirmacion);
+
+                // El pago se procesa solo después de verificar la correspondencia
+                // exacta entre compra, entradas y reservas.
+                Compra confirmada = compraService.confirmarCompra(compra, tarjeta);
+
+                // Se mantiene el bloqueo de disponibilidad hasta sustituir las
+                // reservas por las entradas emitidas que ocuparán esos asientos.
+                reservaService.convertirReservasEnEntradas(
+                        reservas, entradasValidadas, cliente, momentoConfirmacion);
+
+                return confirmada;
+            }
+        }
+    }
+
+    private List<Entrada> validarEntradasDeReserva(
+            Compra compra,
+            Collection<Entrada> entradasRecibidas,
+            Collection<ReservaAsiento> reservas,
+            LocalDateTime instante
+    ) {
+        List<Entrada> entradasCopia = List.copyOf(entradasRecibidas);
+        List<ReservaAsiento> reservasCopia = List.copyOf(reservas);
+        if (entradasCopia.isEmpty() || entradasCopia.size() != reservasCopia.size()) {
+            throw new IllegalArgumentException(
+                    "Debe existir una entrada por cada asiento reservado.");
+        }
+
+        Map<String, Entrada> entradasEsperadas = new HashMap<>();
+        for (DetalleCompra detalle : compra.getDetalles()) {
+            ElementoVendible elemento = desenvolver(detalle.getElemento());
+            if (elemento instanceof Entrada entrada) {
+                if (entradasEsperadas.putIfAbsent(entrada.getCodigo(), entrada) != null) {
+                    throw new IllegalArgumentException(
+                            "La compra contiene códigos de entrada duplicados.");
+                }
+            }
+        }
+
+        Map<String, ReservaAsiento> reservasPorAsiento = new HashMap<>();
+        for (ReservaAsiento reserva : reservasCopia) {
+            String clave = claveAsiento(reserva.getFuncion(), reserva.getAsiento());
+            if (reservasPorAsiento.putIfAbsent(clave, reserva) != null) {
+                throw new IllegalArgumentException(
+                        "Hay reservas duplicadas para el mismo asiento.");
+            }
+        }
+
+        Set<String> codigosRecibidos = new HashSet<>();
+        List<Entrada> validadas = new ArrayList<>();
+        for (Entrada entrada : entradasCopia) {
+            Objects.requireNonNull(entrada, "No se permiten entradas nulas.");
+            if (!codigosRecibidos.add(entrada.getCodigo())) {
+                throw new IllegalArgumentException(
+                        "La compra contiene entradas repetidas.");
+            }
+            Entrada esperada = entradasEsperadas.remove(entrada.getCodigo());
+            if (esperada != entrada) {
+                throw new IllegalArgumentException(
+                        "Las entradas no coinciden con los detalles de la compra.");
+            }
+            if (entrada.getEstado() != EstadoEntrada.EMITIDA) {
+                throw new IllegalStateException(
+                        "Solo se pueden comprar entradas emitidas.");
+            }
+            if (!entrada.getFuncion().puedeVenderEntradas(instante)) {
+                throw new IllegalStateException(
+                        "La función ya no está disponible para la venta.");
+            }
+            String clave = claveAsiento(entrada.getFuncion(), entrada.getAsiento());
+            ReservaAsiento reserva = reservasPorAsiento.remove(clave);
+            if (reserva == null
+                    || reserva.getFuncion() != entrada.getFuncion()
+                    || reserva.getAsiento() != entrada.getAsiento()) {
+                throw new IllegalArgumentException(
+                        "Una entrada no corresponde a los asientos reservados.");
+            }
+            validadas.add(entrada);
+        }
+
+        if (!entradasEsperadas.isEmpty() || !reservasPorAsiento.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "La compra debe contener exactamente las entradas reservadas.");
+        }
+        return List.copyOf(validadas);
+    }
+
+    private String claveAsiento(Funcion funcion, Asiento asiento) {
+        return funcion.getCodigo() + "|"
+                + asiento.getFila().toUpperCase(java.util.Locale.ROOT)
+                + "|" + asiento.getNumero();
+    }
+
     private List<Entrada> validarCorrespondenciaYDisponibilidad(
             Compra compra,
             Collection<Entrada> entradasRecibidas,

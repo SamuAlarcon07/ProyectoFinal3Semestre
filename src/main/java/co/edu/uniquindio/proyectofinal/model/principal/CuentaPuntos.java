@@ -1,13 +1,9 @@
 package co.edu.uniquindio.proyectofinal.model.principal;
 
 import co.edu.uniquindio.proyectofinal.model.enums.TipoMovimientoPuntos;
+
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 /** Administra los lotes y movimientos de puntos de un cliente. */
 public class CuentaPuntos {

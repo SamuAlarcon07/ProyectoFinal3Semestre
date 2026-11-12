@@ -5,13 +5,7 @@ import co.edu.uniquindio.proyectofinal.model.principal.Compra;
 import co.edu.uniquindio.proyectofinal.model.principal.TarjetaVirtual;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Coordina la confirmación de compras, pagos, inventario, puntos y eventos.

@@ -1,29 +1,12 @@
 package co.edu.uniquindio.proyectofinal.model.service;
 
 
-
 import co.edu.uniquindio.proyectofinal.model.principal.Administrador;
-
 import co.edu.uniquindio.proyectofinal.model.principal.Cliente;
-
 import co.edu.uniquindio.proyectofinal.model.principal.Usuario;
-
 import co.edu.uniquindio.proyectofinal.model.util.PasswordHasher;
 
-
-
-import java.util.Collection;
-
-import java.util.LinkedHashMap;
-
-import java.util.Locale;
-
-import java.util.Map;
-
-import java.util.Objects;
-
-import java.util.Optional;
-
+import java.util.*;
 
 
 /** Gestiona el registro de usuarios y la autenticación de CinemaUQ. */

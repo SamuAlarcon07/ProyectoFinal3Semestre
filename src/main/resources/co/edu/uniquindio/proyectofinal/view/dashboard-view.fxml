@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21.0.6"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="co.edu.uniquindio.proyectofinal.viewcontroller.DashboardViewController"
+            styleClass="dashboard-shell">
+
+    <left>
+        <VBox prefWidth="250"
+              minWidth="230"
+              maxWidth="250"
+              styleClass="sidebar"
+              spacing="18">
+
+            <padding>
+                <Insets top="24" right="15" bottom="18" left="15"/>
+            </padding>
+
+            <HBox alignment="CENTER_LEFT"
+                  spacing="10"
+                  styleClass="brand-row">
+
+                <Label text="🎬" styleClass="brand-icon"/>
+                <Label text="CinemaUQ" styleClass="brand-name"/>
+
+            </HBox>
+
+            <Separator styleClass="sidebar-separator"/>
+
+            <VBox fx:id="menuContainer"
+                  spacing="7"
+                  styleClass="nav-list"/>
+
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <VBox spacing="7" styleClass="sidebar-footer">
+
+                <Label text="UNIVERSIDAD DEL QUINDÍO"
+                       styleClass="sidebar-caption"/>
+
+                <Label text="Cinema experience"
+                       styleClass="sidebar-caption-muted"/>
+
+                <Button text="↪   Cerrar sesión"
+                        onAction="#cerrarSesion"
+                        maxWidth="Infinity"
+                        styleClass="logout-button"/>
+
+            </VBox>
+        </VBox>
+    </left>
+
+    <center>
+        <BorderPane styleClass="dashboard-workspace">
+
+            <top>
+                <HBox alignment="CENTER_LEFT"
+                      spacing="16"
+                      styleClass="dashboard-topbar">
+
+                    <TextField fx:id="searchField"
+                               promptText="Buscar películas por título, género o sinopsis..."
+                               styleClass="dashboard-search"
+                               HBox.hgrow="ALWAYS"/>
+
+                    <Button text="🔔"
+                            onAction="#mostrarNotificaciones"
+                            styleClass="notification-button"/>
+
+                </HBox>
+            </top>
+
+            <center>
+                <HBox spacing="14" styleClass="dashboard-body">
+
+                    <ScrollPane fx:id="contentScroll"
+                                fitToWidth="true"
+                                hbarPolicy="NEVER"
+                                styleClass="dashboard-content-scroll"
+                                HBox.hgrow="ALWAYS">
+
+                        <content>
+                            <StackPane fx:id="contentHost"
+                                       styleClass="dashboard-content-host"/>
+                        </content>
+
+                    </ScrollPane>
+
+                    <ScrollPane fitToWidth="true"
+                                hbarPolicy="NEVER"
+                                vbarPolicy="AS_NEEDED"
+                                prefWidth="310"
+                                minWidth="285"
+                                maxWidth="330"
+                                styleClass="dashboard-right-scroll">
+
+                        <content>
+                            <VBox fx:id="rightPanel"
+                                  spacing="13"
+                                  styleClass="dashboard-right-panel">
+
+                                <padding>
+                                    <Insets top="3"
+                                            right="3"
+                                            bottom="16"
+                                            left="3"/>
+                                </padding>
+
+                            </VBox>
+                        </content>
+
+                    </ScrollPane>
+
+                </HBox>
+            </center>
+
+        </BorderPane>
+    </center>
+
+</BorderPane>

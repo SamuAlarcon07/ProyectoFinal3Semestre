@@ -4,7 +4,6 @@ import co.edu.uniquindio.proyectofinal.model.enums.EstadoProducto;
 import co.edu.uniquindio.proyectofinal.model.interfaces.ElementoConfiteria;
 import java.math.BigDecimal;
 import java.util.Map;
-import java.util.Objects;
 
 /** Representa un producto individual del catálogo de confitería. */
 public class Producto implements ElementoConfiteria {

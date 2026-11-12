@@ -36,6 +36,23 @@ public class TarjetaVirtual {
         registrarMovimiento(TipoMovimientoTarjeta.RECARGA, valor, "Recarga autorizada", administrador.getId());
     }
 
+    /**
+     * Recarga de demostración solicitada desde la cuenta del titular.
+     * En una integración real, este método debe ejecutarse solo después
+     * de recibir confirmación de una pasarela de pagos.
+     */
+    public void recargarDesdeCliente(BigDecimal valor, Cliente solicitante) {
+        verificarMonto(valor);
+        if (solicitante == null || !titular.getId().equals(solicitante.getId())) {
+            throw new SecurityException("Solo el titular puede recargar esta tarjeta.");
+        }
+        if (estado != EstadoTarjeta.ACTIVA) {
+            throw new IllegalStateException("No se puede recargar una tarjeta bloqueada.");
+        }
+        registrarMovimiento(TipoMovimientoTarjeta.RECARGA, valor,
+                "Recarga de demostración desde la cuenta", solicitante.getId());
+    }
+
     /** Descuenta el importe de una compra si la tarjeta está activa y tiene saldo suficiente. */
     public void pagar(BigDecimal valor, String codigoCompra) {
         verificarMonto(valor);

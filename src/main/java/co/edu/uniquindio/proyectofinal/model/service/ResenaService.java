@@ -4,21 +4,9 @@ import co.edu.uniquindio.proyectofinal.model.enums.EstadoEntrada;
 import co.edu.uniquindio.proyectofinal.model.enums.EstadoFuncion;
 import co.edu.uniquindio.proyectofinal.model.interfaces.ElementoVendible;
 import co.edu.uniquindio.proyectofinal.model.patrones.estructurales.decorator.ElementoVendibleDecorador;
-import co.edu.uniquindio.proyectofinal.model.principal.Cliente;
-import co.edu.uniquindio.proyectofinal.model.principal.Compra;
-import co.edu.uniquindio.proyectofinal.model.principal.Entrada;
-import co.edu.uniquindio.proyectofinal.model.principal.Pelicula;
-import co.edu.uniquindio.proyectofinal.model.principal.ResenaPelicula;
+import co.edu.uniquindio.proyectofinal.model.principal.*;
 
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 /** Valida y administra las reseñas de películas realizadas por clientes. */
 public class ResenaService {

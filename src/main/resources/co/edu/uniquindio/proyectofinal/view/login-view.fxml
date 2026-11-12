@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21.0.6"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="co.edu.uniquindio.proyectofinal.viewcontroller.LoginViewController"
+            styleClass="app-background">
+
+    <left>
+        <VBox alignment="CENTER_LEFT"
+              spacing="22.0"
+              styleClass="brand-panel">
+            <padding>
+                <Insets top="52" right="48" bottom="52" left="58"/>
+            </padding>
+
+            <VBox spacing="2">
+                <Label text="CINEMA" styleClass="brand-title"/>
+                <Label text="UQ" styleClass="brand-mark"/>
+            </VBox>
+
+            <VBox spacing="10">
+                <Label text="El cine se vive" styleClass="hero-title"/>
+                <Label text="en cada historia." styleClass="hero-title-accent"/>
+                <Label text="Encuentra tu próxima película, elige tus asientos y disfruta la experiencia CinemaUQ."
+                       wrapText="true"
+                       styleClass="hero-description"
+                       maxWidth="390"/>
+            </VBox>
+
+            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="hero-pill">
+                <Label text="✦" styleClass="hero-star"/>
+                <Label text="Tu próxima historia comienza aquí"
+                       styleClass="hero-pill-text"/>
+            </HBox>
+
+            <Label text="UNIVERSIDAD DEL QUINDÍO · CINEMA EXPERIENCE"
+                   styleClass="brand-footer"/>
+        </VBox>
+    </left>
+
+    <center>
+        <VBox alignment="CENTER" styleClass="form-area">
+            <VBox spacing="18" maxWidth="390" styleClass="form-card">
+
+                <VBox spacing="7">
+                    <Label text="Bienvenido de nuevo" styleClass="form-title"/>
+                    <Label text="Ingresa a tu cuenta para continuar."
+                           styleClass="form-subtitle"/>
+                </VBox>
+
+                <VBox spacing="7">
+                    <Label text="Correo electrónico" styleClass="field-label"/>
+                    <TextField fx:id="correoField"
+                               promptText="nombre@correo.com"
+                               styleClass="input-field"/>
+                </VBox>
+
+                <VBox spacing="7">
+                    <Label text="Contraseña" styleClass="field-label"/>
+                    <PasswordField fx:id="contrasenaField"
+                                   promptText="Ingresa tu contraseña"
+                                   styleClass="input-field"
+                                   onAction="#iniciarSesion"/>
+                </VBox>
+
+                <Label fx:id="mensajeLabel"
+                       text=" "
+                       wrapText="true"
+                       minHeight="30"
+                       styleClass="message-label"/>
+
+                <Button text="Iniciar sesión"
+                        onAction="#iniciarSesion"
+                        maxWidth="Infinity"
+                        styleClass="button-primary"/>
+
+                <HBox alignment="CENTER" spacing="5">
+                    <Label text="¿Todavía no tienes una cuenta?"
+                           styleClass="helper-text"/>
+                    <Button text="Regístrate"
+                            onAction="#abrirRegistro"
+                            styleClass="button-link"/>
+                </HBox>
+
+            </VBox>
+        </VBox>
+    </center>
+</BorderPane>
