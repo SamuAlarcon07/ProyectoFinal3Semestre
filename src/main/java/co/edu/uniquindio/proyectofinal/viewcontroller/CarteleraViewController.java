@@ -20,7 +20,10 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.paint.Color;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
@@ -33,7 +36,11 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.Tooltip;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -44,8 +51,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.paint.Color;
 import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 
 import java.text.NumberFormat;
@@ -734,13 +741,15 @@ public class CarteleraViewController {
                     "La lista de espera está disponible para clientes autenticados.");
             return;
         }
-        TextInputDialog cantidad = new TextInputDialog("1");
-        cantidad.setTitle("Lista de espera");
-        cantidad.setHeaderText(funcion.getPelicula().getTitulo()
-                + " · " + FORMATO_FUNCION.format(funcion.getFechaHora()));
-        cantidad.setContentText("¿Cuántos asientos necesitas?");
-        if (ventanaPropietaria != null) cantidad.initOwner(ventanaPropietaria);
-        cantidad.showAndWait().ifPresent(valor -> {
+        Optional<String> cantidad = solicitarTextoCinemaUQ(
+                "Lista de espera",
+                funcion.getPelicula().getTitulo()
+                        + " · " + FORMATO_FUNCION.format(funcion.getFechaHora()),
+                "¿Cuántos asientos necesitas?",
+                "1",
+                "Cantidad de asientos"
+        );
+        cantidad.ifPresent(valor -> {
             try {
                 int unidades = Integer.parseInt(valor.trim());
                 operaciones.solicitarEspera(funcion, cliente, unidades);
@@ -755,195 +764,534 @@ public class CarteleraViewController {
     }
 
     private void mostrarSelectorAsientos(Funcion funcion) {
-        Dialog<List<Asiento>> dialogo = new Dialog<>();
-        prepararDialogo(dialogo, "Seleccionar asientos",
-                funcion.getPelicula().getTitulo() + " · "
-                        + FORMATO_FUNCION.format(funcion.getFechaHora()),
-                690, 610);
+        /*
+         * Se utiliza un Stage propio en lugar de Dialog/ DialogPane.
+         * El selector tenía un problema persistente con el fondo interno de
+         * DialogPane en algunos equipos Windows: la skin de JavaFX volvía a
+         * pintar el contenido de blanco. Una Scene independiente evita esa capa.
+         */
+        Stage ventanaAsientos = new Stage();
+        ventanaAsientos.setTitle("CinemaUQ · Seleccionar asientos");
+        if (ventanaPropietaria != null) {
+            ventanaAsientos.initOwner(ventanaPropietaria);
+        }
+        ventanaAsientos.initModality(Modality.APPLICATION_MODAL);
+        ventanaAsientos.setResizable(false);
 
-        ButtonType continuar = new ButtonType(
-                "Confirmar selección", ButtonBar.ButtonData.OK_DONE);
-        dialogo.getDialogPane().getButtonTypes().addAll(continuar, ButtonType.CANCEL);
-        Button botonConfirmarInicial = (Button) dialogo.getDialogPane()
-                .lookupButton(continuar);
-        botonConfirmarInicial.setDisable(true);
+        Color colorFondo = Color.web("#09192b");
+        Color colorPanel = Color.web("#0b1b2d");
+
+        Background fondoVentana = new Background(
+                new BackgroundFill(colorFondo, CornerRadii.EMPTY, Insets.EMPTY)
+        );
+        Background fondoPanel = new Background(
+                new BackgroundFill(colorPanel, CornerRadii.EMPTY, Insets.EMPTY)
+        );
 
         Map<String, Asiento> seleccionados = new LinkedHashMap<>();
-        Label resumen = new Label("No has seleccionado asientos.");
-        resumen.getStyleClass().add("seat-selection-summary");
+        List<Asiento> resultadoSeleccion = new ArrayList<>();
 
-        VBox contenido = new VBox(14);
-        contenido.setPadding(new Insets(16));
+        VBox raiz = new VBox(0);
+        raiz.setFillWidth(true);
+        raiz.setBackground(fondoVentana);
+        raiz.setStyle("-fx-background-color: #09192b;");
+
+        // Encabezado de la ventana.
+        VBox encabezado = new VBox(5);
+        encabezado.setPadding(new Insets(17, 22, 14, 22));
+        encabezado.setBackground(fondoVentana);
+        encabezado.setStyle("-fx-background-color: #09192b;");
+
+        Label titulo = new Label("Selecciona tus asientos");
+        titulo.setStyle(
+                "-fx-text-fill: #f5f7fb;"
+                        + "-fx-font-family: 'Segoe UI';"
+                        + "-fx-font-size: 19px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label detalleFuncion = new Label(
+                funcion.getPelicula().getTitulo()
+                        + " · "
+                        + FORMATO_FUNCION.format(funcion.getFechaHora())
+        );
+        detalleFuncion.setStyle(
+                "-fx-text-fill: #aebfd1;"
+                        + "-fx-font-family: 'Segoe UI';"
+                        + "-fx-font-size: 11px;"
+        );
+
+        encabezado.getChildren().addAll(titulo, detalleFuncion);
+
+        // Cuerpo desplazable.
+        VBox contenido = new VBox(15);
+        contenido.setPadding(new Insets(17, 22, 17, 22));
+        contenido.setFillWidth(true);
+        contenido.setBackground(fondoPanel);
+        contenido.setStyle("-fx-background-color: #0b1b2d;");
 
         Label pantalla = new Label("PANTALLA");
-        pantalla.getStyleClass().add("seat-screen");
         pantalla.setMaxWidth(Double.MAX_VALUE);
         pantalla.setAlignment(Pos.CENTER);
+        pantalla.setPadding(new Insets(10, 12, 10, 12));
+        pantalla.setStyle(
+                "-fx-background-color: linear-gradient(to right, #314b61, #d2a83f, #314b61);"
+                        + "-fx-background-radius: 18;"
+                        + "-fx-text-fill: #111c2b;"
+                        + "-fx-font-family: 'Segoe UI';"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-font-size: 11px;"
+        );
 
-        HBox leyenda = new HBox(16,
+        HBox leyenda = new HBox(
+                22,
                 crearLeyendaAsiento("Disponible", "seat-legend-available"),
                 crearLeyendaAsiento("Seleccionado", "seat-legend-selected"),
-                crearLeyendaAsiento("Ocupado", "seat-legend-occupied"));
+                crearLeyendaAsiento("Ocupado", "seat-legend-occupied")
+        );
         leyenda.setAlignment(Pos.CENTER);
+        leyenda.setPadding(new Insets(2, 0, 2, 0));
 
-        GridPane mapa = new GridPane();
-        mapa.setHgap(8);
-        mapa.setVgap(8);
-        mapa.setAlignment(Pos.CENTER);
-        mapa.getStyleClass().add("seat-map");
+        List<Asiento> asientosFuncion =
+                carteleraController.consultarAsientos(funcion);
 
         Map<String, List<Asiento>> porFila =
                 new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        for (Asiento asiento : carteleraController.consultarAsientos(funcion)) {
-            porFila.computeIfAbsent(asiento.getFila(), clave -> new ArrayList<>())
-                    .add(asiento);
+
+        for (Asiento asiento : asientosFuncion) {
+            porFila.computeIfAbsent(
+                    asiento.getFila(), clave -> new ArrayList<>()
+            ).add(asiento);
         }
 
+        Label estadoDisponibilidad = new Label();
+        estadoDisponibilidad.setWrapText(true);
+        estadoDisponibilidad.setStyle(
+                "-fx-text-fill: #aebfd1;"
+                        + "-fx-font-family: 'Segoe UI';"
+                        + "-fx-font-size: 10px;"
+        );
+
+        GridPane mapa = new GridPane();
+        mapa.setHgap(5);
+        mapa.setVgap(9);
+        mapa.setAlignment(Pos.CENTER);
+        mapa.setPadding(new Insets(5, 0, 8, 0));
+        mapa.setBackground(fondoPanel);
+        mapa.setStyle("-fx-background-color: #0b1b2d;");
+
+        final java.util.concurrent.atomic.AtomicReference<Label> resumenAsientosRef =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        final java.util.concurrent.atomic.AtomicReference<Button> botonConfirmarRef =
+                new java.util.concurrent.atomic.AtomicReference<>();
+
+        long cantidadDisponibles = 0;
+        long cantidadOcupados = 0;
         int indiceFila = 0;
+
         for (Map.Entry<String, List<Asiento>> entrada : porFila.entrySet()) {
             Label nombreFila = new Label(entrada.getKey());
-            nombreFila.getStyleClass().add("seat-row-label");
+            nombreFila.setMinWidth(22);
+            nombreFila.setAlignment(Pos.CENTER);
+            nombreFila.setStyle(
+                    "-fx-text-fill: #aebfd1;"
+                            + "-fx-font-family: 'Segoe UI';"
+                            + "-fx-font-size: 11px;"
+                            + "-fx-font-weight: bold;"
+            );
             mapa.add(nombreFila, 0, indiceFila);
 
+            entrada.getValue().sort(
+                    java.util.Comparator.comparingInt(Asiento::getNumero)
+            );
+
             int columna = 1;
-            for (Asiento asiento : entrada.getValue()) {
+
+            for (int indiceAsiento = 0;
+                 indiceAsiento < entrada.getValue().size();
+                 indiceAsiento++) {
+
+                Asiento asiento = entrada.getValue().get(indiceAsiento);
                 String idAsiento = asiento.obtenerIdentificador();
                 boolean disponible =
                         carteleraController.estaDisponible(funcion, asiento);
 
-                // Se usa un Button real para que JavaFX gestione de forma nativa
-                // el clic, el foco y el estado habilitado/deshabilitado.
-                Button botonAsiento = new Button();
-                // La parte visible es un gráfico JavaFX, no un fondo CSS.
-                Rectangle fondoAsiento = new Rectangle(35, 31);
-                fondoAsiento.setArcWidth(10);
-                fondoAsiento.setArcHeight(10);
-                fondoAsiento.setFill(Color.web(disponible ? "#123b51" : "#566272"));
-                fondoAsiento.setStroke(Color.web(disponible ? "#50a994" : "#738092"));
-                fondoAsiento.setStrokeWidth(2);
-                Label textoAsiento = new Label(String.valueOf(asiento.getNumero()));
-                textoAsiento.setTextFill(Color.WHITE);
-                StackPane graficoAsiento = new StackPane(fondoAsiento, textoAsiento);
-                graficoAsiento.setMouseTransparent(true);
-                botonAsiento.setGraphic(graficoAsiento);
-                botonAsiento.setPadding(Insets.EMPTY);
-                botonAsiento.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-padding: 0;");
-                botonAsiento.setMinSize(38, 34);
-                botonAsiento.setPrefSize(38, 34);
-                botonAsiento.setMaxSize(38, 34);
-                botonAsiento.setFocusTraversable(disponible);
-                botonAsiento.setDisable(!disponible);
-                botonAsiento.setAccessibleText("Asiento " + idAsiento
-                        + (disponible ? " disponible" : " ocupado"));
-
-                botonAsiento.getStyleClass().add(disponible
-                        ? "seat-tile" : "seat-tile-occupied");
-
                 if (disponible) {
+                    cantidadDisponibles++;
+                } else {
+                    cantidadOcupados++;
+                }
+
+                Button botonAsiento = new Button(
+                        String.valueOf(asiento.getNumero())
+                );
+                botonAsiento.getStyleClass().add("seat-button");
+                botonAsiento.setMinSize(43, 38);
+                botonAsiento.setPrefSize(43, 38);
+                botonAsiento.setMaxSize(43, 38);
+                botonAsiento.setFocusTraversable(disponible);
+                botonAsiento.setAccessibleText(
+                        "Asiento " + idAsiento
+                                + (disponible ? ", disponible" : ", ocupado")
+                );
+
+                if (!disponible) {
+                    botonAsiento.getStyleClass().add("seat-button-occupied");
+                    botonAsiento.setStyle(estiloAsientoOcupado());
+                    botonAsiento.setDisable(true);
+                    botonAsiento.setCursor(javafx.scene.Cursor.DEFAULT);
+                    botonAsiento.setTooltip(new Tooltip(
+                            "Asiento " + idAsiento + " · Ocupado"
+                    ));
+                } else {
+                    botonAsiento.setStyle(estiloAsientoDisponible());
                     botonAsiento.setCursor(javafx.scene.Cursor.HAND);
+                    botonAsiento.setTooltip(new Tooltip(
+                            "Asiento " + idAsiento
+                                    + " · Disponible. Pulsa para seleccionar."
+                    ));
 
-                    botonAsiento.setOnMouseEntered(event -> {
-                        if (!seleccionados.containsKey(idAsiento)) {
-                            fondoAsiento.setFill(Color.web("#245d58"));
-                            fondoAsiento.setStroke(Color.web("#8bd5ad"));
-                        }
-                    });
-
-                    botonAsiento.setOnMouseExited(event -> {
-                        boolean marcado = seleccionados.containsKey(idAsiento);
-                        fondoAsiento.setFill(Color.web(marcado ? "#f2bd39" : "#123b51"));
-                        fondoAsiento.setStroke(Color.web(marcado ? "#ffe08a" : "#50a994"));
-                        textoAsiento.setTextFill(marcado ? Color.web("#101827") : Color.WHITE);
-                    });
-
-                    botonAsiento.setOnAction(event -> {
-                        boolean seleccionado;
+                    botonAsiento.setOnAction(evento -> {
                         if (seleccionados.containsKey(idAsiento)) {
                             seleccionados.remove(idAsiento);
-                            seleccionado = false;
+                            botonAsiento.getStyleClass()
+                                    .remove("seat-button-selected");
+                            botonAsiento.setStyle(estiloAsientoDisponible());
+                            botonAsiento.setAccessibleText(
+                                    "Asiento " + idAsiento + ", disponible"
+                            );
+                            botonAsiento.setTooltip(new Tooltip(
+                                    "Asiento " + idAsiento
+                                            + " · Disponible. Pulsa para seleccionar."
+                            ));
                         } else {
                             seleccionados.put(idAsiento, asiento);
-                            seleccionado = true;
-                        }
-
-                        // Actualización síncrona: no se difiere con runLater.
-                        fondoAsiento.setFill(Color.web(seleccionado ? "#f2bd39" : "#123b51"));
-                        fondoAsiento.setStroke(Color.web(seleccionado ? "#ffe08a" : "#50a994"));
-                        textoAsiento.setTextFill(seleccionado ? Color.web("#101827") : Color.WHITE);
-                        botonAsiento.setAccessibleText("Asiento " + idAsiento
-                                + (seleccionado ? " seleccionado" : " disponible"));
-
-                        if (seleccionado) {
-                            botonAsiento.getStyleClass().remove("seat-tile");
                             if (!botonAsiento.getStyleClass()
-                                    .contains("seat-tile-selected")) {
-                                botonAsiento.getStyleClass().add("seat-tile-selected");
+                                    .contains("seat-button-selected")) {
+                                botonAsiento.getStyleClass()
+                                        .add("seat-button-selected");
                             }
-                        } else {
-                            botonAsiento.getStyleClass().remove("seat-tile-selected");
-                            if (!botonAsiento.getStyleClass().contains("seat-tile")) {
-                                botonAsiento.getStyleClass().add("seat-tile");
-                            }
+                            botonAsiento.setStyle(estiloAsientoSeleccionado());
+                            botonAsiento.setAccessibleText(
+                                    "Asiento " + idAsiento + ", seleccionado"
+                            );
+                            botonAsiento.setTooltip(new Tooltip(
+                                    "Asiento " + idAsiento
+                                            + " · Seleccionado. Pulsa para quitarlo."
+                            ));
                         }
 
-                        actualizarResumenAsientos(seleccionados, resumen);
+                        // El resumen y el estado del botón cambian en el mismo clic.
+                        actualizarResumenAsientos(seleccionados, resumenAsientosRef.get());
+                        actualizarEstadoConfirmacion(
+                                botonConfirmarRef.get(), seleccionados
+                        );
 
-                        Button confirmar = (Button) dialogo.getDialogPane()
-                                .lookupButton(continuar);
-                        confirmar.setDisable(seleccionados.isEmpty());
-
-                        fondoAsiento.setStrokeWidth(seleccionado ? 2.5 : 2);
-                        resumen.applyCss();
-                        contenido.requestLayout();
-
-                        System.out.println("[ASIENTOS] " + idAsiento
-                                + (seleccionado ? " SELECCIONADO" : " DESELECCIONADO"));
-                        System.out.println("[ASIENTOS] TOTAL: "
-                                + seleccionados.size());
-                        System.out.println("[ASIENTOS] CONFIRMAR DESHABILITADO: "
-                                + confirmar.isDisabled());
-
-                        ScaleTransition animacion = new ScaleTransition(
-                                javafx.util.Duration.millis(130), botonAsiento);
-                        animacion.setFromX(1.0);
-                        animacion.setFromY(1.0);
-                        animacion.setToX(1.13);
-                        animacion.setToY(1.13);
-                        animacion.setCycleCount(2);
-                        animacion.setAutoReverse(true);
-                        animacion.play();
+                        ScaleTransition pulso = new ScaleTransition(
+                                javafx.util.Duration.millis(105), botonAsiento);
+                        pulso.setFromX(1.0);
+                        pulso.setFromY(1.0);
+                        pulso.setToX(1.08);
+                        pulso.setToY(1.08);
+                        pulso.setCycleCount(2);
+                        pulso.setAutoReverse(true);
+                        pulso.play();
                     });
                 }
 
                 mapa.add(botonAsiento, columna++, indiceFila);
+
+                // Solo se separan los dos asientos de los extremos laterales.
+                // Los seis asientos del centro permanecen completamente juntos.
+                int numeroAsiento = asiento.getNumero();
+                if ((numeroAsiento == 2 || numeroAsiento == 8)
+                        && indiceAsiento < entrada.getValue().size() - 1) {
+                    Region pasilloLateral = new Region();
+                    pasilloLateral.setMinWidth(12);
+                    pasilloLateral.setPrefWidth(14);
+                    pasilloLateral.setMaxWidth(14);
+                    mapa.add(pasilloLateral, columna++, indiceFila);
+                }
             }
+
             indiceFila++;
         }
 
-        long cantidadDisponibles = carteleraController.consultarAsientos(funcion).stream()
-                .filter(asiento -> carteleraController.estaDisponible(funcion, asiento))
-                .count();
-        Label estadoDisponibilidad = new Label(
-                "Asientos disponibles: " + cantidadDisponibles
-                        + " · Haz clic en uno o varios para seleccionarlos.");
-        estadoDisponibilidad.getStyleClass().add("muted-small");
-        estadoDisponibilidad.setWrapText(true);
+        estadoDisponibilidad.setText(
+                "Disponibles: " + cantidadDisponibles
+                        + "     ·     Ocupados: " + cantidadOcupados
+        );
 
-        contenido.getChildren().addAll(pantalla, leyenda, estadoDisponibilidad, mapa,
-                new Separator(), resumen);
+        Label resumenAsientos = new Label("No has seleccionado asientos.");
+        resumenAsientos.setWrapText(true);
+        resumenAsientos.setStyle(
+                "-fx-text-fill: #f4c34e;"
+                        + "-fx-font-family: 'Segoe UI';"
+                        + "-fx-font-size: 11px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        // Conecta el resumen y el botón inferior con los eventos de cada asiento.
+        resumenAsientosRef.set(resumenAsientos);
+
+        contenido.getChildren().addAll(
+                pantalla,
+                leyenda,
+                estadoDisponibilidad,
+                mapa,
+                new Separator(),
+                resumenAsientos
+        );
 
         ScrollPane scroll = new ScrollPane(contenido);
         scroll.setFitToWidth(true);
-        scroll.setPrefViewportHeight(390);
-        dialogo.getDialogPane().setContent(scroll);
+        scroll.setFitToHeight(false);
+        scroll.setPannable(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scroll.setPrefViewportHeight(445);
+        scroll.setMinViewportHeight(320);
+        scroll.setBackground(fondoPanel);
+        scroll.setStyle(
+                "-fx-background-color: #0b1b2d;"
+                        + "-fx-background: #0b1b2d;"
+                        + "-fx-border-color: transparent;"
+                        + "-fx-padding: 0;"
+        );
 
-        dialogo.setResultConverter(tipo -> tipo == continuar
-                ? List.copyOf(seleccionados.values()) : null);
+        // La escena es propia: no existe DialogPane que pueda volver a pintar blanco.
+        Scene escena = new Scene(raiz, 760, 680, colorFondo);
+        URL cssAsientos = CarteleraViewController.class.getResource(
+                "/co/edu/uniquindio/proyectofinal/css/styles.css"
+        );
+        if (cssAsientos != null) {
+            escena.getStylesheets().add(cssAsientos.toExternalForm());
+        }
 
-        Optional<List<Asiento>> resultado = dialogo.showAndWait();
-        resultado.ifPresent(asientos -> mostrarResumenSeleccion(funcion, asientos));
+        HBox pie = new HBox(10);
+        pie.setAlignment(Pos.CENTER_RIGHT);
+        pie.setPadding(new Insets(13, 20, 15, 20));
+        pie.setBackground(fondoVentana);
+        pie.setStyle("-fx-background-color: #09192b;");
+
+        Button botonConfirmar = new Button("Confirmar selección");
+        botonConfirmar.setDisable(true);
+        botonConfirmar.setStyle(
+                "-fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);"
+                        + "-fx-background-radius: 8;"
+                        + "-fx-text-fill: #101827;"
+                        + "-fx-font-family: 'Segoe UI';"
+                        + "-fx-font-size: 11px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-padding: 10px 18px;"
+                        + "-fx-cursor: hand;"
+        );
+
+        Button botonCancelar = new Button("Cancelar");
+        botonCancelar.setStyle(
+                "-fx-background-color: #172d45;"
+                        + "-fx-background-radius: 8;"
+                        + "-fx-border-color: #3b5876;"
+                        + "-fx-border-radius: 8;"
+                        + "-fx-text-fill: #e5edf6;"
+                        + "-fx-font-family: 'Segoe UI';"
+                        + "-fx-font-size: 11px;"
+                        + "-fx-padding: 10px 18px;"
+                        + "-fx-cursor: hand;"
+        );
+
+        botonConfirmarRef.set(botonConfirmar);
+
+        botonConfirmar.setOnAction(evento -> {
+            if (seleccionados.isEmpty()) {
+                return;
+            }
+            resultadoSeleccion.clear();
+            resultadoSeleccion.addAll(seleccionados.values());
+            ventanaAsientos.close();
+        });
+
+        botonCancelar.setOnAction(evento -> ventanaAsientos.close());
+
+        pie.getChildren().addAll(botonCancelar, botonConfirmar);
+
+        VBox.setVgrow(scroll, Priority.ALWAYS);
+        raiz.getChildren().addAll(encabezado, scroll, pie);
+
+        // Control de rueda explícito, además del desplazamiento nativo y arrastre.
+        scroll.addEventFilter(ScrollEvent.SCROLL, evento -> {
+            double recorrido = contenido.getBoundsInLocal().getHeight()
+                    - scroll.getViewportBounds().getHeight();
+            if (recorrido > 0.5) {
+                double nuevoValor = scroll.getVvalue()
+                        - evento.getDeltaY() / recorrido;
+                scroll.setVvalue(Math.max(0, Math.min(1, nuevoValor)));
+                evento.consume();
+            }
+        });
+
+        ventanaAsientos.setScene(escena);
+        ventanaAsientos.setMinWidth(700);
+        ventanaAsientos.setMinHeight(600);
+        ventanaAsientos.setOnShown(evento -> Platform.runLater(() -> {
+            escena.getRoot().applyCss();
+            escena.getRoot().layout();
+
+            Node viewport = scroll.lookup(".viewport");
+            if (viewport instanceof Region regionViewport) {
+                regionViewport.setBackground(fondoPanel);
+                regionViewport.setStyle(
+                        "-fx-background-color: #0b1b2d;"
+                                + "-fx-background: #0b1b2d;"
+                );
+            }
+
+            Node corner = scroll.lookup(".corner");
+            if (corner instanceof Region regionCorner) {
+                regionCorner.setBackground(fondoPanel);
+                regionCorner.setStyle("-fx-background-color: #0b1b2d;");
+            }
+
+            scroll.setBackground(fondoPanel);
+            contenido.setBackground(fondoPanel);
+            raiz.setBackground(fondoVentana);
+            escena.setFill(colorFondo);
+            scroll.setVvalue(0);
+        }));
+
+        ventanaAsientos.showAndWait();
+
+        if (!resultadoSeleccion.isEmpty()) {
+            mostrarResumenSeleccion(funcion, List.copyOf(resultadoSeleccion));
+        }
     }
 
+    private void actualizarEstadoConfirmacion(
+            Button boton,
+            Map<String, Asiento> seleccionados
+    ) {
+        boolean habilitado = !seleccionados.isEmpty();
+        boton.setDisable(!habilitado);
+        boton.setOpacity(habilitado ? 1.0 : 0.48);
+    }
+
+    private void aplicarTemaDialogoAsientos(
+            Dialog<?> dialogo,
+            DialogPane panel,
+            ScrollPane scroll,
+            VBox contenido
+    ) {
+        javafx.scene.paint.Color fondoPrincipal =
+                javafx.scene.paint.Color.web("#09192b");
+        javafx.scene.paint.Color fondoContenido =
+                javafx.scene.paint.Color.web("#0b1b2d");
+
+        javafx.scene.layout.Background backgroundPrincipal =
+                new javafx.scene.layout.Background(
+                        new javafx.scene.layout.BackgroundFill(
+                                fondoPrincipal,
+                                javafx.scene.layout.CornerRadii.EMPTY,
+                                Insets.EMPTY
+                        )
+                );
+
+        javafx.scene.layout.Background backgroundContenido =
+                new javafx.scene.layout.Background(
+                        new javafx.scene.layout.BackgroundFill(
+                                fondoContenido,
+                                javafx.scene.layout.CornerRadii.EMPTY,
+                                Insets.EMPTY
+                        )
+                );
+
+        panel.setBackground(backgroundPrincipal);
+        panel.setStyle(
+                "-fx-background-color: #09192b;"
+                        + "-fx-control-inner-background: #09192b;"
+                        + "-fx-padding: 0;"
+                        + "-fx-border-color: #294760;"
+                        + "-fx-border-width: 1px;"
+        );
+
+        contenido.setBackground(backgroundContenido);
+        contenido.setStyle(
+                "-fx-background-color: #0b1b2d;"
+                        + "-fx-background: #0b1b2d;"
+        );
+
+        scroll.setBackground(backgroundContenido);
+        scroll.setStyle(
+                "-fx-background-color: #0b1b2d;"
+                        + "-fx-background: #0b1b2d;"
+                        + "-fx-border-color: transparent;"
+                        + "-fx-padding: 0;"
+        );
+
+        // La escena del Dialog es separada de la Scene del Dashboard.
+        if (panel.getScene() != null) {
+            Node raizEscena = panel.getScene().getRoot();
+            if (raizEscena instanceof Region regionRaiz) {
+                regionRaiz.setBackground(backgroundPrincipal);
+                regionRaiz.setStyle("-fx-background-color: #09192b;");
+            }
+        }
+
+        // Fuerza el estilo de las regiones internas creadas por DialogPane.
+        for (String selector : List.of(
+                ".content",
+                ".header-panel",
+                ".button-bar",
+                ".graphic-container"
+        )) {
+            Node nodo = panel.lookup(selector);
+            if (nodo instanceof Region region) {
+                region.setBackground(backgroundPrincipal);
+                region.setStyle(
+                        "-fx-background-color: #09192b;"
+                                + "-fx-background: #09192b;"
+                );
+            }
+        }
+
+        // El viewport es la superficie que suele quedarse blanca en Windows.
+        for (String selector : List.of(
+                ".viewport",
+                ".corner",
+                ".scroll-pane"
+        )) {
+            Node nodo = scroll.lookup(selector);
+            if (nodo instanceof Region region) {
+                region.setBackground(backgroundContenido);
+                region.setStyle(
+                        "-fx-background-color: #0b1b2d;"
+                                + "-fx-background: #0b1b2d;"
+                );
+            }
+        }
+
+        // También se pinta el nodo raíz del contenido dentro del ScrollPane.
+        if (scroll.getContent() instanceof Region regionContenido) {
+            regionContenido.setBackground(backgroundContenido);
+            regionContenido.setStyle(
+                    "-fx-background-color: #0b1b2d;"
+                            + "-fx-background: #0b1b2d;"
+            );
+        }
+
+        panel.applyCss();
+        panel.layout();
+        scroll.applyCss();
+        scroll.layout();
+        scroll.setVvalue(0);
+        panel.requestLayout();
+
+        // Evita advertencias por parámetro y mantiene el método autocontenido.
+        if (dialogo.getDialogPane() != panel) {
+            throw new IllegalStateException(
+                    "El panel del diálogo de asientos cambió inesperadamente."
+            );
+        }
+    }
 
     private String estiloAsientoDisponible() {
         return "-fx-background-color: #183b50;"
@@ -1450,20 +1798,184 @@ public class CarteleraViewController {
         dialogo.showAndWait();
     }
 
+    /**
+     * Reemplaza Alert nativos por un diálogo CinemaUQ. Mantiene la firma
+     * existente para que todos los puntos de aviso/error sigan funcionando.
+     */
     private void mostrarAlerta(
             Alert.AlertType tipo,
             String titulo,
             String encabezado,
             String contenido
     ) {
-        Alert alerta = new Alert(tipo);
-        if (ventanaPropietaria != null) {
-            alerta.initOwner(ventanaPropietaria);
-        }
-        alerta.setTitle("CinemaUQ");
-        alerta.setHeaderText(encabezado);
-        alerta.setContentText(contenido == null ? "" : contenido);
-        alerta.showAndWait();
+        Dialog<Void> dialogo = new Dialog<>();
+        prepararDialogo(dialogo, titulo, null, 465, 330);
+        dialogo.setHeaderText(null);
+        dialogo.getDialogPane().getButtonTypes().add(ButtonType.OK);
+
+        boolean error = tipo == Alert.AlertType.ERROR;
+        boolean advertencia = tipo == Alert.AlertType.WARNING
+                || tipo == Alert.AlertType.CONFIRMATION;
+        String color = error ? "#ff8b86" : advertencia ? "#ffd04a" : "#78e0b5";
+        String fondoIcono = error ? "#482b36" : advertencia ? "#47391f" : "#173d38";
+        String simbolo = error ? "!" : advertencia ? "!" : "✓";
+
+        Button aceptar = (Button) dialogo.getDialogPane().lookupButton(ButtonType.OK);
+        aceptar.setText("Entendido");
+        aceptar.setStyle(
+                "-fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);"
+                        + "-fx-background-radius: 8;"
+                        + "-fx-text-fill: #101827;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-padding: 9 24;"
+                        + "-fx-cursor: hand;"
+        );
+
+        VBox tarjeta = new VBox(12);
+        tarjeta.setAlignment(Pos.CENTER);
+        tarjeta.setPadding(new Insets(24, 27, 22, 27));
+        tarjeta.setStyle(
+                "-fx-background-color: linear-gradient(to bottom, #10243a, #09192b);"
+                        + "-fx-background-radius: 11;"
+        );
+
+        StackPane iconoFondo = new StackPane();
+        iconoFondo.setMinSize(58, 58);
+        iconoFondo.setPrefSize(58, 58);
+        iconoFondo.setMaxSize(58, 58);
+        iconoFondo.setStyle(
+                "-fx-background-color: " + fondoIcono + ";"
+                        + "-fx-background-radius: 40;"
+                        + "-fx-border-color: " + color + ";"
+                        + "-fx-border-radius: 40;"
+        );
+
+        Label icono = new Label(simbolo);
+        icono.setStyle(
+                "-fx-text-fill: " + color + ";"
+                        + "-fx-font-size: 28px;"
+                        + "-fx-font-weight: bold;"
+        );
+        iconoFondo.getChildren().add(icono);
+
+        Label tituloLabel = new Label(titulo == null ? "Aviso de CinemaUQ" : titulo);
+        tituloLabel.setWrapText(true);
+        tituloLabel.setAlignment(Pos.CENTER);
+        tituloLabel.setStyle(
+                "-fx-text-fill: #f5f7fb;"
+                        + "-fx-font-size: 19px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label encabezadoLabel = new Label(encabezado == null ? "" : encabezado);
+        encabezadoLabel.setWrapText(true);
+        encabezadoLabel.setAlignment(Pos.CENTER);
+        encabezadoLabel.setMaxWidth(365);
+        encabezadoLabel.setStyle(
+                "-fx-text-fill: #dce6f2;"
+                        + "-fx-font-size: 12px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label detalleLabel = new Label(contenido == null ? "" : contenido);
+        detalleLabel.setWrapText(true);
+        detalleLabel.setAlignment(Pos.CENTER);
+        detalleLabel.setMaxWidth(365);
+        detalleLabel.setStyle(
+                "-fx-text-fill: #9fb3c9;"
+                        + "-fx-font-size: 11px;"
+        );
+
+        Label marca = new Label("CINEMAUQ  ·  EXPERIENCIA CINEMATOGRÁFICA");
+        marca.setStyle(
+                "-fx-text-fill: #7189a2;"
+                        + "-fx-font-size: 8px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        tarjeta.getChildren().addAll(
+                iconoFondo, tituloLabel, encabezadoLabel, detalleLabel, marca
+        );
+        dialogo.getDialogPane().setContent(tarjeta);
+        dialogo.showAndWait();
+    }
+
+    /**
+     * Formulario de entrada de texto con campos y botones CinemaUQ.
+     */
+    private Optional<String> solicitarTextoCinemaUQ(
+            String titulo,
+            String encabezado,
+            String etiqueta,
+            String valorInicial,
+            String prompt
+    ) {
+        Dialog<String> dialogo = new Dialog<>();
+        prepararDialogo(dialogo, titulo, null, 455, 285);
+        dialogo.setHeaderText(null);
+
+        ButtonType aceptar = new ButtonType("Continuar", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelar = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialogo.getDialogPane().getButtonTypes().addAll(aceptar, cancelar);
+
+        VBox contenido = new VBox(11);
+        contenido.setPadding(new Insets(21, 24, 18, 24));
+        contenido.setStyle(
+                "-fx-background-color: linear-gradient(to bottom, #10243a, #09192b);"
+        );
+
+        Label tituloLabel = new Label(titulo);
+        tituloLabel.setStyle(
+                "-fx-text-fill: #f5f7fb; -fx-font-size: 18px; -fx-font-weight: bold;"
+        );
+
+        Label descripcion = new Label(encabezado == null ? "" : encabezado);
+        descripcion.setWrapText(true);
+        descripcion.setStyle("-fx-text-fill: #b8c9d9; -fx-font-size: 11px;");
+
+        Label etiquetaLabel = new Label(etiqueta);
+        etiquetaLabel.setStyle(
+                "-fx-text-fill: #e9bb4e; -fx-font-size: 10px; -fx-font-weight: bold;"
+        );
+
+        TextField campo = new TextField(valorInicial == null ? "" : valorInicial);
+        campo.setPromptText(prompt);
+        campo.setMaxWidth(Double.MAX_VALUE);
+        campo.setStyle(
+                "-fx-background-color: #0b1b2d;"
+                        + "-fx-control-inner-background: #0b1b2d;"
+                        + "-fx-text-fill: #f5f7fb;"
+                        + "-fx-prompt-text-fill: #8198af;"
+                        + "-fx-background-radius: 8;"
+                        + "-fx-border-color: #35516e;"
+                        + "-fx-border-radius: 8;"
+                        + "-fx-padding: 10 12;"
+        );
+
+        contenido.getChildren().addAll(
+                tituloLabel, descripcion, etiquetaLabel, campo
+        );
+        dialogo.getDialogPane().setContent(contenido);
+
+        Button botonAceptar = (Button) dialogo.getDialogPane().lookupButton(aceptar);
+        botonAceptar.setStyle(
+                "-fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);"
+                        + "-fx-text-fill: #101827; -fx-font-weight: bold;"
+                        + "-fx-background-radius: 8; -fx-padding: 9 20;"
+        );
+
+        Button botonCancelar = (Button) dialogo.getDialogPane().lookupButton(cancelar);
+        botonCancelar.setStyle(
+                "-fx-background-color: #172d45; -fx-text-fill: #e5edf6;"
+                        + "-fx-border-color: #3b5876; -fx-border-radius: 8;"
+                        + "-fx-background-radius: 8; -fx-padding: 9 20;"
+        );
+
+        dialogo.setResultConverter(tipo ->
+                tipo == aceptar ? campo.getText().trim() : null
+        );
+        dialogo.setOnShown(evento -> campo.requestFocus());
+        return dialogo.showAndWait();
     }
 
 
@@ -1735,10 +2247,61 @@ public class CarteleraViewController {
         DialogPane pane = dialogo.getDialogPane();
         pane.setPrefSize(ancho, alto);
         pane.getStyleClass().add("cinemauq-dialog");
+        pane.setStyle(
+                "-fx-background-color: #071629;"
+                        + "-fx-control-inner-background: #0b1b2d;"
+                        + "-fx-border-color: #344c67;"
+                        + "-fx-border-width: 1;"
+                        + "-fx-padding: 0;"
+        );
+        pane.setBackground(new Background(
+                new BackgroundFill(
+                        Color.web("#071629"),
+                        CornerRadii.EMPTY,
+                        Insets.EMPTY
+                )
+        ));
         URL css = CarteleraViewController.class.getResource(
                 "/co/edu/uniquindio/proyectofinal/css/styles.css");
-        if (css != null) {
+        if (css != null && !pane.getStylesheets().contains(css.toExternalForm())) {
             pane.getStylesheets().add(css.toExternalForm());
         }
+
+        pane.sceneProperty().addListener((observable, anterior, escena) -> {
+            if (escena == null) return;
+            Platform.runLater(() -> {
+                Node raizEscena = escena.getRoot();
+                if (raizEscena instanceof Region regionRaiz) {
+                    regionRaiz.setBackground(new Background(
+                            new BackgroundFill(
+                                    Color.web("#071629"),
+                                    CornerRadii.EMPTY,
+                                    Insets.EMPTY
+                            )
+                    ));
+                    regionRaiz.setStyle("-fx-background-color: #071629;");
+                }
+                pane.applyCss();
+                for (String selector : List.of(
+                        ".content", ".header-panel", ".button-bar",
+                        ".container", ".graphic-container"
+                )) {
+                    Node nodo = pane.lookup(selector);
+                    if (nodo instanceof Region region) {
+                        String color = selector.equals(".button-bar")
+                                ? "#071629" : "#0b1b2d";
+                        region.setBackground(new Background(
+                                new BackgroundFill(
+                                        Color.web(color),
+                                        CornerRadii.EMPTY,
+                                        Insets.EMPTY
+                                )
+                        ));
+                        region.setStyle("-fx-background-color: " + color + ";");
+                    }
+                }
+                pane.layout();
+            });
+        });
     }
 }

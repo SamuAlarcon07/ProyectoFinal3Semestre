@@ -1116,12 +1116,111 @@ public class DashboardViewController {
         try {
             aplicacion.mostrarLogin("Has cerrado sesión correctamente.");
         } catch (IOException ex) {
-            Alert alerta = new Alert(Alert.AlertType.ERROR);
-            alerta.setTitle("CinemaUQ");
-            alerta.setHeaderText("No fue posible cerrar sesión");
-            alerta.setContentText(ex.getMessage());
-            alerta.showAndWait();
+            mostrarErrorSesion(ex);
         }
+    }
+
+    /**
+     * Alerta de error del Dashboard con el estilo azul oscuro y dorado de CinemaUQ.
+     */
+    private void mostrarErrorSesion(IOException ex) {
+        Dialog<Void> dialogo = new Dialog<>();
+        dialogo.setTitle("CinemaUQ · Error de sesión");
+        dialogo.setHeaderText(null);
+
+        if (contentHost != null && contentHost.getScene() != null) {
+            dialogo.initOwner(contentHost.getScene().getWindow());
+        }
+
+        dialogo.getDialogPane().getButtonTypes().add(ButtonType.OK);
+
+        DialogPane panel = dialogo.getDialogPane();
+        panel.setMinWidth(430);
+        panel.setPrefWidth(455);
+        panel.setStyle(
+                "-fx-background-color: #071629;"
+                        + "-fx-control-inner-background: #0b1b2d;"
+                        + "-fx-border-color: #344c67;"
+                        + "-fx-border-width: 1;"
+                        + "-fx-padding: 0;"
+        );
+        panel.setBackground(new javafx.scene.layout.Background(
+                new javafx.scene.layout.BackgroundFill(
+                        javafx.scene.paint.Color.web("#071629"),
+                        javafx.scene.layout.CornerRadii.EMPTY,
+                        javafx.geometry.Insets.EMPTY
+                )
+        ));
+
+        Button aceptar = (Button) panel.lookupButton(ButtonType.OK);
+        aceptar.setText("Entendido");
+        aceptar.setStyle(
+                "-fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);"
+                        + "-fx-text-fill: #101827;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-background-radius: 8;"
+                        + "-fx-padding: 9 24;"
+        );
+
+        VBox contenido = new VBox(12);
+        contenido.setAlignment(Pos.CENTER);
+        contenido.setPadding(new javafx.geometry.Insets(23, 25, 20, 25));
+        contenido.setStyle(
+                "-fx-background-color: linear-gradient(to bottom, #10243a, #09192b);"
+        );
+
+        Label icono = new Label("!");
+        icono.setMinSize(56, 56);
+        icono.setAlignment(Pos.CENTER);
+        icono.setStyle(
+                "-fx-background-color: #482b36;"
+                        + "-fx-background-radius: 40;"
+                        + "-fx-border-color: #ff8b86;"
+                        + "-fx-border-radius: 40;"
+                        + "-fx-text-fill: #ff8b86;"
+                        + "-fx-font-size: 27px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label titulo = new Label("No fue posible cerrar sesión");
+        titulo.setStyle(
+                "-fx-text-fill: #f5f7fb;"
+                        + "-fx-font-size: 18px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label detalle = new Label(
+                ex.getMessage() == null || ex.getMessage().isBlank()
+                        ? "Ocurrió un problema al regresar al inicio de sesión."
+                        : ex.getMessage()
+        );
+        detalle.setWrapText(true);
+        detalle.setMaxWidth(350);
+        detalle.setAlignment(Pos.CENTER);
+        detalle.setStyle("-fx-text-fill: #b8c9d9; -fx-font-size: 11px;");
+
+        Label marca = new Label("CINEMAUQ  ·  EXPERIENCIA CINEMATOGRÁFICA");
+        marca.setStyle("-fx-text-fill: #7189a2; -fx-font-size: 8px;");
+
+        contenido.getChildren().addAll(icono, titulo, detalle, marca);
+        panel.setContent(contenido);
+
+        panel.sceneProperty().addListener((observable, anterior, escena) -> {
+            if (escena == null) return;
+            javafx.application.Platform.runLater(() -> {
+                if (escena.getRoot() instanceof Region region) {
+                    region.setStyle("-fx-background-color: #071629;");
+                }
+                panel.applyCss();
+                Node barra = panel.lookup(".button-bar");
+                if (barra instanceof Region regionBarra) {
+                    regionBarra.setStyle("-fx-background-color: #071629;");
+                }
+                panel.layout();
+            });
+        });
+
+        dialogo.showAndWait();
     }
 
     private String iniciales(String nombre) {

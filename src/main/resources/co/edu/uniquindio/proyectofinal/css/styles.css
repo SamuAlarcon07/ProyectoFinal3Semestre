@@ -503,15 +503,143 @@
     -fx-background-color: transparent;
     -fx-padding: 12px 0 0 0;
 }
-.date-picker, .combo-box, .choice-box {
+.date-picker {
     -fx-background-color: #13273e;
     -fx-border-color: #314a66;
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
 }
-.date-picker .text-field,
-.combo-box .list-cell {
+.date-picker .text-field {
     -fx-text-fill: #eef3f8;
+}
+
+
+/* ==========================================================
+   COMBOBOX / CHOICEBOX - POPUPS AZUL NOCHE Y DORADO
+   Evita el popup blanco predeterminado de JavaFX.
+   ========================================================== */
+.combo-box,
+.choice-box {
+    -fx-background-color: #10243a;
+    -fx-background-insets: 0;
+    -fx-border-color: #35516e;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+.combo-box:hover,
+.choice-box:hover {
+    -fx-border-color: #627f9e;
+}
+.combo-box:focused,
+.combo-box:showing,
+.choice-box:focused,
+.choice-box:showing {
+    -fx-border-color: #f0b92e;
+    -fx-border-width: 1.3px;
+    -fx-effect: dropshadow(gaussian, rgba(240,185,46,0.16), 8, 0.10, 0, 0);
+}
+.combo-box > .list-cell,
+.cinemauq-combo-button-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #edf3fa;
+    -fx-font-size: 11px;
+    -fx-padding: 7px 10px;
+}
+.combo-box > .arrow-button,
+.choice-box > .open-button {
+    -fx-background-color: #19334d;
+    -fx-background-radius: 0 7px 7px 0;
+    -fx-padding: 0 10px;
+}
+.combo-box > .arrow-button:hover,
+.choice-box > .open-button:hover {
+    -fx-background-color: #254561;
+}
+.combo-box > .arrow-button > .arrow,
+.choice-box > .open-button > .arrow {
+    -fx-background-color: #f3bf43;
+}
+
+/* Ventana flotante de opciones del ComboBox */
+.combo-box-popup,
+.combo-box-popup > .list-view {
+    -fx-background-color: #0b1b2e;
+    -fx-control-inner-background: #10243a;
+    -fx-control-inner-background-alt: #132a43;
+    -fx-border-color: #35516e;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 3px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.38), 12, 0.15, 0, 4);
+}
+.combo-box-popup .list-view {
+    -fx-background-color: #0b1b2e;
+    -fx-control-inner-background: #10243a;
+    -fx-padding: 3px;
+}
+.combo-box-popup .list-cell,
+.combo-box-popup .cinemauq-combo-cell {
+    -fx-background-color: #10243a;
+    -fx-text-fill: #e8eff7;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-padding: 8px 11px;
+}
+.combo-box-popup .list-cell:empty {
+    -fx-background-color: #10243a;
+}
+.combo-box-popup .list-cell:filled:hover,
+.combo-box-popup .cinemauq-combo-cell:filled:hover {
+    -fx-background-color: #203c58;
+    -fx-text-fill: #ffffff;
+}
+.combo-box-popup .list-cell:filled:selected,
+.combo-box-popup .list-cell:filled:selected:hover,
+.combo-box-popup .cinemauq-combo-cell:filled:selected {
+    -fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);
+    -fx-text-fill: #101827;
+    -fx-font-weight: bold;
+}
+.combo-box-popup .list-view .scroll-bar:vertical {
+    -fx-background-color: #0b1b2e;
+    -fx-background-radius: 5px;
+}
+.combo-box-popup .list-view .scroll-bar:vertical .thumb {
+    -fx-background-color: #45627f;
+    -fx-background-radius: 5px;
+}
+.combo-box-popup .list-view .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #d6aa42;
+}
+
+/* ChoiceBox despliega un ContextMenu separado. */
+.context-menu {
+    -fx-background-color: #0b1b2e;
+    -fx-background-radius: 8px;
+    -fx-border-color: #35516e;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-padding: 4px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.38), 12, 0.15, 0, 4);
+}
+.context-menu .menu-item {
+    -fx-background-color: #0b1b2e;
+    -fx-padding: 7px 12px;
+}
+.context-menu .menu-item .label {
+    -fx-text-fill: #e8eff7;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+}
+.context-menu .menu-item:focused,
+.context-menu .menu-item:hover {
+    -fx-background-color: #203c58;
+}
+.context-menu .menu-item:focused .label,
+.context-menu .menu-item:hover .label {
+    -fx-text-fill: #ffffff;
 }
 
 
@@ -1049,4 +1177,658 @@
 .date-picker-popup > * > .date-cell:disabled {
     -fx-text-fill: #50657a;
     -fx-opacity: 0.55;
+}
+
+
+
+/* ==========================================================
+   CAMPOS MULTILÍNEA ADMINISTRATIVOS - TEMA CINEMAUQ
+   ========================================================== */
+.admin-text-area {
+    -fx-control-inner-background: #10243a;
+    -fx-background-color: #10243a;
+    -fx-background-insets: 0;
+    -fx-background-radius: 9px;
+    -fx-border-color: #35516e;
+    -fx-border-width: 1px;
+    -fx-border-radius: 9px;
+    -fx-text-fill: #edf3fa;
+    -fx-prompt-text-fill: #8196ad;
+    -fx-highlight-fill: #d9a52b;
+    -fx-highlight-text-fill: #101827;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+    -fx-padding: 0;
+    -fx-cursor: text;
+}
+.admin-text-area .content {
+    -fx-background-color: #10243a;
+    -fx-background-radius: 8px;
+    -fx-padding: 9px 11px;
+}
+.admin-text-area:focused {
+    -fx-border-color: #f0b92e;
+    -fx-border-width: 1.4px;
+    -fx-effect: dropshadow(gaussian, rgba(240,185,46,0.18), 9, 0.12, 0, 0);
+}
+.admin-text-area:focused .content {
+    -fx-background-color: #10243a;
+}
+.admin-text-area:disabled {
+    -fx-opacity: 0.72;
+}
+.admin-text-area .scroll-pane,
+.admin-text-area .scroll-pane .viewport {
+    -fx-background-color: #10243a;
+    -fx-background: #10243a;
+}
+.admin-text-area .scroll-bar:vertical,
+.admin-text-area .scroll-bar:horizontal {
+    -fx-background-color: #0b1b2e;
+    -fx-background-radius: 5px;
+}
+.admin-text-area .scroll-bar .thumb {
+    -fx-background-color: #45627f;
+    -fx-background-radius: 5px;
+}
+.admin-text-area .scroll-bar .thumb:hover {
+    -fx-background-color: #d6aa42;
+}
+.admin-text-area .scroll-bar .increment-button,
+.admin-text-area .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+}
+.admin-text-area .scroll-bar .increment-arrow,
+.admin-text-area .scroll-bar .decrement-arrow {
+    -fx-background-color: #d6aa42;
+}
+
+
+
+/* ==========================================================
+   CASILLAS DE SELECCIÓN - FORMULARIOS ADMINISTRATIVOS
+   ========================================================== */
+.admin-check-box {
+    -fx-text-fill: #dce6f2;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-font-weight: normal;
+    -fx-label-padding: 0 0 0 7px;
+    -fx-cursor: hand;
+    -fx-opacity: 1;
+}
+.admin-check-box > .box {
+    -fx-background-color: #0b1b2e;
+    -fx-background-insets: 0;
+    -fx-background-radius: 4px;
+    -fx-border-color: #607b98;
+    -fx-border-width: 1.2px;
+    -fx-border-radius: 4px;
+    -fx-padding: 2px;
+    -fx-min-width: 15px;
+    -fx-min-height: 15px;
+    -fx-pref-width: 15px;
+    -fx-pref-height: 15px;
+}
+.admin-check-box:hover {
+    -fx-text-fill: #ffffff;
+}
+.admin-check-box:hover > .box {
+    -fx-background-color: #18324c;
+    -fx-border-color: #e8b83e;
+}
+.admin-check-box:focused > .box {
+    -fx-border-color: #ffd04a;
+    -fx-border-width: 1.5px;
+    -fx-effect: dropshadow(gaussian, rgba(240,185,46,0.20), 6, 0.10, 0, 0);
+}
+.admin-check-box:selected > .box {
+    -fx-background-color: linear-gradient(to bottom, #ffd34d, #eaa018);
+    -fx-border-color: #ffd34d;
+}
+.admin-check-box:selected > .box > .mark {
+    -fx-background-color: #102033;
+}
+.admin-check-box:indeterminate > .box {
+    -fx-background-color: #dba52d;
+    -fx-border-color: #ffd34d;
+}
+.admin-check-box:indeterminate > .box > .mark {
+    -fx-background-color: #102033;
+}
+.admin-check-box:disabled {
+    -fx-opacity: 0.55;
+}
+
+/* Por si el administrador incorpora botones de opción más adelante. */
+.admin-radio-button {
+    -fx-text-fill: #dce6f2;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-label-padding: 0 0 0 7px;
+    -fx-cursor: hand;
+}
+.admin-radio-button > .radio {
+    -fx-background-color: #0b1b2e;
+    -fx-background-insets: 0;
+    -fx-border-color: #607b98;
+    -fx-border-width: 1.2px;
+    -fx-border-radius: 20px;
+    -fx-background-radius: 20px;
+}
+.admin-radio-button:selected > .radio {
+    -fx-background-color: #ffd04a;
+    -fx-border-color: #ffd04a;
+}
+.admin-radio-button:selected > .radio > .dot {
+    -fx-background-color: #102033;
+}
+.admin-radio-button:hover > .radio {
+    -fx-border-color: #e8b83e;
+}
+
+
+
+/* ==========================================================
+   LISTA DE COMPONENTES DEL COMBO - TEMA CINEMAUQ
+   Corrige el panel blanco que aparece al crear un combo.
+   ========================================================== */
+.admin-combo-components {
+    -fx-background-color: #0b1b2e;
+    -fx-control-inner-background: #10243a;
+    -fx-control-inner-background-alt: #132a43;
+    -fx-background-insets: 0;
+    -fx-background-radius: 9px;
+    -fx-border-color: #35516e;
+    -fx-border-width: 1px;
+    -fx-border-radius: 9px;
+    -fx-padding: 3px;
+}
+.admin-combo-components .virtual-flow,
+.admin-combo-components .virtual-flow .clipped-container,
+.admin-combo-components .virtual-flow .sheet {
+    -fx-background-color: #10243a;
+}
+.admin-combo-components .list-cell {
+    -fx-background-color: #10243a;
+    -fx-text-fill: #e8eff7;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-padding: 8px 11px;
+}
+.admin-combo-components .list-cell:empty {
+    -fx-background-color: #10243a;
+}
+.admin-combo-components .list-cell:filled:hover {
+    -fx-background-color: #203c58;
+    -fx-text-fill: #ffffff;
+}
+.admin-combo-components .list-cell:filled:selected,
+.admin-combo-components .list-cell:filled:selected:hover {
+    -fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);
+    -fx-text-fill: #101827;
+    -fx-font-weight: bold;
+}
+.admin-combo-components:focused {
+    -fx-border-color: #f0b92e;
+    -fx-effect: dropshadow(gaussian, rgba(240,185,46,0.16), 8, 0.10, 0, 0);
+}
+.admin-combo-components .scroll-bar:vertical,
+.admin-combo-components .scroll-bar:horizontal {
+    -fx-background-color: #0b1b2e;
+    -fx-background-radius: 5px;
+}
+.admin-combo-components .scroll-bar .thumb {
+    -fx-background-color: #45627f;
+    -fx-background-radius: 5px;
+}
+.admin-combo-components .scroll-bar .thumb:hover {
+    -fx-background-color: #d6aa42;
+}
+.admin-combo-components .scroll-bar .increment-button,
+.admin-combo-components .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+}
+.admin-combo-components .scroll-bar .increment-arrow,
+.admin-combo-components .scroll-bar .decrement-arrow {
+    -fx-background-color: #d6aa42;
+}
+.admin-combo-components .placeholder .label,
+.admin-list-placeholder {
+    -fx-text-fill: #8196ad;
+    -fx-font-size: 10px;
+}
+
+
+
+/* ==========================================================
+   SELECTOR DE ASIENTOS - INTERACCIÓN Y ESTADOS VISIBLES
+   ========================================================== */
+.seat-selection-dialog {
+    -fx-background-color: #09192b;
+    -fx-border-color: #34516e;
+    -fx-border-width: 1px;
+}
+.seat-selection-dialog > .header-panel {
+    -fx-background-color: #10243a;
+    -fx-border-color: transparent transparent #294760 transparent;
+    -fx-border-width: 0 0 1px 0;
+}
+.seat-selection-dialog > .header-panel > .label {
+    -fx-text-fill: #f3f6fb;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+.seat-selection-dialog > .content {
+    -fx-background-color: #0b1b2d;
+}
+.seat-dialog-content {
+    -fx-background-color: #0b1b2d;
+}
+.seat-dialog-scroll,
+.seat-dialog-scroll > .viewport {
+    -fx-background-color: #0b1b2d;
+    -fx-background: #0b1b2d;
+    -fx-border-color: transparent;
+}
+.seat-dialog-scroll .corner {
+    -fx-background-color: #0b1b2d;
+}
+.seat-dialog-scroll .scroll-bar:vertical,
+.seat-dialog-scroll .scroll-bar:horizontal {
+    -fx-background-color: #0b1b2d;
+    -fx-background-radius: 6px;
+}
+.seat-dialog-scroll .scroll-bar .thumb {
+    -fx-background-color: #48627d;
+    -fx-background-radius: 6px;
+}
+.seat-dialog-scroll .scroll-bar .thumb:hover {
+    -fx-background-color: #d6aa42;
+}
+.seat-availability-info {
+    -fx-text-fill: #aebfd1;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-padding: 4px 2px;
+}
+.seat-toggle {
+    -fx-background-color: #123b51;
+    -fx-background-insets: 0;
+    -fx-border-color: #50a994;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #f4f8fb;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.16), 4, 0.08, 0, 1);
+}
+.seat-toggle:hover {
+    -fx-background-color: #245d58;
+    -fx-border-color: #8bd5ad;
+    -fx-border-width: 2px;
+    -fx-effect: dropshadow(gaussian, rgba(139,213,173,0.35), 7, 0.18, 0, 0);
+}
+.seat-toggle:focused {
+    -fx-border-color: #ffe08a;
+    -fx-border-width: 2px;
+}
+.seat-toggle:selected {
+    -fx-background-color: linear-gradient(to bottom, #ffd34d, #eaa018);
+    -fx-border-color: #fff0ad;
+    -fx-border-width: 2.5px;
+    -fx-text-fill: #101827;
+    -fx-effect: dropshadow(gaussian, rgba(242,189,57,0.78), 12, 0.30, 0, 0);
+}
+.seat-toggle:selected:hover {
+    -fx-background-color: linear-gradient(to bottom, #ffe17b, #f4b52b);
+}
+.seat-toggle-occupied,
+.seat-toggle-occupied:disabled {
+    -fx-background-color: #47566a;
+    -fx-border-color: #77869a;
+    -fx-border-width: 1.2px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #d3dbe5;
+    -fx-opacity: 1;
+    -fx-cursor: default;
+    -fx-effect: none;
+}
+.seat-toggle-occupied:hover {
+    -fx-background-color: #47566a;
+    -fx-border-color: #77869a;
+}
+.seat-legend-available {
+    -fx-background-color: #123b51;
+    -fx-border-color: #50a994;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+.seat-legend-selected {
+    -fx-background-color: #f2bd39;
+    -fx-border-color: #ffe08a;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+.seat-legend-occupied {
+    -fx-background-color: #47566a;
+    -fx-border-color: #77869a;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
+
+/* ASIENTOS_DIALOG_FORCE_STYLE: refuerzo para el DialogPane y el viewport */
+.seat-selection-dialog,
+.dialog-pane.seat-selection-dialog {
+    -fx-background-color: #09192b;
+    -fx-control-inner-background: #09192b;
+}
+.seat-selection-dialog > .header-panel {
+    -fx-background-color: #10243a;
+}
+.seat-selection-dialog > .header-panel .label {
+    -fx-text-fill: #edf3fa;
+}
+.seat-selection-dialog > .content,
+.seat-selection-dialog > .content > .scroll-pane,
+.seat-selection-dialog > .content > .scroll-pane > .viewport,
+.seat-dialog-scroll,
+.seat-dialog-scroll > .viewport,
+.seat-dialog-content {
+    -fx-background-color: #0b1b2d;
+    -fx-background: #0b1b2d;
+}
+.seat-dialog-scroll .viewport {
+    -fx-background-color: #0b1b2d;
+}
+.seat-dialog-content .label {
+    -fx-text-fill: #e8eff7;
+}
+.seat-dialog-content .seat-screen {
+    -fx-text-fill: #101827;
+}
+.seat-dialog-content .seat-selection-summary {
+    -fx-text-fill: #f2bd39;
+}
+.seat-dialog-content .seat-toggle {
+    -fx-background-color: #123b51;
+    -fx-text-fill: #f4f8fb;
+}
+.seat-dialog-content .seat-toggle:selected {
+    -fx-background-color: #f2bd39;
+    -fx-text-fill: #101827;
+}
+.seat-dialog-content .seat-toggle-occupied,
+.seat-dialog-content .seat-toggle-occupied:disabled {
+    -fx-background-color: #47566a;
+    -fx-text-fill: #d3dbe5;
+    -fx-opacity: 1;
+}
+
+
+/* ==========================================================
+   SELECTOR DE ASIENTOS - FONDO OPACO PARA TODAS LAS CAPAS
+   ========================================================== */
+.seat-selection-dialog,
+.seat-selection-dialog:header,
+.seat-selection-dialog > .content,
+.seat-selection-dialog > .header-panel,
+.seat-selection-dialog > .button-bar {
+    -fx-background-color: #09192b;
+    -fx-background: #09192b;
+    -fx-control-inner-background: #09192b;
+}
+.seat-selection-dialog > .content {
+    -fx-padding: 0;
+}
+.seat-selection-dialog > .header-panel .label {
+    -fx-text-fill: #edf3fa;
+}
+.seat-dialog-scroll,
+.seat-dialog-scroll > .viewport,
+.seat-dialog-scroll .viewport,
+.seat-dialog-scroll .corner {
+    -fx-background-color: #0b1b2d;
+    -fx-background: #0b1b2d;
+    -fx-border-color: transparent;
+}
+.seat-dialog-content,
+.seat-map {
+    -fx-background-color: #0b1b2d;
+    -fx-background: #0b1b2d;
+}
+.seat-dialog-scroll .scroll-bar:vertical {
+    -fx-background-color: #09192b;
+    -fx-background-radius: 6px;
+    -fx-padding: 2px;
+}
+.seat-dialog-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: #486782;
+    -fx-background-radius: 6px;
+}
+.seat-dialog-scroll .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #d5a941;
+}
+.seat-dialog-scroll .scroll-bar .increment-button,
+.seat-dialog-scroll .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+}
+.seat-dialog-scroll .scroll-bar .increment-arrow,
+.seat-dialog-scroll .scroll-bar .decrement-arrow {
+    -fx-background-color: #d5a941;
+}
+
+
+/* ==========================================================
+   SELECTOR DE ASIENTOS - BOTONES INTERACTIVOS Y PARES
+   ========================================================== */
+.seat-function-title {
+    -fx-text-fill: #f3f6fb;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 2px 0;
+}
+.seat-map {
+    -fx-padding: 12px 8px;
+    -fx-background-color: #0b1b2d;
+}
+.seat-row-label {
+    -fx-text-fill: #aebfd1;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+}
+.seat-button {
+    -fx-background-color: #183b50;
+    -fx-background-insets: 0;
+    -fx-border-color: #3f947d;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 9px 9px 5px 5px;
+    -fx-background-radius: 9px 9px 5px 5px;
+    -fx-text-fill: #f4f8fb;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+.seat-button:hover {
+    -fx-background-color: #245d58;
+    -fx-border-color: #8bd5ad;
+    -fx-border-width: 2px;
+    -fx-effect: dropshadow(gaussian, rgba(139,213,173,0.35), 7, 0.18, 0, 0);
+}
+.seat-button:focused {
+    -fx-border-color: #ffe08a;
+    -fx-border-width: 2px;
+}
+.seat-button-selected {
+    -fx-background-color: linear-gradient(to bottom, #ffd34d, #eaa018);
+    -fx-border-color: #fff0ad;
+    -fx-border-width: 2.5px;
+    -fx-text-fill: #101827;
+    -fx-effect: dropshadow(gaussian, rgba(242,189,57,0.65), 10, 0.28, 0, 0);
+}
+.seat-button-selected:hover {
+    -fx-background-color: linear-gradient(to bottom, #ffe17d, #f1b32e);
+    -fx-border-color: #fff4c7;
+}
+.seat-button-occupied,
+.seat-button:disabled {
+    -fx-background-color: #3a4655;
+    -fx-border-color: #667386;
+    -fx-text-fill: #aeb8c5;
+    -fx-opacity: 0.92;
+    -fx-cursor: default;
+    -fx-effect: none;
+}
+.seat-button-occupied:hover,
+.seat-button:disabled:hover {
+    -fx-background-color: #3a4655;
+    -fx-border-color: #667386;
+}
+.seat-selection-dialog > .button-bar {
+    -fx-background-color: #09192b;
+}
+.seat-confirm-button {
+    -fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);
+    -fx-text-fill: #101827;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-padding: 9px 17px;
+}
+.seat-confirm-button:disabled {
+    -fx-opacity: 0.45;
+}
+.seat-cancel-button {
+    -fx-background-color: #172d45;
+    -fx-text-fill: #e5edf6;
+    -fx-border-color: #3b5876;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 9px 17px;
+}
+
+
+/* Distribución del mapa: asientos contiguos en el bloque central */
+.seat-map {
+    -fx-hgap: 4px;
+    -fx-vgap: 9px;
+}
+.seat-button {
+    -fx-min-width: 41px;
+    -fx-pref-width: 41px;
+    -fx-max-width: 41px;
+    -fx-min-height: 37px;
+    -fx-pref-height: 37px;
+    -fx-max-height: 37px;
+}
+
+
+
+/* Selector de asientos: estilos auxiliares para la ventana Stage independiente */
+.seat-dialog-root,
+.seat-dialog-content,
+.seat-dialog-scroll,
+.seat-dialog-scroll .viewport {
+    -fx-background-color: #0b1b2d;
+}
+.seat-dialog-header,
+.seat-dialog-footer {
+    -fx-background-color: #09192b;
+}
+
+
+
+/* ==========================================================
+   DIÁLOGOS DE CLIENTE - TEMA GLOBAL CINEMAUQ
+   Evita superficies blancas en DialogPane y en sus skins internas.
+   ========================================================== */
+.dialog-pane.cinemauq-client-dialog,
+.dialog-pane.cinemauq-dialog {
+    -fx-background-color: #071629;
+    -fx-control-inner-background: #0b1b2d;
+    -fx-background-insets: 0;
+    -fx-border-color: #344c67;
+    -fx-border-width: 1px;
+    -fx-padding: 0;
+}
+.dialog-pane.cinemauq-client-dialog > .header-panel,
+.dialog-pane.cinemauq-dialog > .header-panel {
+    -fx-background-color: #0b1b2d;
+    -fx-background-insets: 0;
+    -fx-padding: 14px 20px 9px 20px;
+}
+.dialog-pane.cinemauq-client-dialog > .header-panel > .label,
+.dialog-pane.cinemauq-dialog > .header-panel > .label {
+    -fx-text-fill: #f5f7fb;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+.dialog-pane.cinemauq-client-dialog > .content,
+.dialog-pane.cinemauq-dialog > .content {
+    -fx-background-color: #0b1b2d;
+    -fx-text-fill: #dce6f2;
+    -fx-padding: 0;
+}
+.dialog-pane.cinemauq-client-dialog > .button-bar,
+.dialog-pane.cinemauq-dialog > .button-bar {
+    -fx-background-color: #071629;
+    -fx-background-insets: 0;
+    -fx-padding: 12px 18px 14px 18px;
+}
+.dialog-pane.cinemauq-client-dialog > .button-bar > .container,
+.dialog-pane.cinemauq-dialog > .button-bar > .container {
+    -fx-background-color: #071629;
+}
+.dialog-pane.cinemauq-client-dialog .label,
+.dialog-pane.cinemauq-dialog .label {
+    -fx-font-family: "Segoe UI";
+}
+.dialog-pane.cinemauq-client-dialog .text-field,
+.dialog-pane.cinemauq-dialog .text-field {
+    -fx-background-color: #0b1b2d;
+    -fx-control-inner-background: #0b1b2d;
+    -fx-text-fill: #f5f7fb;
+    -fx-prompt-text-fill: #8198af;
+    -fx-border-color: #35516e;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+.dialog-pane.cinemauq-client-dialog .text-area,
+.dialog-pane.cinemauq-dialog .text-area {
+    -fx-control-inner-background: #0b1b2d;
+    -fx-background-color: #0b1b2d;
+    -fx-text-fill: #f5f7fb;
+    -fx-prompt-text-fill: #8198af;
+}
+.dialog-pane.cinemauq-client-dialog .button,
+.dialog-pane.cinemauq-dialog .button {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+.dialog-pane.cinemauq-client-dialog .button:default,
+.dialog-pane.cinemauq-dialog .button:default {
+    -fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);
+    -fx-text-fill: #101827;
+    -fx-font-weight: bold;
+}
+.dialog-pane.cinemauq-client-dialog .button:cancel,
+.dialog-pane.cinemauq-dialog .button:cancel {
+    -fx-background-color: #172d45;
+    -fx-text-fill: #e5edf6;
+    -fx-border-color: #3b5876;
+    -fx-border-radius: 8px;
 }
