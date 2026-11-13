@@ -23,12 +23,42 @@ public class FuncionService {
 
 
 
+    /**
+     * Valida que un bloqueo no interrumpa una función que ya está programada.
+     * Se ejecuta antes de persistir el bloqueo en los servicios relacionados.
+     */
+    public void validarBloqueo(BloqueoSala bloqueo) {
+        if (bloqueo == null) {
+            throw new IllegalArgumentException("El bloqueo es obligatorio.");
+        }
+
+        LocalDateTime inicioBloqueo = bloqueo.getFechaInicio();
+        LocalDateTime finBloqueo = bloqueo.getFechaFin();
+
+        Optional<Funcion> funcionEnConflicto = funciones.values().stream()
+                .filter(funcion -> funcion.getEstado() == EstadoFuncion.PROGRAMADA)
+                .filter(funcion -> funcion.getSala().getCodigo()
+                        .equals(bloqueo.getSala().getCodigo()))
+                .filter(funcion -> {
+                    LocalDateTime inicioFuncion = funcion.getFechaHora();
+                    LocalDateTime finFuncion = inicioFuncion.plusMinutes(
+                            funcion.getPelicula().getDuracionMinutos() + MINUTOS_LIMPIEZA);
+                    return inicioBloqueo.isBefore(finFuncion)
+                            && finBloqueo.isAfter(inicioFuncion);
+                })
+                .findFirst();
+
+        if (funcionEnConflicto.isPresent()) {
+            Funcion funcion = funcionEnConflicto.get();
+            throw new IllegalStateException(
+                    "No se puede bloquear la sala: el intervalo se cruza con la función "
+                            + funcion.getCodigo() + " (" + funcion.getPelicula().getTitulo() + ").");
+        }
+    }
+
     public void registrarBloqueo(BloqueoSala bloqueo) {
-
-        if (bloqueo == null) throw new IllegalArgumentException("El bloqueo es obligatorio.");
-
+        validarBloqueo(bloqueo);
         bloqueos.add(bloqueo);
-
     }
 
 

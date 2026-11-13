@@ -14,6 +14,17 @@ import javafx.scene.layout.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.SVGPath;
+import javafx.animation.FadeTransition;
+import javafx.animation.Interpolator;
+import javafx.animation.ParallelTransition;
+import javafx.animation.PauseTransition;
+import javafx.animation.ScaleTransition;
+import javafx.animation.TranslateTransition;
+import javafx.scene.Parent;
+import javafx.scene.input.MouseEvent;
+import javafx.util.Duration;
+import java.util.WeakHashMap;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +32,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Comparator;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Controlador visual del Dashboard compartido.
@@ -60,6 +76,10 @@ public class DashboardViewController {
 
     private GestionAdminViewController adminView;
     private ClienteViewController clienteView;
+
+    // Evita acumular transiciones si el cursor entra y sale rápidamente.
+    private final Map<Node, ParallelTransition> transicionesHover = new WeakHashMap<>();
+    private String seccionActual = "";
 
     @FXML
     private void initialize() {
@@ -114,51 +134,146 @@ public class DashboardViewController {
 
         List<String[]> opciones = administrador
                 ? List.of(
-                new String[]{"⌂", "Inicio"},
-                new String[]{"▣", "Gestión de películas"},
-                new String[]{"▦", "Funciones y salas"},
-                new String[]{"♙", "Gestión de usuarios"},
-                new String[]{"▤", "Inventario"},
-                new String[]{"🍿", "Confitería"},
-                new String[]{"◇", "Promociones"},
-                new String[]{"▥", "Control de acceso"},
-                new String[]{"≋", "Lista de espera"},
-                new String[]{"▧", "Reportes"},
-                new String[]{"▣", "Tarjetas virtuales"},
-                new String[]{"◎", "Mi perfil"}
+                new String[]{"home", "Inicio"},
+                new String[]{"film", "Gestión de películas"},
+                new String[]{"clock", "Funciones y salas"},
+                new String[]{"user", "Gestión de usuarios"},
+                new String[]{"box", "Inventario"},
+                new String[]{"popcorn", "Confitería"},
+                new String[]{"tag", "Promociones"},
+                new String[]{"scan", "Control de acceso"},
+                new String[]{"hourglass", "Lista de espera"},
+                new String[]{"chart", "Reportes"},
+                new String[]{"wallet", "Tarjetas virtuales"}
         )
                 : List.of(
-                new String[]{"⌂", "Inicio"},
-                new String[]{"▣", "Cartelera"},
-                new String[]{"🍿", "Confitería"},
-                new String[]{"≋", "Lista de espera"},
-                new String[]{"♢", "Mis entradas"},
-                new String[]{"▤", "Mis compras"},
-                new String[]{"▣", "Mi tarjeta virtual"},
-                new String[]{"☆", "Mis puntos"},
-                new String[]{"♡", "Películas guardadas"},
-                new String[]{"☏", "Reseñas"},
-                new String[]{"♙", "Mi perfil"},
-                new String[]{"♧", "Notificaciones"}
+                new String[]{"home", "Inicio"},
+                new String[]{"film", "Cartelera"},
+                new String[]{"popcorn", "Confitería"},
+                new String[]{"clock", "Lista de espera"},
+                new String[]{"ticket", "Mis entradas"},
+                new String[]{"receipt", "Mis compras"},
+                new String[]{"wallet", "Mi tarjeta virtual"},
+                new String[]{"star", "Mis puntos"},
+                new String[]{"heart", "Películas guardadas"},
+                new String[]{"edit", "Reseñas"}
         );
 
         for (String[] opcion : opciones) {
-            Button boton = new Button(opcion[0] + "    " + opcion[1]);
+            StackPane icono = crearIconoNavegacion(opcion[0]);
+            icono.getStyleClass().add("nav-icon");
+
+            Label texto = new Label(opcion[1]);
+            texto.getStyleClass().add("nav-label");
+
+            // Indicador vertical dorado: solo se ilumina en la sección activa.
+            Region indicador = new Region();
+            indicador.getStyleClass().add("nav-indicator");
+            indicador.setMinWidth(4);
+            indicador.setPrefWidth(4);
+            indicador.setMaxWidth(4);
+            indicador.setMinHeight(34);
+            indicador.setPrefHeight(34);
+            indicador.setMaxHeight(34);
+
+            HBox contenido = new HBox(11, indicador, icono, texto);
+            contenido.setAlignment(Pos.CENTER_LEFT);
+            contenido.setMouseTransparent(true);
+
+            Button boton = new Button();
+            boton.setGraphic(contenido);
+            boton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
             boton.getStyleClass().add("nav-button");
             boton.setMaxWidth(Double.MAX_VALUE);
             boton.setAlignment(Pos.CENTER_LEFT);
+            boton.setUserData(opcion[1]);
             boton.setOnAction(event -> mostrarSeccion(opcion[1], ""));
+            instalarAnimacionBoton(boton);
+
             menuContainer.getChildren().add(boton);
         }
+
         actualizarMenuActivo("Inicio");
+        animarEntradaEscalonada(menuContainer.getChildren());
+        instalarAnimacionesRecursivas(menuContainer);
+    }
+
+    /**
+     * Construye iconos vectoriales SVG para que todo el menú use el mismo
+     * lenguaje visual, sin emojis ni caracteres dependientes de la fuente.
+     */
+    private StackPane crearIconoNavegacion(String tipo) {
+        String path = switch (tipo) {
+            case "home" -> "M3 10.8 L12 3 L21 10.8 V20 H14.5 V14.5 H9.5 V20 H3 Z";
+            case "film" -> "M4 3 H20 V21 H4 Z M4 8 H20 M4 16 H20 M8 3 V8 M16 3 V8 M8 16 V21 M16 16 V21";
+            case "clock" -> "M12 3 A9 9 0 1 0 12.01 3 M12 7 V12 L16 14";
+            case "user" -> "M12 12 A4 4 0 1 0 12 4 A4 4 0 0 0 12 12 M4 21 C4 16 8 14 12 14 C16 14 20 16 20 21";
+            case "box" -> "M3 7 L12 3 L21 7 V17 L12 21 L3 17 Z M3 7 L12 11 L21 7 M12 11 V21";
+            case "ticket" -> "M3 6 H21 V10 A2 2 0 0 0 21 14 V18 H3 V14 A2 2 0 0 0 3 10 Z M12 7 V9 M12 11 V13 M12 15 V17";
+            case "receipt" -> "M5 3 H19 V21 L16 19 L13 21 L10 19 L7 21 L5 19 Z M8 8 H16 M8 12 H16 M8 16 H13";
+            case "popcorn" -> "M6 8 H18 L16 21 H8 Z M6 8 L4 4 L8 3 L10 7 L12 3 L15 7 L18 3 L20 8 M9 11 V17 M13 11 V17 M16 11 V17";
+            case "tag" -> "M3 12 L12 3 H21 V12 L12 21 Z M16 8 A1 1 0 1 0 16.01 8";
+            case "scan" -> "M4 9 V4 H9 M15 4 H20 V9 M20 15 V20 H15 M9 20 H4 V15 M7 12 H17";
+            case "hourglass" -> "M6 3 H18 M6 21 H18 M7 3 C7 8 10 9 12 12 C14 9 17 8 17 3 M7 21 C7 16 10 15 12 12 C14 15 17 16 17 21";
+            case "chart" -> "M4 20 V11 H8 V20 M10 20 V5 H14 V20 M16 20 V9 H20 V20";
+            case "star" -> "M12 2.8 L14.8 8.7 L21.2 9.5 L16.5 14 L17.6 20.5 L12 17.4 L6.4 20.5 L7.5 14 L2.8 9.5 L9.2 8.7 Z";
+            case "wallet" -> "M3 6 H20 V20 H3 Z M3 6 L17 3 V6 M15 12 H21 V17 H15 A2.5 2.5 0 0 1 15 12";
+            case "heart" -> "M12 20 C10 18 3 13 3 8 A4.5 4.5 0 0 1 12 6 A4.5 4.5 0 0 1 21 8 C21 13 14 18 12 20 Z";
+            case "edit" -> "M4 16.5 V20 H7.5 L19 8.5 L15.5 5 Z M13.8 6.7 L17.3 10.2 M4 4 H11";
+            case "bell" -> "M18 9 A6 6 0 0 0 6 9 C6 16 3.5 16 3.5 18 H20.5 C20.5 16 18 16 18 9 M10 21 H14";
+            default -> "M12 3 V21 M3 12 H21";
+        };
+        SVGPath vector = new SVGPath();
+        vector.setContent(path);
+        vector.setFill(javafx.scene.paint.Color.TRANSPARENT);
+        vector.setStroke(javafx.scene.paint.Color.web("#AAB6C5"));
+        vector.getStyleClass().add("nav-icon-vector");
+        vector.setStrokeWidth(1.8);
+        vector.setStrokeLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
+        vector.setStrokeLineJoin(javafx.scene.shape.StrokeLineJoin.ROUND);
+        vector.setScaleX(0.82);
+        vector.setScaleY(0.82);
+        StackPane contenedor = new StackPane(vector);
+        contenedor.setMinSize(36, 36);
+        contenedor.setPrefSize(36, 36);
+        contenedor.setMaxSize(36, 36);
+        return contenedor;
     }
 
     private void actualizarMenuActivo(String seleccion) {
+        boolean cambioSeccion = !seleccion.equals(seccionActual);
+        seccionActual = seleccion;
+
         for (Node node : menuContainer.getChildren()) {
             if (node instanceof Button boton) {
+                boolean activo = seleccion.equals(boton.getUserData());
                 boton.getStyleClass().remove("nav-button-active");
-                if (boton.getText().endsWith(seleccion)) {
+                if (activo) {
                     boton.getStyleClass().add("nav-button-active");
+                    if (cambioSeccion) {
+                        ScaleTransition pulso = new ScaleTransition(Duration.millis(170), boton);
+                        pulso.setFromX(0.985);
+                        pulso.setFromY(0.985);
+                        pulso.setToX(1.0);
+                        pulso.setToY(1.0);
+                        pulso.play();
+                    }
+                }
+
+                // El icono inactivo se muestra gris; el activo recupera el dorado.
+                if (boton.getGraphic() instanceof HBox contenido) {
+                    for (Node elemento : contenido.getChildren()) {
+                        if (elemento instanceof StackPane icono
+                                && icono.getStyleClass().contains("nav-icon")) {
+                            for (Node forma : icono.getChildren()) {
+                                if (forma instanceof SVGPath vector) {
+                                    vector.setStroke(activo
+                                            ? javafx.scene.paint.Color.web("#F5B82E")
+                                            : javafx.scene.paint.Color.web("#AAB6C5"));
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -170,16 +285,180 @@ public class DashboardViewController {
 
         if (administrador) {
             rightPanel.getChildren().add(crearPanelResumenAdmin());
-            rightPanel.getChildren().add(panelInfo(
+
+            VBox informacion = panelInfo(
                     "Centro de administración",
-                    "Gestiona el catálogo, las salas, la programación, los usuarios y la operación del cine."));
+                    "Gestiona el catálogo, las salas, la programación, los usuarios y la operación del cine.");
+            informacion.getStyleClass().add("side-card-bottom");
+            informacion.setMaxHeight(Double.MAX_VALUE);
+            informacion.setAlignment(Pos.CENTER_LEFT);
+            rightPanel.getChildren().add(informacion);
+            VBox.setVgrow(informacion, Priority.ALWAYS);
         } else {
             rightPanel.getChildren().add(crearPanelPuntos());
             rightPanel.getChildren().add(crearPanelTarjetaVirtual());
-            rightPanel.getChildren().add(panelInfo(
-                    "Tu experiencia",
-                    "Consulta tus entradas, guarda películas y administra tus reseñas desde el menú."));
+
+            // Única tarjeta adicional: actividad reciente del cliente.
+            rightPanel.getChildren().add(crearPanelActividadReciente());
         }
+
+        animarEntradaEscalonada(rightPanel.getChildren());
+        instalarAnimacionesRecursivas(rightPanel);
+    }
+
+    /** Muestra la siguiente entrada comprada que todavía corresponde a una función futura. */
+    private VBox crearPanelProximaFuncion() {
+        VBox card = tarjetaLateral("Tu próxima función", "🎟");
+        if (!(usuario instanceof Cliente cliente)) return card;
+
+        LocalDateTime ahora = LocalDateTime.now();
+        Optional<Entrada> proxima = operaciones.consultarEntradas(cliente).stream()
+                .filter(e -> e.getEstado() != null && e.getEstado().name().equals("EMITIDA"))
+                .filter(e -> e.getFuncion().getFechaHora().isAfter(ahora))
+                .min(Comparator.comparing(e -> e.getFuncion().getFechaHora()));
+
+        if (proxima.isEmpty()) {
+            Label vacio = new Label("Aún no tienes funciones futuras compradas.");
+            vacio.getStyleClass().add("muted-small");
+            vacio.setWrapText(true);
+            Button ir = botonLateral("Explorar cartelera", () -> mostrarSeccion("Cartelera", ""));
+            card.getChildren().addAll(vacio, ir);
+            return card;
+        }
+
+        Entrada entrada = proxima.get();
+        Funcion funcion = entrada.getFuncion();
+        Label pelicula = new Label(funcion.getPelicula().getTitulo());
+        pelicula.getStyleClass().add("side-feature-title");
+        Label fecha = new Label(funcion.getFechaHora().format(
+                DateTimeFormatter.ofPattern("EEE d MMM · h:mm a", new Locale("es", "CO"))));
+        fecha.getStyleClass().add("muted-small");
+        Label datos = new Label(funcion.getSala().getNombre() + " · Asiento "
+                + entrada.getAsiento().obtenerIdentificador());
+        datos.getStyleClass().add("muted-small");
+        datos.setWrapText(true);
+        card.getChildren().addAll(pelicula, fecha, datos,
+                botonLateral("Ver mis entradas", () -> mostrarSeccion("Mis entradas", "")));
+        return card;
+    }
+
+    /** Resume la compra más reciente registrada para el cliente. */
+    private VBox crearPanelActividadReciente() {
+        VBox card = tarjetaLateral("Actividad reciente", "↻");
+        if (!(usuario instanceof Cliente cliente)) return card;
+
+        Optional<Compra> reciente = operaciones.consultarCompras(cliente).stream()
+                .max(Comparator.comparing(Compra::getFecha));
+        if (reciente.isEmpty()) {
+            Label vacio = new Label("Tus compras aparecerán aquí cuando realices la primera.");
+            vacio.getStyleClass().add("muted-small");
+            vacio.setWrapText(true);
+            card.getChildren().addAll(vacio,
+                    botonLateral("Ir a confitería", () -> mostrarSeccion("Confitería", "")));
+            return card;
+        }
+
+        Compra compra = reciente.get();
+        Label codigo = new Label("Compra " + compra.getCodigo());
+        codigo.getStyleClass().add("side-feature-title");
+        Label fecha = new Label(compra.getFecha().format(
+                DateTimeFormatter.ofPattern("d MMM yyyy · h:mm a", new Locale("es", "CO"))));
+        fecha.getStyleClass().add("muted-small");
+        Label total = new Label("Total: " + java.text.NumberFormat
+                .getCurrencyInstance(new Locale("es", "CO")).format(compra.getTotal()));
+        total.getStyleClass().add("side-feature-value");
+        Label estado = new Label("Estado: " + compra.consultarNombreEstado());
+        estado.getStyleClass().add("muted-small");
+        card.getChildren().addAll(codigo, fecha, total, estado,
+                botonLateral("Ver mis compras", () -> mostrarSeccion("Mis compras", "")));
+        return card;
+    }
+
+    /** Recomienda una película activa que no aparezca en las entradas ya adquiridas. */
+    private VBox crearPanelRecomendacion() {
+        VBox card = tarjetaLateral("Recomendación", "✦");
+        if (!(usuario instanceof Cliente cliente)) return card;
+
+        Set<String> peliculasCompradas = operaciones.consultarEntradas(cliente).stream()
+                .map(e -> e.getFuncion().getPelicula().getCodigo())
+                .collect(Collectors.toSet());
+        Optional<Pelicula> recomendada = dashboardController.consultarPeliculasDestacadas()
+                .stream()
+                .filter(Pelicula::estaActiva)
+                .filter(p -> !peliculasCompradas.contains(p.getCodigo()))
+                .findFirst();
+
+        if (recomendada.isEmpty()) {
+            Label texto = new Label("Ya has explorado nuestras películas destacadas. ¡Revisa la cartelera!");
+            texto.getStyleClass().add("muted-small");
+            texto.setWrapText(true);
+            card.getChildren().addAll(texto,
+                    botonLateral("Ver cartelera", () -> mostrarSeccion("Cartelera", "")));
+            return card;
+        }
+
+        Pelicula pelicula = recomendada.get();
+        Label titulo = new Label(pelicula.getTitulo());
+        titulo.getStyleClass().add("side-feature-title");
+        Label detalle = new Label(pelicula.getGenero() + " · "
+                + pelicula.getDuracionMinutos() + " min");
+        detalle.getStyleClass().add("muted-small");
+        detalle.setWrapText(true);
+        card.getChildren().addAll(titulo, detalle,
+                botonLateral("Descubrir película", () -> mostrarSeccion("Cartelera", pelicula.getTitulo())));
+        return card;
+    }
+
+    /** Alertas reales de inventario para el perfil administrativo. */
+    private VBox crearPanelAlertasAdmin() {
+        VBox card = tarjetaLateral("Alertas operativas", "⚠");
+        List<Producto> porReponer = operaciones.consultarProductosPorReponer();
+        List<Funcion> proximas = dashboardController.consultarProximasFunciones();
+
+        Label inventario = new Label(porReponer.isEmpty()
+                ? "Inventario: sin productos por reponer."
+                : "Inventario: " + porReponer.size() + " producto(s) requieren reposición.");
+        inventario.getStyleClass().add(porReponer.isEmpty()
+                ? "muted-small" : "side-alert-text");
+        inventario.setWrapText(true);
+
+        Label funciones = new Label("Funciones próximas: " + proximas.size()
+                + " en los próximos días.");
+        funciones.getStyleClass().add("muted-small");
+        funciones.setWrapText(true);
+
+        card.getChildren().addAll(inventario, funciones,
+                botonLateral("Revisar inventario", () -> mostrarSeccion("Inventario", "")));
+        if (!porReponer.isEmpty()) {
+            Label nombres = new Label(porReponer.stream().limit(3)
+                    .map(Producto::getNombre).collect(Collectors.joining(" · ")));
+            nombres.getStyleClass().add("muted-small");
+            nombres.setWrapText(true);
+            card.getChildren().add(2, nombres);
+        }
+        return card;
+    }
+
+    private VBox tarjetaLateral(String titulo, String icono) {
+        VBox card = new VBox(8);
+        card.getStyleClass().addAll("side-card", "side-live-card");
+        HBox encabezado = new HBox(8);
+        encabezado.setAlignment(Pos.CENTER_LEFT);
+        Label simbolo = new Label(icono);
+        simbolo.getStyleClass().add("side-metric-icon");
+        Label nombre = new Label(titulo);
+        nombre.getStyleClass().add("side-card-title");
+        encabezado.getChildren().addAll(simbolo, nombre);
+        card.getChildren().add(encabezado);
+        return card;
+    }
+
+    private Button botonLateral(String texto, Runnable accion) {
+        Button boton = new Button(texto);
+        boton.getStyleClass().add("side-action-button");
+        boton.setMaxWidth(Double.MAX_VALUE);
+        boton.setOnAction(e -> accion.run());
+        return boton;
     }
 
     private VBox crearTarjetaPerfil() {
@@ -202,6 +481,19 @@ public class DashboardViewController {
         correo.getStyleClass().add("muted-small");
         correo.setWrapText(true);
         card.getChildren().addAll(fila, correo);
+        card.setCursor(javafx.scene.Cursor.HAND);
+        card.setFocusTraversable(true);
+        card.setOnMouseClicked(event -> mostrarSeccion("Mi perfil", ""));
+        card.setOnKeyPressed(event -> {
+            if (event.getCode() == javafx.scene.input.KeyCode.ENTER
+                    || event.getCode() == javafx.scene.input.KeyCode.SPACE) {
+                mostrarSeccion("Mi perfil", "");
+                event.consume();
+            }
+        });
+        card.setAccessibleText("Abrir perfil de " + usuario.getNombre());
+        Tooltip.install(card, new Tooltip("Ver y editar mi perfil"));
+        instalarAnimacionTarjeta(card);
         return card;
     }
 
@@ -312,6 +604,9 @@ public class DashboardViewController {
         }
         rightPanel.getChildren().set(1, crearPanelPuntos());
         rightPanel.getChildren().set(2, crearPanelTarjetaVirtual());
+        if (rightPanel.getChildren().size() > 3) {
+            rightPanel.getChildren().set(3, crearPanelActividadReciente());
+        }
     }
 
     private VBox crearPanelResumenAdmin() {
@@ -372,9 +667,184 @@ public class DashboardViewController {
         }
 
         contentHost.getChildren().setAll(contenido);
+        animarEntrada(contenido, 0, false);
+        instalarAnimacionesRecursivas(contenido);
+        animarTarjetasEscalonadas(contenido);
         contentScroll.setVvalue(0);
         // También sincroniza los indicadores al volver de Cartelera u otra sección.
         actualizarResumenCliente();
+    }
+
+
+    // ------------------------------------------------------------------
+    // ANIMACIONES DEL DASHBOARD
+    // ------------------------------------------------------------------
+
+    /**
+     * Entrada ligera para el contenido de cada sección. La animación se ejecuta
+     * al navegar, sin bloquear eventos ni operaciones del usuario.
+     */
+    private void animarEntrada(Node nodo, long retrasoMs, boolean esTarjeta) {
+        if (nodo == null) return;
+
+        nodo.setOpacity(0);
+        nodo.setTranslateY(esTarjeta ? 11 : 8);
+        if (esTarjeta) {
+            nodo.setScaleX(0.985);
+            nodo.setScaleY(0.985);
+        }
+
+        Runnable reproducir = () -> {
+            FadeTransition aparecer = new FadeTransition(
+                    Duration.millis(esTarjeta ? 260 : 300), nodo);
+            aparecer.setFromValue(0);
+            aparecer.setToValue(1);
+            aparecer.setInterpolator(Interpolator.EASE_OUT);
+
+            TranslateTransition subir = new TranslateTransition(
+                    Duration.millis(esTarjeta ? 310 : 340), nodo);
+            subir.setFromY(esTarjeta ? 11 : 8);
+            subir.setToY(0);
+            subir.setInterpolator(Interpolator.EASE_OUT);
+
+            ParallelTransition entrada = new ParallelTransition(aparecer, subir);
+            if (esTarjeta) {
+                ScaleTransition escala = new ScaleTransition(Duration.millis(300), nodo);
+                escala.setFromX(0.985);
+                escala.setFromY(0.985);
+                escala.setToX(1);
+                escala.setToY(1);
+                escala.setInterpolator(Interpolator.EASE_OUT);
+                entrada.getChildren().add(escala);
+            }
+            entrada.play();
+        };
+
+        if (retrasoMs <= 0) {
+            reproducir.run();
+        } else {
+            PauseTransition pausa = new PauseTransition(Duration.millis(retrasoMs));
+            pausa.setOnFinished(evento -> reproducir.run());
+            pausa.play();
+        }
+    }
+
+    /** Da entrada escalonada a las tarjetas visibles del panel derecho. */
+    private void animarEntradaEscalonada(List<Node> nodos) {
+        int indice = 0;
+        for (Node nodo : nodos) {
+            animarEntrada(nodo, indice * 65L, true);
+            indice++;
+        }
+    }
+
+    /**
+     * Busca tarjetas dentro de cualquier vista: Inicio, Cartelera, Confitería,
+     * compras, entradas, perfil, panel administrativo y módulos auxiliares.
+     */
+    private void animarTarjetasEscalonadas(Node raiz) {
+        List<Node> tarjetas = new java.util.ArrayList<>();
+        recolectarTarjetas(raiz, tarjetas);
+
+        int indice = 0;
+        for (Node tarjeta : tarjetas) {
+            // Limita el retraso total para no hacer esperar al usuario en listas largas.
+            long retraso = Math.min(indice * 42L, 420L);
+            animarEntrada(tarjeta, retraso, true);
+            indice++;
+        }
+    }
+
+    private void recolectarTarjetas(Node nodo, List<Node> resultado) {
+        if (nodo == null) return;
+
+        if (esTarjetaAnimable(nodo)) {
+            resultado.add(nodo);
+        }
+        if (nodo instanceof Parent padre) {
+            for (Node hijo : padre.getChildrenUnmodifiable()) {
+                recolectarTarjetas(hijo, resultado);
+            }
+        }
+    }
+
+    private boolean esTarjetaAnimable(Node nodo) {
+        if (nodo.getStyleClass() == null) return false;
+
+        List<String> clases = nodo.getStyleClass();
+        String[] candidatas = {
+                "hero-banner", "movie-card", "function-card", "quick-access-button",
+                "stat-card", "side-card", "side-metric-card", "side-live-card",
+                "ticket-card", "tickets-summary", "tickets-empty", "catalog-movie-card",
+                "content-card", "empty-state", "reservation-summary",
+                "catalog-metadata-card", "catalog-function-row", "tickets-summary",
+                "profile-identity-card", "profile-data-card", "profile-extra-card",
+                "interactive-card"
+        };
+        for (String clase : candidatas) {
+            if (clases.contains(clase)) return true;
+        }
+        return false;
+    }
+
+    /** Instala efectos sin reemplazar los controladores onAction existentes. */
+    private void instalarAnimacionesRecursivas(Node raiz) {
+        if (raiz == null) return;
+
+        if (raiz instanceof Button boton) {
+            instalarAnimacionBoton(boton);
+        } else if (esTarjetaAnimable(raiz)) {
+            instalarAnimacionTarjeta(raiz);
+        }
+
+        if (raiz instanceof Parent padre) {
+            for (Node hijo : padre.getChildrenUnmodifiable()) {
+                instalarAnimacionesRecursivas(hijo);
+            }
+        }
+    }
+
+    private void instalarAnimacionBoton(Button boton) {
+        if (Boolean.TRUE.equals(boton.getProperties().get("cinemauq-button-animation"))) return;
+        boton.getProperties().put("cinemauq-button-animation", Boolean.TRUE);
+
+        boton.addEventHandler(MouseEvent.MOUSE_ENTERED,
+                evento -> transicionarNodo(boton, 1.025, -1.0, 135));
+        boton.addEventHandler(MouseEvent.MOUSE_EXITED,
+                evento -> transicionarNodo(boton, 1.0, 0, 145));
+        boton.addEventHandler(MouseEvent.MOUSE_PRESSED,
+                evento -> transicionarNodo(boton, 0.975, 1.0, 75));
+        boton.addEventHandler(MouseEvent.MOUSE_RELEASED,
+                evento -> transicionarNodo(boton, boton.isHover() ? 1.025 : 1.0,
+                        boton.isHover() ? -1.0 : 0, 110));
+    }
+
+    private void instalarAnimacionTarjeta(Node tarjeta) {
+        if (Boolean.TRUE.equals(tarjeta.getProperties().get("cinemauq-card-animation"))) return;
+        tarjeta.getProperties().put("cinemauq-card-animation", Boolean.TRUE);
+
+        tarjeta.addEventHandler(MouseEvent.MOUSE_ENTERED,
+                evento -> transicionarNodo(tarjeta, 1.012, -2.2, 170));
+        tarjeta.addEventHandler(MouseEvent.MOUSE_EXITED,
+                evento -> transicionarNodo(tarjeta, 1.0, 0, 190));
+    }
+
+    /** Interrumpe la animación anterior del mismo nodo para evitar vibraciones. */
+    private void transicionarNodo(Node nodo, double escala, double desplazamientoY, int duracionMs) {
+        ParallelTransition anterior = transicionesHover.remove(nodo);
+        if (anterior != null) anterior.stop();
+
+        ScaleTransition cambioEscala = new ScaleTransition(Duration.millis(duracionMs), nodo);
+        cambioEscala.setToX(escala);
+        cambioEscala.setToY(escala);
+
+        TranslateTransition movimiento = new TranslateTransition(
+                Duration.millis(duracionMs), nodo);
+        movimiento.setToY(desplazamientoY);
+
+        ParallelTransition transicion = new ParallelTransition(cambioEscala, movimiento);
+        transicionesHover.put(nodo, transicion);
+        transicion.play();
     }
 
     private Node construirCartelera(String filtro) {

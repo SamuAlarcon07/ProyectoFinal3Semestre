@@ -189,6 +189,9 @@ public class CinemaOperationsController {
                                         String motivo, Administrador administrador) {
         BloqueoSala bloqueo = new BloqueoSala(
                 codigo, sala, tipo, inicio, fin, motivo, administrador);
+        // Valida antes de registrar en cualquiera de los servicios para evitar
+        // que un fallo deje el bloqueo guardado solo en una de las colecciones.
+        funciones.validarBloqueo(bloqueo);
         bloqueos.registrarBloqueo(bloqueo);
         funciones.registrarBloqueo(bloqueo);
         return bloqueo;

@@ -23,6 +23,7 @@ import co.edu.uniquindio.proyectofinal.viewcontroller.RegistroViewController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.image.Image;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
@@ -42,6 +43,8 @@ public class App extends Application {
             "/co/edu/uniquindio/proyectofinal/view/";
     private static final String RUTA_CSS =
             "/co/edu/uniquindio/proyectofinal/css/styles.css";
+    private static final String RUTA_ICONO =
+            "/co/edu/uniquindio/proyectofinal/images/cinemauq-icon.png";
 
     // Servicios principales.
     private final AutenticacionService autenticacionService =
@@ -370,8 +373,38 @@ public class App extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         escenarioPrincipal = stage;
+
+        // Carga el icono de CinemaUQ para la barra de título y la ventana de Windows.
+        configurarIconoAplicacion(stage);
+
         mostrarLogin(null);
         escenarioPrincipal.show();
+    }
+
+    /**
+     * Configura el icono de la aplicación. El recurso se carga desde
+     * src/main/resources/co/edu/uniquindio/proyectofinal/images/.
+     */
+    private void configurarIconoAplicacion(Stage stage) {
+        URL recursoIcono = App.class.getResource(RUTA_ICONO);
+
+        if (recursoIcono == null) {
+            System.err.println("No se encontró el icono de CinemaUQ: " + RUTA_ICONO);
+            return;
+        }
+
+        Image icono = new Image(recursoIcono.toExternalForm());
+
+        if (icono.isError()) {
+            System.err.println("No fue posible cargar el icono de CinemaUQ.");
+            if (icono.getException() != null) {
+                icono.getException().printStackTrace();
+            }
+            return;
+        }
+
+        stage.getIcons().clear();
+        stage.getIcons().add(icono);
     }
 
     public AutenticacionController getAutenticacionController() {
