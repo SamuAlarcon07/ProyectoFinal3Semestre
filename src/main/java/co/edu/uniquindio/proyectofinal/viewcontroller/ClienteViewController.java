@@ -1,3 +1,4 @@
+
 package co.edu.uniquindio.proyectofinal.viewcontroller;
 
 import co.edu.uniquindio.proyectofinal.controller.CinemaOperationsController;
@@ -461,6 +462,7 @@ public class ClienteViewController {
 
         // Tarjeta digital principal.
         VBox tarjetaVisual = new VBox(15);
+        tarjetaVisual.getStyleClass().add("interactive-card");
         tarjetaVisual.setPadding(new Insets(22, 25, 22, 25));
         tarjetaVisual.setMinHeight(205);
         tarjetaVisual.setMaxWidth(Double.MAX_VALUE);
@@ -603,8 +605,7 @@ public class ClienteViewController {
                 movimientosValor.setText(String.valueOf(actualizada.getMovimientos().size()));
                 refrescar(tabla, actualizada.getMovimientos());
                 alActualizarResumen.run();
-                aviso("Recarga realizada correctamente por " + moneda(valor)
-                        + ". El nuevo saldo ya está disponible.");
+                mostrarConfirmacionRecarga(valor, actualizada);
             } catch (RuntimeException ex) {
                 mostrarError(ex);
             }
@@ -684,6 +685,7 @@ public class ClienteViewController {
 
         // Banner superior inspirado en la referencia visual de CinemaUQ.
         HBox banner = new HBox(18);
+        banner.getStyleClass().add("interactive-card");
         banner.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         banner.setPadding(new Insets(20, 24, 20, 24));
         banner.setMinHeight(118);
@@ -749,6 +751,7 @@ public class ClienteViewController {
 
         // Carrito lateral fijo.
         VBox panelCarrito = new VBox(12);
+        panelCarrito.getStyleClass().add("interactive-card");
         panelCarrito.setPadding(new Insets(17));
         panelCarrito.setPrefWidth(330);
         panelCarrito.setMinWidth(310);
@@ -852,6 +855,7 @@ public class ClienteViewController {
                 String archivoImagen = archivoImagenConfiteria(elemento);
 
                 VBox tarjeta = new VBox(9);
+                tarjeta.getStyleClass().add("interactive-card");
                 tarjeta.setPadding(new Insets(12));
                 tarjeta.setPrefWidth(220);
                 tarjeta.setMinWidth(220);
@@ -1286,6 +1290,7 @@ public class ClienteViewController {
                 operaciones.quitarPeliculaGuardada(
                         cliente, seleccionada.getPelicula(), seleccionada.getTipoLista());
                 cargar.run();
+                aviso("La película se retiró de tu lista correctamente.");
             } catch (RuntimeException ex) {
                 mostrarError(ex);
             }
@@ -1539,6 +1544,7 @@ public class ClienteViewController {
 
         // Encabezado de identidad: conserva la paleta y los componentes del tema actual.
         HBox identidad = new HBox(16);
+        identidad.getStyleClass().add("profile-identity-card");
         identidad.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         identidad.setPadding(new Insets(18));
         identidad.setStyle("-fx-background-color: linear-gradient(to right, #172b43, #102238);"
@@ -1563,6 +1569,7 @@ public class ClienteViewController {
         identidad.getChildren().addAll(avatar, identidadTexto);
 
         VBox datosCard = new VBox(14);
+        datosCard.getStyleClass().add("profile-data-card");
         datosCard.setPadding(new Insets(18));
         datosCard.setStyle("-fx-background-color: #0e2033; -fx-border-color: #294765;"
                 + "-fx-border-radius: 14; -fx-background-radius: 14;");
@@ -1614,8 +1621,7 @@ public class ClienteViewController {
         Runnable modoEdicion = () -> {
             nombre.setEditable(true);
             correo.setEditable(true);
-            nombre.setStyle("-fx-control-inner-background: #ffffff; -fx-background-radius: 6;");
-            correo.setStyle("-fx-control-inner-background: #ffffff; -fx-background-radius: 6;");
+            // Los campos conservan el tema oscuro también durante la edición.
             editar.setVisible(false); editar.setManaged(false);
             guardar.setVisible(true); guardar.setManaged(true);
             cancelar.setVisible(true); cancelar.setManaged(true);
@@ -1675,9 +1681,9 @@ public class ClienteViewController {
     }
 
     private void configurarCampoPerfil(TextField campo) {
-        campo.setPrefHeight(34);
-        campo.setStyle("-fx-background-radius: 6; -fx-border-radius: 6; -fx-border-color: #36516d;"
-                + "-fx-font-size: 12px; -fx-padding: 6 9;");
+        campo.setPrefHeight(38);
+        campo.setMaxWidth(Double.MAX_VALUE);
+        campo.getStyleClass().add("profile-input");
     }
 
     private void agregarFilaPerfil(GridPane grid, int fila, String etiqueta, TextField campo) {
@@ -1696,14 +1702,93 @@ public class ClienteViewController {
     }
 
     private Node vistaNotificaciones() {
-        VBox root = pagina("Notificaciones", "Mensajes y avisos asociados a tus compras.");
-        ListView<String> lista = new ListView<>(
-                FXCollections.observableArrayList(operaciones.consultarNotificaciones(cliente)));
-        lista.setPrefHeight(520);
-        if (lista.getItems().isEmpty()) {
-            lista.getItems().add("Todavía no tienes notificaciones.");
+        VBox root = pagina("Notificaciones",
+                "Mantente al tanto de las novedades y movimientos de tu cuenta.");
+        root.setSpacing(14);
+
+        List<String> mensajes = new ArrayList<>(
+                operaciones.consultarNotificaciones(cliente));
+
+        // Mensaje inicial de bienvenida mostrado siempre en la bandeja del cliente.
+        VBox bienvenida = new VBox(9);
+        bienvenida.setPadding(new Insets(17));
+        bienvenida.setStyle(
+                "-fx-background-color: linear-gradient(to right, #142f4b, #1b2940);"
+                        + "-fx-background-radius: 14; -fx-border-color: #d9a928;"
+                        + "-fx-border-radius: 14; -fx-border-width: 1.1;");
+
+        HBox bienvenidaCabecera = new HBox(9);
+        bienvenidaCabecera.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        Label iconoBienvenida = new Label("✦");
+        iconoBienvenida.setStyle("-fx-text-fill: #ffd04a; -fx-font-size: 22px; -fx-font-weight: bold;");
+        Label tituloBienvenida = new Label("¡Bienvenido a CinemaUQ!");
+        tituloBienvenida.setStyle("-fx-text-fill: white; -fx-font-size: 15px; -fx-font-weight: bold;");
+        Region espacioBienvenida = new Region();
+        HBox.setHgrow(espacioBienvenida, Priority.ALWAYS);
+        Label etiquetaNueva = new Label("BIENVENIDA");
+        etiquetaNueva.setStyle("-fx-text-fill: #172338; -fx-background-color: #f5bd32;"
+                + "-fx-background-radius: 10; -fx-padding: 4 8; -fx-font-size: 9px; -fx-font-weight: bold;");
+        bienvenidaCabecera.getChildren().addAll(
+                iconoBienvenida, tituloBienvenida, espacioBienvenida, etiquetaNueva);
+
+        Label textoBienvenida = new Label(
+                "Nos alegra tenerte aquí. Explora nuestra cartelera, descubre los próximos estrenos "
+                        + "y disfruta de una experiencia de cine hecha para ti.");
+        textoBienvenida.setWrapText(true);
+        textoBienvenida.setStyle("-fx-text-fill: #d1deeb; -fx-font-size: 12px;");
+
+        Label fechaBienvenida = new Label(
+                java.time.LocalDate.now().format(
+                        java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        fechaBienvenida.setStyle("-fx-text-fill: #91a9bf; -fx-font-size: 10px;");
+        bienvenida.getChildren().addAll(bienvenidaCabecera, textoBienvenida, fechaBienvenida);
+
+        VBox lista = new VBox(10);
+        lista.setFillWidth(true);
+
+        if (mensajes.isEmpty()) {
+            VBox vacio = new VBox(7);
+            vacio.setPadding(new Insets(16));
+            vacio.setStyle("-fx-background-color: #0d2035; -fx-background-radius: 12;"
+                    + "-fx-border-color: #29445f; -fx-border-radius: 12;");
+            Label tituloVacio = new Label("Todo está al día");
+            tituloVacio.setStyle("-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold;");
+            Label detalleVacio = new Label(
+                    "Cuando realices compras o recibas avisos, aparecerán aquí.");
+            detalleVacio.setWrapText(true);
+            detalleVacio.setStyle("-fx-text-fill: #9fb3c9; -fx-font-size: 11px;");
+            vacio.getChildren().addAll(tituloVacio, detalleVacio);
+            lista.getChildren().add(vacio);
+        } else {
+            for (String mensaje : mensajes) {
+                VBox tarjeta = new VBox(7);
+                tarjeta.setPadding(new Insets(14, 16, 14, 16));
+                tarjeta.setStyle("-fx-background-color: #0d2035; -fx-background-radius: 12;"
+                        + "-fx-border-color: #29445f; -fx-border-radius: 12;");
+
+                HBox encabezado = new HBox(8);
+                encabezado.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                Label icono = new Label("●");
+                icono.setStyle("-fx-text-fill: #f5bd32; -fx-font-size: 10px;");
+                Label titulo = new Label("Aviso de CinemaUQ");
+                titulo.setStyle("-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;");
+                Region espacio = new Region();
+                HBox.setHgrow(espacio, Priority.ALWAYS);
+                Label estado = new Label("NOTIFICACIÓN");
+                estado.setStyle("-fx-text-fill: #f5c242; -fx-font-size: 9px; -fx-font-weight: bold;");
+                encabezado.getChildren().addAll(icono, titulo, espacio, estado);
+
+                Label contenido = new Label(mensaje);
+                contenido.setWrapText(true);
+                contenido.setStyle("-fx-text-fill: #c4d3e0; -fx-font-size: 11px;");
+                tarjeta.getChildren().addAll(encabezado, contenido);
+                lista.getChildren().add(tarjeta);
+            }
         }
-        root.getChildren().add(lista);
+
+        Label subtitulo = new Label("CENTRO DE NOTIFICACIONES");
+        subtitulo.setStyle("-fx-text-fill: #f5c242; -fx-font-size: 10px; -fx-font-weight: bold;");
+        root.getChildren().addAll(bienvenida, subtitulo, lista);
         return root;
     }
 
@@ -1853,22 +1938,428 @@ public class ClienteViewController {
         combo.setMaxWidth(Double.MAX_VALUE);
     }
 
-    private void aviso(String mensaje) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        if (owner != null) alert.initOwner(owner);
-        alert.setTitle("CinemaUQ");
-        alert.setHeaderText(null);
-        alert.setContentText(mensaje);
-        alert.showAndWait();
+    /**
+     * Diálogo personalizado de confirmación para recargas de la tarjeta virtual.
+     * Mantiene la estética azul noche y dorada de CinemaUQ.
+     */
+    private void mostrarConfirmacionRecarga(BigDecimal valor, TarjetaVirtual tarjetaActualizada) {
+        Dialog<Void> dialogo = new Dialog<>();
+        if (owner != null) {
+            dialogo.initOwner(owner);
+        }
+
+        dialogo.setTitle("CinemaUQ · Recarga exitosa");
+        dialogo.setHeaderText(null);
+        dialogo.getDialogPane().getButtonTypes().add(ButtonType.OK);
+
+        DialogPane panel = dialogo.getDialogPane();
+        panel.setStyle(
+                "-fx-background-color: #071629;"
+                        + "-fx-border-color: #34516e;"
+                        + "-fx-border-width: 1;"
+        );
+        panel.setMinWidth(440);
+        panel.setPrefWidth(460);
+
+        Button cerrar = (Button) panel.lookupButton(ButtonType.OK);
+        cerrar.setText("Continuar");
+        cerrar.setStyle(
+                "-fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);"
+                        + "-fx-background-radius: 8;"
+                        + "-fx-text-fill: #101827;"
+                        + "-fx-font-size: 12px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-padding: 9 25;"
+                        + "-fx-cursor: hand;"
+        );
+
+        VBox contenido = new VBox(13);
+        contenido.setAlignment(javafx.geometry.Pos.CENTER);
+        contenido.setPadding(new Insets(25, 28, 22, 28));
+        contenido.setStyle(
+                "-fx-background-color: linear-gradient(to bottom, #10243a, #0a192b);"
+                        + "-fx-background-radius: 12;"
+        );
+
+        StackPane iconoContenedor = new StackPane();
+        iconoContenedor.setMinSize(62, 62);
+        iconoContenedor.setPrefSize(62, 62);
+        iconoContenedor.setMaxSize(62, 62);
+        iconoContenedor.setStyle(
+                "-fx-background-color: rgba(63, 190, 139, 0.15);"
+                        + "-fx-background-radius: 40;"
+                        + "-fx-border-color: #3a9b78;"
+                        + "-fx-border-radius: 40;"
+                        + "-fx-border-width: 1.2;"
+        );
+
+        Label icono = new Label("✓");
+        icono.setStyle(
+                "-fx-text-fill: #78e0b5;"
+                        + "-fx-font-size: 33px;"
+                        + "-fx-font-weight: bold;"
+        );
+        iconoContenedor.getChildren().add(icono);
+
+        Label titulo = new Label("¡Recarga realizada!");
+        titulo.setStyle(
+                "-fx-text-fill: #f5f7fb;"
+                        + "-fx-font-size: 21px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label subtitulo = new Label("El dinero ya está disponible en tu tarjeta virtual.");
+        subtitulo.setWrapText(true);
+        subtitulo.setMaxWidth(350);
+        subtitulo.setAlignment(javafx.geometry.Pos.CENTER);
+        subtitulo.setStyle(
+                "-fx-text-fill: #aebfd1;"
+                        + "-fx-font-size: 11px;"
+        );
+
+        VBox detalleRecarga = new VBox(6);
+        detalleRecarga.setAlignment(javafx.geometry.Pos.CENTER);
+        detalleRecarga.setMaxWidth(Double.MAX_VALUE);
+        detalleRecarga.setPadding(new Insets(15, 18, 15, 18));
+        detalleRecarga.setStyle(
+                "-fx-background-color: #142b44;"
+                        + "-fx-background-radius: 11;"
+                        + "-fx-border-color: #385675;"
+                        + "-fx-border-radius: 11;"
+        );
+
+        Label etiquetaImporte = new Label("VALOR RECARGADO");
+        etiquetaImporte.setStyle(
+                "-fx-text-fill: #91a8c0;"
+                        + "-fx-font-size: 9px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label importe = new Label(moneda(valor));
+        importe.setStyle(
+                "-fx-text-fill: #ffd04a;"
+                        + "-fx-font-size: 27px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Separator separador = new Separator();
+        separador.setStyle("-fx-background-color: #2b4662;");
+
+        HBox filaSaldo = new HBox(8);
+        filaSaldo.setAlignment(javafx.geometry.Pos.CENTER);
+        Label etiquetaSaldo = new Label("Nuevo saldo disponible");
+        etiquetaSaldo.setStyle("-fx-text-fill: #c0cddd; -fx-font-size: 11px;");
+        Label nuevoSaldo = new Label(moneda(tarjetaActualizada.getSaldo()));
+        nuevoSaldo.setStyle(
+                "-fx-text-fill: #78e0b5;"
+                        + "-fx-font-size: 13px;"
+                        + "-fx-font-weight: bold;"
+        );
+        filaSaldo.getChildren().addAll(etiquetaSaldo, nuevoSaldo);
+
+        detalleRecarga.getChildren().addAll(
+                etiquetaImporte, importe, separador, filaSaldo
+        );
+
+        Label pie = new Label("CinemaUQ · Tu experiencia, siempre contigo");
+        pie.setStyle(
+                "-fx-text-fill: #7189a2;"
+                        + "-fx-font-size: 9px;"
+        );
+
+        contenido.getChildren().addAll(
+                iconoContenedor, titulo, subtitulo, detalleRecarga, pie
+        );
+        panel.setContent(contenido);
+
+        dialogo.showAndWait();
     }
 
+    /**
+     * Diálogo informativo personalizado. Se utiliza en las validaciones y
+     * confirmaciones de los módulos del cliente para mantener una apariencia
+     * uniforme con CinemaUQ, en lugar de mostrar alertas nativas de JavaFX.
+     */
+    private void aviso(String mensaje) {
+        String texto = mensaje == null || mensaje.isBlank()
+                ? "La operación requiere tu atención."
+                : mensaje.trim();
+        String normalizado = texto.toLowerCase(Locale.ROOT);
+
+        boolean exito = normalizado.contains("agregada")
+                || normalizado.contains("guardada")
+                || normalizado.contains("retirada")
+                || normalizado.contains("actualizada correctamente")
+                || normalizado.contains("realizada correctamente")
+                || normalizado.contains("se ha actualizado")
+                || normalizado.contains("cancelada correctamente")
+                || normalizado.contains("confirmada");
+
+        String titulo = exito ? "¡Todo listo!" : "Un momento";
+        String colorIcono = exito ? "#78E0B5" : "#FFD04A";
+        String fondoIcono = exito
+                ? "rgba(63, 190, 139, 0.15)"
+                : "rgba(238, 177, 45, 0.13)";
+        String bordeIcono = exito ? "#3A9B78" : "#A77A24";
+        String simbolo = exito ? "✓" : "i";
+
+        Dialog<Void> dialogo = new Dialog<>();
+        if (owner != null) {
+            dialogo.initOwner(owner);
+        }
+        dialogo.setTitle("CinemaUQ · " + (exito ? "Confirmación" : "Aviso"));
+        dialogo.setHeaderText(null);
+        dialogo.getDialogPane().getButtonTypes().add(ButtonType.OK);
+
+        DialogPane panel = dialogo.getDialogPane();
+        panel.setMinWidth(420);
+        panel.setPrefWidth(445);
+        panel.setStyle(
+                "-fx-background-color: #071629;"
+                        + "-fx-border-color: #344c67;"
+                        + "-fx-border-width: 1;"
+        );
+
+        Button aceptar = (Button) panel.lookupButton(ButtonType.OK);
+        aceptar.setText("Entendido");
+        aceptar.setStyle(
+                "-fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);"
+                        + "-fx-background-radius: 8;"
+                        + "-fx-text-fill: #101827;"
+                        + "-fx-font-size: 12px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-padding: 9 24;"
+                        + "-fx-cursor: hand;"
+        );
+
+        VBox contenido = new VBox(12);
+        contenido.setAlignment(javafx.geometry.Pos.CENTER);
+        contenido.setPadding(new Insets(22, 25, 20, 25));
+        contenido.setStyle(
+                "-fx-background-color: linear-gradient(to bottom, #10243a, #09192b);"
+                        + "-fx-background-radius: 11;"
+        );
+
+        StackPane iconoContenedor = new StackPane();
+        iconoContenedor.setMinSize(56, 56);
+        iconoContenedor.setPrefSize(56, 56);
+        iconoContenedor.setMaxSize(56, 56);
+        iconoContenedor.setStyle(
+                "-fx-background-color: " + fondoIcono + ";"
+                        + "-fx-border-color: " + bordeIcono + ";"
+                        + "-fx-background-radius: 40;"
+                        + "-fx-border-radius: 40;"
+                        + "-fx-border-width: 1;"
+        );
+
+        Label icono = new Label(simbolo);
+        icono.setStyle(
+                "-fx-text-fill: " + colorIcono + ";"
+                        + "-fx-font-size: " + (exito ? "29px" : "25px") + ";"
+                        + "-fx-font-weight: bold;"
+        );
+        iconoContenedor.getChildren().add(icono);
+
+        Label encabezado = new Label(titulo);
+        encabezado.setStyle(
+                "-fx-text-fill: #F5F7FB;"
+                        + "-fx-font-size: 19px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label descripcion = new Label(texto);
+        descripcion.setWrapText(true);
+        descripcion.setMaxWidth(340);
+        descripcion.setAlignment(javafx.geometry.Pos.CENTER);
+        descripcion.setStyle(
+                "-fx-text-fill: #C2CFDD;"
+                        + "-fx-font-size: 12px;"
+                        + "-fx-line-spacing: 2px;"
+        );
+
+        Label marca = new Label("CINEMAUQ  ·  EXPERIENCIA CINEMATOGRÁFICA");
+        marca.setStyle(
+                "-fx-text-fill: #7189A2;"
+                        + "-fx-font-size: 8px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        contenido.getChildren().addAll(iconoContenedor, encabezado, descripcion, marca);
+        panel.setContent(contenido);
+        dialogo.showAndWait();
+    }
+
+    /**
+     * Muestra errores con el lenguaje visual de CinemaUQ y conserva el mensaje
+     * real de la operación para que el usuario sepa qué debe corregir.
+     */
     private void mostrarError(Throwable ex) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        if (owner != null) alert.initOwner(owner);
-        alert.setTitle("CinemaUQ");
-        alert.setHeaderText("No se pudo completar la operación");
-        alert.setContentText(ex.getMessage() == null ? ex.toString() : ex.getMessage());
-        alert.showAndWait();
+        String detalle = obtenerMensajeError(ex);
+        String detalleNormalizado = detalle.toLowerCase(Locale.ROOT);
+
+        boolean saldoInsuficiente = detalleNormalizado.contains("saldo")
+                && (detalleNormalizado.contains("suficiente")
+                || detalleNormalizado.contains("insuficiente"));
+
+        String titulo = saldoInsuficiente
+                ? "Saldo insuficiente"
+                : "No se pudo completar la operación";
+
+        String explicacion = saldoInsuficiente
+                ? "Tu tarjeta virtual no tiene saldo suficiente para pagar este pedido."
+                : "Ocurrió un inconveniente al procesar tu solicitud.";
+
+        String recomendacion = saldoInsuficiente
+                ? "Puedes recargar tu tarjeta virtual o quitar algunos productos del carrito y volver a intentarlo."
+                : "Revisa la información e inténtalo nuevamente. Si el problema continúa, contacta al administrador.";
+
+        Dialog<Void> dialogo = new Dialog<>();
+        if (owner != null) {
+            dialogo.initOwner(owner);
+        }
+        dialogo.setTitle("CinemaUQ · Aviso");
+        dialogo.getDialogPane().getButtonTypes().add(ButtonType.OK);
+
+        DialogPane panel = dialogo.getDialogPane();
+        panel.setMinWidth(450);
+        panel.setPrefWidth(470);
+        panel.setStyle(
+                "-fx-background-color: #071629;"
+                        + "-fx-border-color: #344c67;"
+                        + "-fx-border-width: 1;"
+        );
+
+        Button aceptar = (Button) panel.lookupButton(ButtonType.OK);
+        aceptar.setText("Entendido");
+        aceptar.setStyle(
+                "-fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);"
+                        + "-fx-background-radius: 8;"
+                        + "-fx-text-fill: #101827;"
+                        + "-fx-font-size: 12px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-padding: 9 24;"
+                        + "-fx-cursor: hand;"
+        );
+
+        VBox contenido = new VBox(13);
+        contenido.setAlignment(javafx.geometry.Pos.CENTER);
+        contenido.setPadding(new Insets(23, 26, 20, 26));
+        contenido.setStyle(
+                "-fx-background-color: linear-gradient(to bottom, #10243a, #09192b);"
+                        + "-fx-background-radius: 11;"
+        );
+
+        StackPane iconoContenedor = new StackPane();
+        iconoContenedor.setMinSize(58, 58);
+        iconoContenedor.setPrefSize(58, 58);
+        iconoContenedor.setMaxSize(58, 58);
+        iconoContenedor.setStyle(
+                saldoInsuficiente
+                        ? "-fx-background-color: rgba(238, 177, 45, 0.13);"
+                          + "-fx-border-color: #a77a24;"
+                          + "-fx-background-radius: 40; -fx-border-radius: 40;"
+                        : "-fx-background-color: rgba(220, 91, 91, 0.13);"
+                          + "-fx-border-color: #a84f56;"
+                          + "-fx-background-radius: 40; -fx-border-radius: 40;"
+        );
+
+        Label icono = new Label(saldoInsuficiente ? "$" : "!");
+        icono.setStyle(
+                (saldoInsuficiente ? "-fx-text-fill: #ffd04a;" : "-fx-text-fill: #ff9292;")
+                        + "-fx-font-size: 29px; -fx-font-weight: bold;"
+        );
+        iconoContenedor.getChildren().add(icono);
+
+        Label encabezado = new Label(titulo);
+        encabezado.setStyle(
+                "-fx-text-fill: #f5f7fb;"
+                        + "-fx-font-size: 20px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label mensaje = new Label(explicacion);
+        mensaje.setWrapText(true);
+        mensaje.setMaxWidth(365);
+        mensaje.setAlignment(javafx.geometry.Pos.CENTER);
+        mensaje.setStyle(
+                "-fx-text-fill: #b9c9d9;"
+                        + "-fx-font-size: 12px;"
+        );
+
+        VBox detalleCard = new VBox(7);
+        detalleCard.setMaxWidth(Double.MAX_VALUE);
+        detalleCard.setPadding(new Insets(13, 15, 13, 15));
+        detalleCard.setStyle(
+                "-fx-background-color: #142b44;"
+                        + "-fx-background-radius: 10;"
+                        + "-fx-border-color: #344f6d;"
+                        + "-fx-border-radius: 10;"
+        );
+
+        Label etiquetaDetalle = new Label("DETALLE");
+        etiquetaDetalle.setStyle(
+                "-fx-text-fill: #e9bb4e;"
+                        + "-fx-font-size: 9px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label textoDetalle = new Label(detalle);
+        textoDetalle.setWrapText(true);
+        textoDetalle.setMaxWidth(Double.MAX_VALUE);
+        textoDetalle.setStyle(
+                "-fx-text-fill: #e1e9f2;"
+                        + "-fx-font-size: 11px;"
+        );
+        detalleCard.getChildren().addAll(etiquetaDetalle, textoDetalle);
+
+        Label sugerencia = new Label(recomendacion);
+        sugerencia.setWrapText(true);
+        sugerencia.setMaxWidth(365);
+        sugerencia.setAlignment(javafx.geometry.Pos.CENTER);
+        sugerencia.setStyle(
+                "-fx-text-fill: #8fa6be;"
+                        + "-fx-font-size: 10px;"
+        );
+
+        Label marca = new Label("CINEMAUQ  ·  EXPERIENCIA CINEMATOGRÁFICA");
+        marca.setStyle(
+                "-fx-text-fill: #647d97;"
+                        + "-fx-font-size: 8px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        contenido.getChildren().addAll(
+                iconoContenedor,
+                encabezado,
+                mensaje,
+                detalleCard,
+                sugerencia,
+                marca
+        );
+
+        panel.setContent(contenido);
+        dialogo.showAndWait();
+    }
+
+    /**
+     * Recupera el mensaje más útil de la excepción, incluyendo su causa
+     * cuando la excepción principal no trae una descripción.
+     */
+    private String obtenerMensajeError(Throwable ex) {
+        if (ex == null) {
+            return "Se produjo un error inesperado.";
+        }
+
+        Throwable actual = ex;
+        while (actual != null) {
+            String mensaje = actual.getMessage();
+            if (mensaje != null && !mensaje.isBlank()) {
+                return mensaje.trim();
+            }
+            actual = actual.getCause();
+        }
+
+        return "Se produjo un error inesperado. Inténtalo nuevamente.";
     }
 
     private String moneda(BigDecimal valor) {
@@ -1921,3 +2412,4 @@ public class ClienteViewController {
     }
 
 }
+

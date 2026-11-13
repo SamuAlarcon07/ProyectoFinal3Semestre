@@ -5,6 +5,8 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
@@ -22,10 +24,17 @@
                 <Insets top="52" right="48" bottom="52" left="58"/>
             </padding>
 
-            <VBox spacing="2">
-                <Label text="CINEMA" styleClass="brand-title"/>
-                <Label text="UQ" styleClass="brand-mark"/>
-            </VBox>
+            <!-- Logo oficial de CinemaUQ -->
+            <ImageView fitWidth="300.0"
+                       fitHeight="116.0"
+                       preserveRatio="true"
+                       smooth="true"
+                       pickOnBounds="true"
+                       styleClass="brand-logo">
+                <image>
+                    <Image url="@../images/Logo.png"/>
+                </image>
+            </ImageView>
 
             <VBox spacing="10">
                 <Label text="El cine se vive" styleClass="hero-title"/>
