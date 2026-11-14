@@ -4,6 +4,7 @@ import co.edu.uniquindio.proyectofinal.controller.CinemaOperationsController;
 import co.edu.uniquindio.proyectofinal.model.enums.*;
 import co.edu.uniquindio.proyectofinal.model.interfaces.ElementoConfiteria;
 import co.edu.uniquindio.proyectofinal.model.principal.*;
+import co.edu.uniquindio.proyectofinal.model.util.FechaHoraUtil;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -291,7 +292,7 @@ public class GestionAdminViewController {
                 columna("Código", Funcion::getCodigo),
                 columna("Película", f -> f.getPelicula().getTitulo()),
                 columna("Sala", f -> f.getSala().getNombre()),
-                columna("Fecha", f -> f.getFechaHora().toString().replace('T', ' ')),
+                columna("Fecha", f -> FechaHoraUtil.formatear(f.getFechaHora())),
                 columna("Formato", f -> f.getFormatoProyeccion().name()),
                 columna("Precio", f -> moneda(f.getPrecioBase())),
                 columna("Estado", f -> f.getEstado().name())
@@ -403,8 +404,8 @@ public class GestionAdminViewController {
                 columna("Código", BloqueoSala::getCodigo),
                 columna("Sala", b -> b.getSala().getNombre()),
                 columna("Tipo", b -> b.getTipoBloqueo().name()),
-                columna("Desde", b -> b.getFechaInicio().toString()),
-                columna("Hasta", b -> b.getFechaFin().toString()),
+                columna("Desde", b -> FechaHoraUtil.formatear(b.getFechaInicio())),
+                columna("Hasta", b -> FechaHoraUtil.formatear(b.getFechaFin())),
                 columna("Estado", b -> b.getEstado().name())
         );
         Button nuevo = boton("＋ Nuevo bloqueo", "button-gold");
@@ -881,7 +882,7 @@ public class GestionAdminViewController {
 
         TableView<RegistroAcceso> tabla = tabla();
         tabla.getColumns().addAll(
-                columna("Fecha", r -> r.getFechaHora().toString()),
+                columna("Fecha", r -> FechaHoraUtil.formatear(r.getFechaHora())),
                 columna("Entrada", r -> r.getEntrada().getCodigo()),
                 columna("QR", r -> r.getEntrada().getCodigoQR()),
                 columna("Resultado", r -> r.getResultado().name()),
@@ -930,7 +931,7 @@ public class GestionAdminViewController {
         ComboBox<Funcion> funcion = new ComboBox<>(
                 FXCollections.observableArrayList(funcionesDisponibles));
         configurarCombo(funcion, f -> f.getPelicula().getTitulo()
-                + " · " + f.getFechaHora().toString().replace('T', ' ')
+                + " · " + FechaHoraUtil.formatear(f.getFechaHora())
                 + " · " + f.getSala().getNombre());
         if (!funcionesDisponibles.isEmpty()) {
             funcion.getSelectionModel().selectFirst();
@@ -942,10 +943,10 @@ public class GestionAdminViewController {
                 columna("Cliente", s -> s.getCliente().getNombre()),
                 columna("Identificación", s -> s.getCliente().getId()),
                 columna("Asientos", s -> String.valueOf(s.getCantidadAsientos())),
-                columna("Solicitud", s -> s.getFechaSolicitud().toString()),
+                columna("Solicitud", s -> FechaHoraUtil.formatear(s.getFechaSolicitud())),
                 columna("Estado", s -> s.getEstado().name()),
                 columna("Oferta expira", s -> s.getFechaExpiracionOferta() == null
-                        ? "—" : s.getFechaExpiracionOferta().toString())
+                        ? "—" : FechaHoraUtil.formatear(s.getFechaExpiracionOferta()))
         );
 
         Button consultar = boton("Consultar", "button-small-outline");
@@ -965,7 +966,7 @@ public class GestionAdminViewController {
             if (f == null) { aviso("Selecciona una función."); return; }
             Optional<String> n = solicitarTexto(
                     "Notificar lista de espera",
-                    f.getPelicula().getTitulo() + " · " + f.getFechaHora().toString().replace('T', ' '),
+                    f.getPelicula().getTitulo() + " · " + FechaHoraUtil.formatear(f.getFechaHora()),
                     "Cantidad de asientos liberados:",
                     "2"
             );

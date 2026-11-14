@@ -7,6 +7,7 @@ import co.edu.uniquindio.proyectofinal.model.enums.TipoListaPelicula;
 import co.edu.uniquindio.proyectofinal.model.interfaces.ElementoConfiteria;
 import co.edu.uniquindio.proyectofinal.model.principal.*;
 import co.edu.uniquindio.proyectofinal.model.util.QrCodeGenerator;
+import co.edu.uniquindio.proyectofinal.model.util.FechaHoraUtil;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -160,7 +161,7 @@ public class ClienteViewController {
         detalles.getStyleClass().add("ticket-details");
         detalles.getChildren().addAll(
                 detalleEntrada("◷", "FECHA Y HORA",
-                        entrada.getFuncion().getFechaHora().toString().replace('T', ' ')),
+                        FechaHoraUtil.formatear(entrada.getFuncion().getFechaHora())),
                 detalleEntrada("▣", "SALA",
                         entrada.getFuncion().getSala().getNombre()),
                 detalleEntrada("⌖", "ASIENTO",
@@ -241,7 +242,7 @@ public class ClienteViewController {
         Label pelicula = new Label(entrada.getFuncion().getPelicula().getTitulo());
         pelicula.setStyle("-fx-text-fill: white; -fx-font-size: 15px; -fx-font-weight: bold;");
         Label funcion = new Label("Función: "
-                + entrada.getFuncion().getFechaHora().toString().replace('T', ' '));
+                + FechaHoraUtil.formatear(entrada.getFuncion().getFechaHora()));
         funcion.setStyle("-fx-text-fill: #c4d3e0; -fx-font-size: 11px;");
         Label asiento = new Label("Asiento: " + entrada.getAsiento().obtenerIdentificador());
         asiento.setStyle("-fx-text-fill: #c4d3e0; -fx-font-size: 11px;");
@@ -287,7 +288,7 @@ public class ClienteViewController {
         tabla.setPrefHeight(430);
         tabla.getColumns().addAll(
                 columna("Código", Compra::getCodigo),
-                columna("Fecha", c -> c.getFecha().toString().replace('T', ' ')),
+                columna("Fecha", c -> FechaHoraUtil.formatear(c.getFecha())),
                 columna("Artículos", c -> String.valueOf(c.getDetalles().size())),
                 columna("Subtotal", c -> moneda(c.calcularSubtotal())),
                 columna("Descuentos", c -> moneda(c.getDescuentos())),
@@ -588,7 +589,7 @@ public class ClienteViewController {
 
         TableView<MovimientoTarjeta> tabla = tabla();
         tabla.getColumns().addAll(
-                columna("Fecha", m -> m.getFecha().toString().replace('T', ' ')),
+                columna("Fecha", m -> FechaHoraUtil.formatear(m.getFecha())),
                 columna("Tipo", m -> m.getTipo().name()),
                 columna("Valor", m -> {
                     boolean esPago = m.getTipo().name().equalsIgnoreCase("PAGO");
@@ -1088,7 +1089,7 @@ public class ClienteViewController {
                 columna("Código", SolicitudEspera::getCodigo),
                 columna("Asientos", s -> String.valueOf(s.getCantidadAsientos())),
                 columna("Estado", s -> s.getEstado().name()),
-                columna("Vence oferta", s -> s.getFechaExpiracionOferta() == null ? "—" : s.getFechaExpiracionOferta().toString())
+                columna("Vence oferta", s -> s.getFechaExpiracionOferta() == null ? "—" : FechaHoraUtil.formatear(s.getFechaExpiracionOferta()))
         );
         Runnable cargar = () -> refrescar(tabla, operaciones.consultarSolicitudesEspera(cliente));
         Button cancelar = boton("Cancelar solicitud", "button-small-outline");
@@ -1195,7 +1196,7 @@ public class ClienteViewController {
         tabla.setPrefHeight(390);
         tabla.setPlaceholder(new Label("Todavía no tienes movimientos de puntos."));
         tabla.getColumns().addAll(
-                columna("Fecha", m -> m.getFecha().toString().replace('T', ' ')),
+                columna("Fecha", m -> FechaHoraUtil.formatear(m.getFecha())),
                 columna("Movimiento", m -> m.getTipo().name().replace('_', ' ')),
                 columna("Cantidad", m -> {
                     String tipo = m.getTipo().name().toUpperCase(Locale.ROOT);
@@ -1262,7 +1263,7 @@ public class ClienteViewController {
                 columnaPelicula,
                 columna("Género", p -> p.getPelicula().getGenero()),
                 columna("Lista", p -> p.getTipoLista().name()),
-                columna("Agregada", p -> p.getFechaAgregada().toString())
+                columna("Agregada", p -> FechaHoraUtil.formatear(p.getFechaAgregada()))
         );
 
         Runnable cargar = () -> refrescar(
@@ -1494,7 +1495,7 @@ public class ClienteViewController {
                 VBox datosAutor = new VBox(3);
                 Label autor = new Label(resena.getCliente().getNombre());
                 autor.setStyle("-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;");
-                Label fecha = new Label(resena.getFechaPublicacion().toString().replace('T', ' '));
+                Label fecha = new Label(FechaHoraUtil.formatear(resena.getFechaPublicacion()));
                 fecha.setStyle("-fx-text-fill: #8fa6bd; -fx-font-size: 10px;");
                 datosAutor.getChildren().addAll(autor, fecha);
 
