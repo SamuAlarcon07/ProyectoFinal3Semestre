@@ -17,6 +17,7 @@ import javafx.scene.layout.*;
 import javafx.stage.Window;
 
 import java.math.BigDecimal;
+import java.net.URL;
 import java.util.*;
 import java.util.function.Function;
 
@@ -201,6 +202,7 @@ public class ClienteViewController {
      */
     private void mostrarCodigoQR(Entrada entrada) {
         Dialog<Void> dialogo = new Dialog<>();
+        configurarDialogoCinemaUQ(dialogo);
         dialogo.setTitle("Entrada digital · CinemaUQ");
         if (owner != null) dialogo.initOwner(owner);
         dialogo.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
@@ -332,6 +334,7 @@ public class ClienteViewController {
             }
 
             Dialog<Void> dialogo = new Dialog<>();
+            configurarDialogoCinemaUQ(dialogo);
             if (owner != null) dialogo.initOwner(owner);
             dialogo.setTitle("Detalle de compra · CinemaUQ");
             dialogo.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
@@ -401,12 +404,14 @@ public class ClienteViewController {
                 return;
             }
 
-            TextInputDialog motivo = new TextInputDialog("No podré asistir a la función");
-            motivo.setTitle("Solicitud de cancelación");
-            motivo.setHeaderText("Compra " + compra.getCodigo());
-            motivo.setContentText("Motivo:");
-            if (owner != null) motivo.initOwner(owner);
-            motivo.showAndWait().ifPresent(texto -> {
+            Optional<String> motivo = solicitarTextoCinemaUQ(
+                    "Solicitud de cancelación",
+                    "Compra " + compra.getCodigo(),
+                    "Cuéntanos el motivo de la cancelación.",
+                    "No podré asistir a la función",
+                    "Escribe tu motivo"
+            );
+            motivo.ifPresent(texto -> {
                 try {
                     Cancelacion solicitud = operaciones.solicitarCancelacion(compra, texto);
                     if (solicitud.getEstado() == EstadoCancelacion.APROBADA) {
@@ -619,12 +624,14 @@ public class ClienteViewController {
         recarga50.setOnAction(e -> ejecutarRecarga.accept(new BigDecimal("50000")));
         Button otraRecarga = boton("Otro valor", "button-small-outline");
         otraRecarga.setOnAction(e -> {
-            TextInputDialog entrada = new TextInputDialog("30000");
-            entrada.setTitle("Recargar tarjeta virtual");
-            entrada.setHeaderText("Ingresa el valor que deseas agregar");
-            entrada.setContentText("Valor en pesos colombianos (COP):");
-            if (owner != null) entrada.initOwner(owner);
-            entrada.showAndWait().ifPresent(valorTexto -> {
+            Optional<String> entrada = solicitarTextoCinemaUQ(
+                    "Recargar tarjeta virtual",
+                    "Ingresa el valor que deseas agregar.",
+                    "Valor en pesos colombianos (COP):",
+                    "30000",
+                    "Ej. 25000"
+            );
+            entrada.ifPresent(valorTexto -> {
                 try {
                     String limpio = valorTexto.replace("$", "").replace(".", "")
                             .replace(",", "").trim();
@@ -925,6 +932,7 @@ public class ClienteViewController {
      */
     private void mostrarConfirmacionPedido(Compra compra) {
         Dialog<Void> dialogo = new Dialog<>();
+        configurarDialogoCinemaUQ(dialogo);
         if (owner != null) {
             dialogo.initOwner(owner);
         }
@@ -1143,7 +1151,8 @@ public class ClienteViewController {
         hero.getChildren().addAll(heroTexto, espacioHero, puntosHero);
 
         // Indicadores secundarios.
-        BigDecimal valorPuntos = BigDecimal.valueOf(saldo).multiply(new BigDecimal("50"));
+        BigDecimal valorPuntos = BigDecimal.valueOf(saldo)
+                .multiply(operaciones.consultarValorPunto());
         HBox indicadores = new HBox(10);
         indicadores.setAlignment(javafx.geometry.Pos.CENTER);
         indicadores.getChildren().addAll(
@@ -1162,8 +1171,8 @@ public class ClienteViewController {
                 + "-fx-border-color: #294760; -fx-border-radius: 13;");
         Label reglasTitulo = new Label("✦  ¿Cómo funciona tu programa de puntos?");
         reglasTitulo.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;");
-        Label reglaAcumulacion = new Label("•  Acumulas 1 punto por cada $10.000 efectivamente pagados.");
-        Label reglaValor = new Label("•  Cada punto equivale a $50 pesos colombianos.");
+        Label reglaAcumulacion = new Label("•  Acumulas 100 puntos por cada $10.000 efectivamente pagados.");
+        Label reglaValor = new Label("•  Cada 100 puntos equivalen a $1.000 de recompensa.");
         Label reglaRedencion = new Label("•  Puedes redimir puntos hasta por el 50 % del subtotal.");
         for (Label regla : List.of(reglaAcumulacion, reglaValor, reglaRedencion)) {
             regla.setStyle("-fx-text-fill: #b9cadd; -fx-font-size: 11px;");
@@ -1944,6 +1953,7 @@ public class ClienteViewController {
      */
     private void mostrarConfirmacionRecarga(BigDecimal valor, TarjetaVirtual tarjetaActualizada) {
         Dialog<Void> dialogo = new Dialog<>();
+        configurarDialogoCinemaUQ(dialogo);
         if (owner != null) {
             dialogo.initOwner(owner);
         }
@@ -2076,6 +2086,170 @@ public class ClienteViewController {
     }
 
     /**
+     * Aplica el tema CinemaUQ a todas las superficies de un Dialog.
+     * Incluye la escena independiente, el panel, el contenido y la barra inferior,
+     * para evitar que la skin predeterminada de JavaFX deje áreas blancas.
+     */
+    private void configurarDialogoCinemaUQ(Dialog<?> dialogo) {
+        DialogPane panel = dialogo.getDialogPane();
+        panel.getStyleClass().add("cinemauq-client-dialog");
+        panel.setStyle(
+                "-fx-background-color: #071629;"
+                        + "-fx-control-inner-background: #0b1b2d;"
+                        + "-fx-border-color: #344c67;"
+                        + "-fx-border-width: 1;"
+                        + "-fx-padding: 0;"
+        );
+        panel.setBackground(new javafx.scene.layout.Background(
+                new javafx.scene.layout.BackgroundFill(
+                        javafx.scene.paint.Color.web("#071629"),
+                        javafx.scene.layout.CornerRadii.EMPTY,
+                        Insets.EMPTY
+                )
+        ));
+
+        URL hoja = ClienteViewController.class.getResource(
+                "/co/edu/uniquindio/proyectofinal/css/styles.css"
+        );
+        if (hoja != null && !panel.getStylesheets().contains(hoja.toExternalForm())) {
+            panel.getStylesheets().add(hoja.toExternalForm());
+        }
+
+        panel.sceneProperty().addListener((observable, anterior, escena) -> {
+            if (escena == null) return;
+            javafx.application.Platform.runLater(() -> {
+                javafx.scene.Parent raizEscena = escena.getRoot();
+                if (raizEscena instanceof Region regionRaiz) {
+                    regionRaiz.setBackground(new javafx.scene.layout.Background(
+                            new javafx.scene.layout.BackgroundFill(
+                                    javafx.scene.paint.Color.web("#071629"),
+                                    javafx.scene.layout.CornerRadii.EMPTY,
+                                    Insets.EMPTY
+                            )
+                    ));
+                    regionRaiz.setStyle("-fx-background-color: #071629;");
+                }
+
+                panel.setStyle(
+                        "-fx-background-color: #071629;"
+                                + "-fx-control-inner-background: #0b1b2d;"
+                                + "-fx-border-color: #344c67;"
+                                + "-fx-padding: 0;"
+                );
+                panel.applyCss();
+
+                for (String selector : List.of(
+                        ".content", ".header-panel", ".button-bar",
+                        ".container", ".graphic-container"
+                )) {
+                    Node nodo = panel.lookup(selector);
+                    if (nodo instanceof Region region) {
+                        region.setBackground(new javafx.scene.layout.Background(
+                                new javafx.scene.layout.BackgroundFill(
+                                        javafx.scene.paint.Color.web(
+                                                selector.equals(".button-bar")
+                                                        ? "#071629" : "#0b1b2d"
+                                        ),
+                                        javafx.scene.layout.CornerRadii.EMPTY,
+                                        Insets.EMPTY
+                                )
+                        ));
+                        region.setStyle(
+                                "-fx-background-color: "
+                                        + (selector.equals(".button-bar")
+                                        ? "#071629" : "#0b1b2d")
+                                        + ";"
+                        );
+                    }
+                }
+                panel.layout();
+            });
+        });
+    }
+
+    /**
+     * Formulario de texto CinemaUQ para reemplazar TextInputDialog nativos.
+     */
+    private Optional<String> solicitarTextoCinemaUQ(
+            String titulo,
+            String encabezado,
+            String etiqueta,
+            String valorInicial,
+            String prompt
+    ) {
+        Dialog<String> dialogo = new Dialog<>();
+        configurarDialogoCinemaUQ(dialogo);
+        if (owner != null) dialogo.initOwner(owner);
+
+        dialogo.setTitle("CinemaUQ · " + titulo);
+        dialogo.setHeaderText(null);
+
+        ButtonType aceptar = new ButtonType("Continuar", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelar = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialogo.getDialogPane().getButtonTypes().addAll(aceptar, cancelar);
+
+        VBox contenido = new VBox(11);
+        contenido.setPadding(new Insets(20, 23, 17, 23));
+        contenido.setStyle(
+                "-fx-background-color: linear-gradient(to bottom, #10243a, #09192b);"
+        );
+
+        Label tituloLabel = new Label(titulo);
+        tituloLabel.setStyle(
+                "-fx-text-fill: #f5f7fb; -fx-font-size: 18px; -fx-font-weight: bold;"
+        );
+
+        Label detalle = new Label(encabezado == null ? "" : encabezado);
+        detalle.setWrapText(true);
+        detalle.setStyle("-fx-text-fill: #b8c9d9; -fx-font-size: 11px;");
+
+        Label etiquetaLabel = new Label(etiqueta);
+        etiquetaLabel.setStyle(
+                "-fx-text-fill: #e9bb4e; -fx-font-size: 10px; -fx-font-weight: bold;"
+        );
+
+        TextField entrada = new TextField(valorInicial == null ? "" : valorInicial);
+        entrada.setPromptText(prompt);
+        entrada.setMaxWidth(Double.MAX_VALUE);
+        entrada.setStyle(
+                "-fx-background-color: #0b1b2d;"
+                        + "-fx-control-inner-background: #0b1b2d;"
+                        + "-fx-text-fill: #f5f7fb;"
+                        + "-fx-prompt-text-fill: #8198af;"
+                        + "-fx-highlight-fill: #d9a52b;"
+                        + "-fx-background-radius: 8;"
+                        + "-fx-border-color: #35516e;"
+                        + "-fx-border-radius: 8;"
+                        + "-fx-padding: 10 12;"
+        );
+
+        contenido.getChildren().addAll(
+                tituloLabel, detalle, etiquetaLabel, entrada
+        );
+        dialogo.getDialogPane().setContent(contenido);
+
+        Button botonAceptar = (Button) dialogo.getDialogPane().lookupButton(aceptar);
+        botonAceptar.setStyle(
+                "-fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);"
+                        + "-fx-text-fill: #101827; -fx-font-weight: bold;"
+                        + "-fx-background-radius: 8; -fx-padding: 9 20;"
+        );
+        Button botonCancelar = (Button) dialogo.getDialogPane().lookupButton(cancelar);
+        botonCancelar.setStyle(
+                "-fx-background-color: #172d45; -fx-text-fill: #e5edf6;"
+                        + "-fx-border-color: #3b5876; -fx-border-radius: 8;"
+                        + "-fx-background-radius: 8; -fx-padding: 9 20;"
+        );
+
+        dialogo.setResultConverter(tipo ->
+                tipo == aceptar ? entrada.getText().trim() : null
+        );
+        dialogo.setOnShown(evento -> entrada.requestFocus());
+
+        return dialogo.showAndWait();
+    }
+
+    /**
      * Diálogo informativo personalizado. Se utiliza en las validaciones y
      * confirmaciones de los módulos del cliente para mantener una apariencia
      * uniforme con CinemaUQ, en lugar de mostrar alertas nativas de JavaFX.
@@ -2104,6 +2278,7 @@ public class ClienteViewController {
         String simbolo = exito ? "✓" : "i";
 
         Dialog<Void> dialogo = new Dialog<>();
+        configurarDialogoCinemaUQ(dialogo);
         if (owner != null) {
             dialogo.initOwner(owner);
         }
@@ -2214,6 +2389,7 @@ public class ClienteViewController {
                 : "Revisa la información e inténtalo nuevamente. Si el problema continúa, contacta al administrador.";
 
         Dialog<Void> dialogo = new Dialog<>();
+        configurarDialogoCinemaUQ(dialogo);
         if (owner != null) {
             dialogo.initOwner(owner);
         }

@@ -11,6 +11,7 @@ import co.edu.uniquindio.proyectofinal.model.service.AdministracionCatalogoServi
 import co.edu.uniquindio.proyectofinal.model.service.CineService;
 import co.edu.uniquindio.proyectofinal.model.service.FuncionService;
 import co.edu.uniquindio.proyectofinal.model.service.GestionSalasService;
+import co.edu.uniquindio.proyectofinal.model.service.DisponibilidadAsientosService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -37,6 +38,31 @@ public final class DatosInicialesFuncionesCinemaUQ {
     private static final DateTimeFormatter FORMATO_CODIGO_FECHA =
             DateTimeFormatter.BASIC_ISO_DATE;
 
+    /**
+     * Ocupación visual inicial para las diez funciones diarias de demostración.
+     * Los asientos se concentran en grupos contiguos de dos y tres plazas,
+     * como una reserva de pareja o de pequeño grupo, nunca en diagonal.
+     */
+    /**
+     * Patrones de ocupación coherentes para las funciones demo.
+     * Cada función muestra tres grupos contiguos: un grupo de tres
+     * asientos y dos parejas en otras filas. No se distribuyen en diagonal.
+     * El patrón rota por día y horario para que no todas las funciones
+     * tengan exactamente las mismas plazas ocupadas.
+     */
+    private static final List<List<String>> ASIENTOS_OCUPADOS_DEMO = List.of(
+            List.of("B4", "B5", "B6", "E2", "E3", "G8", "G9"),
+            List.of("A2", "A3", "A4", "D6", "D7", "H9", "H10"),
+            List.of("C1", "C2", "C3", "F5", "F6", "G8", "G9"),
+            List.of("B7", "B8", "B9", "D2", "D3", "F4", "F5"),
+            List.of("A6", "A7", "A8", "C3", "C4", "H1", "H2"),
+            List.of("B1", "B2", "B3", "E7", "E8", "G5", "G6"),
+            List.of("C6", "C7", "C8", "E2", "E3", "H9", "H10"),
+            List.of("A3", "A4", "A5", "D8", "D9", "F1", "F2"),
+            List.of("B5", "B6", "B7", "E9", "E10", "G2", "G3"),
+            List.of("C2", "C3", "C4", "F6", "F7", "H4", "H5")
+    );
+
     private DatosInicialesFuncionesCinemaUQ() {
         // Clase de utilidad.
     }
@@ -51,6 +77,19 @@ public final class DatosInicialesFuncionesCinemaUQ {
                                       FuncionService funcionService,
                                       GestionSalasService gestionSalasService,
                                       CineService cineService) {
+        return cargarFunciones(
+                catalogo, funcionService, gestionSalasService, cineService, null);
+    }
+
+    /**
+     * Carga funciones y, cuando se proporciona el servicio de disponibilidad,
+     * marca ocupaciones visuales de demostración para las funciones iniciales.
+     */
+    public static int cargarFunciones(AdministracionCatalogoService catalogo,
+                                      FuncionService funcionService,
+                                      GestionSalasService gestionSalasService,
+                                      CineService cineService,
+                                      DisponibilidadAsientosService disponibilidadService) {
         Objects.requireNonNull(catalogo, "El catálogo es obligatorio.");
         Objects.requireNonNull(funcionService, "El servicio de funciones es obligatorio.");
         Objects.requireNonNull(gestionSalasService, "La gestión de salas es obligatoria.");
@@ -87,21 +126,29 @@ public final class DatosInicialesFuncionesCinemaUQ {
 
                 String codigo = "FUN-DEMO-" + fecha.format(FORMATO_CODIGO_FECHA)
                         + "-" + String.format("%02d", indice + 1);
-                if (funcionService.buscarFuncion(codigo).isPresent()) {
-                    continue;
+
+                Funcion funcion = funcionService.buscarFuncion(codigo).orElse(null);
+                if (funcion == null) {
+                    Pelicula pelicula = peliculas.get(indice);
+                    funcion = new Funcion(
+                            codigo,
+                            pelicula,
+                            horario.sala,
+                            fechaHora,
+                            horario.precio,
+                            horario.formato
+                    );
+                    funcionService.registrarFuncion(funcion);
+                    registradas++;
                 }
 
-                Pelicula pelicula = peliculas.get(indice);
-                Funcion funcion = new Funcion(
-                        codigo,
-                        pelicula,
-                        horario.sala,
-                        fechaHora,
-                        horario.precio,
-                        horario.formato
-                );
-                funcionService.registrarFuncion(funcion);
-                registradas++;
+                // Idempotente: si el cargador se invoca nuevamente, las mismas
+                // plazas permanecen ocupadas sin duplicar registros.
+                if (disponibilidadService != null) {
+                    int patronOcupacion = (indice + dia) % ASIENTOS_OCUPADOS_DEMO.size();
+                    disponibilidadService.marcarAsientosOcupadosDemostracion(
+                            funcion, ASIENTOS_OCUPADOS_DEMO.get(patronOcupacion));
+                }
             }
         }
 

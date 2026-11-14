@@ -477,7 +477,7 @@ public class CinemaOperationsController {
     }
 
     public BigDecimal consultarValorPunto() {
-        return new BigDecimal("50.00");
+        return puntos.consultarValorPunto();
     }
 
     public BigDecimal redimirPuntos(Cliente cliente, Compra compra, int cantidad) {

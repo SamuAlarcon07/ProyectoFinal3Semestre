@@ -13,6 +13,13 @@ public class DisponibilidadAsientosService {
     private final List<ReservaAsiento> reservas = new ArrayList<>();
     private final List<Entrada> entradas = new ArrayList<>();
 
+    /**
+     * Asientos ocupados de demostración, identificados por función y asiento.
+     * No representan compras reales ni generan registros contables; sirven para
+     * mostrar disponibilidad realista en los datos iniciales de la aplicación.
+     */
+    private final Set<String> asientosOcupadosDemostracion = new HashSet<>();
+
     public synchronized List<Asiento> consultarAsientosDisponibles(
             Funcion funcion, LocalDateTime instante) {
         Objects.requireNonNull(funcion, "La función es obligatoria.");
@@ -36,6 +43,10 @@ public class DisponibilidadAsientosService {
             return false;
         }
 
+        if (asientosOcupadosDemostracion.contains(claveAsiento(funcion, asiento))) {
+            return false;
+        }
+
         boolean tieneReserva = reservas.stream().anyMatch(reserva ->
                 reserva.getFuncion().getCodigo().equals(funcion.getCodigo())
                         && mismoAsiento(reserva.getAsiento(), asiento)
@@ -48,6 +59,82 @@ public class DisponibilidadAsientosService {
                         && entrada.getEstado() != EstadoEntrada.ANULADA);
 
         return !tieneReserva && !tieneEntrada;
+    }
+
+    /**
+     * Marca asientos como ocupados en una función de demostración.
+     *
+     * La ocupación es independiente por función: el asiento B4 puede estar
+     * ocupado en una función y disponible en otra sesión de la misma sala.
+     * La operación es idempotente y no crea compras ni entradas ficticias.
+     *
+     * @param funcion función en la que se desea simular ocupación
+     * @param identificadores identificadores como A1, B4 o H10
+     * @return cantidad de ocupaciones nuevas registradas
+     */
+    public synchronized int marcarAsientosOcupadosDemostracion(
+            Funcion funcion,
+            Collection<String> identificadores) {
+        Objects.requireNonNull(funcion, "La función es obligatoria.");
+        Objects.requireNonNull(identificadores,
+                "La lista de asientos ocupados es obligatoria.");
+
+        if (identificadores.isEmpty()) {
+            return 0;
+        }
+
+        Map<String, Asiento> asientosPorMarcar = new LinkedHashMap<>();
+        for (String identificador : identificadores) {
+            if (identificador == null || identificador.isBlank()) {
+                throw new IllegalArgumentException(
+                        "Los identificadores de asiento no pueden estar vacíos.");
+            }
+
+            String normalizado = identificador.trim().toUpperCase(Locale.ROOT);
+            Asiento asiento = funcion.getSala().getAsientos().stream()
+                    .filter(Asiento::isActivo)
+                    .filter(actual -> actual.obtenerIdentificador()
+                            .equalsIgnoreCase(normalizado))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "No existe el asiento " + normalizado
+                                    + " en la sala de la función " + funcion.getCodigo() + "."));
+
+            String clave = claveAsiento(funcion, asiento);
+            if (asientosPorMarcar.putIfAbsent(clave, asiento) != null) {
+                throw new IllegalArgumentException(
+                        "El asiento " + normalizado + " está repetido en la lista.");
+            }
+        }
+
+        int nuevas = 0;
+        LocalDateTime ahora = LocalDateTime.now();
+        for (Map.Entry<String, Asiento> entrada : asientosPorMarcar.entrySet()) {
+            String clave = entrada.getKey();
+
+            if (asientosOcupadosDemostracion.contains(clave)) {
+                continue;
+            }
+
+            // Si una compra o reserva real ya ocupa el asiento, se respeta
+            // ese estado y no se duplica como ocupación de demostración.
+            if (!estaDisponible(funcion, entrada.getValue(), ahora)) {
+                continue;
+            }
+
+            asientosOcupadosDemostracion.add(clave);
+            nuevas++;
+        }
+
+        return nuevas;
+    }
+
+    /** Indica si la ocupación proviene específicamente de los datos demo. */
+    public synchronized boolean estaOcupadoPorDemostracion(
+            Funcion funcion, Asiento asiento) {
+        Objects.requireNonNull(funcion, "La función es obligatoria.");
+        Objects.requireNonNull(asiento, "El asiento es obligatorio.");
+        return asientosOcupadosDemostracion.contains(claveAsiento(funcion, asiento));
     }
 
     /** Registra una reserva individual. */

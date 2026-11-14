@@ -12,8 +12,15 @@ import java.util.*;
 /** Administra cuentas, acumulaciones, redenciones y vencimientos de puntos. */
 public class PuntosService {
 
-    private static final BigDecimal VALOR_PUNTO = new BigDecimal("50.00");
-    private static final BigDecimal VALOR_POR_PUNTO = new BigDecimal("10000.00");
+    /** Valor monetario de cada punto al redimirlo: 100 puntos = $1.000 COP. */
+    private static final BigDecimal VALOR_PUNTO = new BigDecimal("10.00");
+
+    /** Importe efectivamente pagado que habilita un bloque de puntos. */
+    private static final BigDecimal MONTO_POR_BLOQUE = new BigDecimal("10000.00");
+
+    /** Puntos entregados por cada bloque completo de $10.000 COP pagados. */
+    private static final int PUNTOS_POR_BLOQUE = 100;
+
     private static final BigDecimal LIMITE_REDENCION = new BigDecimal("0.50");
 
     private final Map<String, CuentaPuntos> cuentas = new LinkedHashMap<>();
@@ -66,8 +73,9 @@ public class PuntosService {
     }
 
     /**
-     * Calcula los puntos según la regla propuesta para CinemaUQ:
-     * un punto por cada $10.000 efectivamente pagados.
+     * Calcula los puntos según las reglas de CinemaUQ:
+     * 100 puntos por cada bloque completo de $10.000 COP efectivamente pagados.
+     * Los importes que no completan otro bloque no generan puntos adicionales.
      */
     public synchronized int calcularPuntosPorCompra(Compra compra) {
         if (compra == null) {
@@ -80,8 +88,16 @@ public class PuntosService {
                     "El total de la compra no puede ser negativo.");
         }
 
-        return totalPagado.divideToIntegralValue(VALOR_POR_PUNTO)
+        int bloquesCompletos = totalPagado
+                .divideToIntegralValue(MONTO_POR_BLOQUE)
                 .intValueExact();
+
+        return Math.multiplyExact(bloquesCompletos, PUNTOS_POR_BLOQUE);
+    }
+
+    /** Devuelve el valor monetario vigente de un punto al momento de redimir. */
+    public BigDecimal consultarValorPunto() {
+        return VALOR_PUNTO;
     }
 
     /** Valida antes del cobro que la compra pueda acumular puntos una sola vez. */
@@ -120,8 +136,9 @@ public class PuntosService {
     }
 
     /**
-     * Redime puntos de forma acumulativa y limita el total redimido al 50 %
-     * del subtotal y al valor que queda después de aplicar descuentos.
+     * Redime puntos a razón de $10 COP por punto (100 puntos = $1.000 COP).
+     * El total redimido se limita al 50 % del subtotal y al valor restante
+     * después de aplicar los descuentos existentes.
      */
     public synchronized BigDecimal redimirParaCompra(Cliente cliente,
                                                      Compra compra,

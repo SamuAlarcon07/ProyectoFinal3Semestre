@@ -13,10 +13,15 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
+import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.animation.ParallelTransition;
 import javafx.animation.PauseTransition;
 import javafx.animation.ScaleTransition;
@@ -34,6 +39,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Comparator;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -65,6 +72,19 @@ public class DashboardViewController {
     @FXML private StackPane contentHost;
     @FXML private VBox rightPanel;
     @FXML private ScrollPane contentScroll;
+    @FXML private Pane dashboardParticleLayer;
+
+    // Reloj en vivo del panel lateral derecho.
+    private Label relojHoraLabel;
+    private Label relojFechaLabel;
+    private Timeline relojTimeline;
+
+    private static final ZoneId ZONA_CINEMA = ZoneId.of("America/Bogota");
+    private static final Locale LOCALE_CINEMA = new Locale("es", "CO");
+    private static final DateTimeFormatter FORMATO_HORA_RELOJ =
+            DateTimeFormatter.ofPattern("hh:mm:ss a", LOCALE_CINEMA);
+    private static final DateTimeFormatter FORMATO_FECHA_RELOJ =
+            DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM", LOCALE_CINEMA);
 
     private App aplicacion;
     private Usuario usuario;
@@ -90,6 +110,8 @@ public class DashboardViewController {
                 mostrarSeccion("Cartelera", searchField.getText());
             }
         });
+
+        iniciarFondoAnimadoDashboard();
     }
 
     public void configurar(
@@ -298,12 +320,93 @@ public class DashboardViewController {
             rightPanel.getChildren().add(crearPanelPuntos());
             rightPanel.getChildren().add(crearPanelTarjetaVirtual());
 
-            // Única tarjeta adicional: actividad reciente del cliente.
+            // Actividad reciente del cliente.
             rightPanel.getChildren().add(crearPanelActividadReciente());
+
+            // El espacio flexible empuja el reloj hacia la parte inferior
+            // del panel derecho cuando hay altura disponible.
+            Region espacioFlexible = new Region();
+            VBox.setVgrow(espacioFlexible, Priority.ALWAYS);
+            rightPanel.getChildren().add(espacioFlexible);
+
+            // Reloj digital en vivo con la hora local de Colombia.
+            rightPanel.getChildren().add(crearPanelReloj());
         }
 
         animarEntradaEscalonada(rightPanel.getChildren());
         instalarAnimacionesRecursivas(rightPanel);
+    }
+
+    /**
+     * Construye una tarjeta de reloj digital para ocupar el espacio libre
+     * de la parte inferior del panel derecho.
+     */
+    private VBox crearPanelReloj() {
+        VBox card = new VBox(9);
+        card.getStyleClass().addAll("side-card", "dashboard-clock-card");
+
+        HBox encabezado = new HBox(8);
+        encabezado.setAlignment(Pos.CENTER_LEFT);
+
+        Label icono = new Label("◷");
+        icono.getStyleClass().add("dashboard-clock-icon");
+
+        Label titulo = new Label("Hora actual");
+        titulo.getStyleClass().add("side-card-title");
+
+        Region separador = new Region();
+        HBox.setHgrow(separador, Priority.ALWAYS);
+
+        Label enVivo = new Label("EN VIVO");
+        enVivo.getStyleClass().add("dashboard-clock-live");
+
+        encabezado.getChildren().addAll(icono, titulo, separador, enVivo);
+
+        relojHoraLabel = new Label("--:--:--");
+        relojHoraLabel.getStyleClass().add("dashboard-clock-time");
+
+        relojFechaLabel = new Label("Cargando fecha...");
+        relojFechaLabel.getStyleClass().add("dashboard-clock-date");
+
+        HBox pie = new HBox(7);
+        pie.setAlignment(Pos.CENTER_LEFT);
+
+        Label punto = new Label("●");
+        punto.getStyleClass().add("dashboard-clock-dot");
+
+        Label zona = new Label("HORA LOCAL · COLOMBIA");
+        zona.getStyleClass().add("dashboard-clock-zone");
+
+        pie.getChildren().addAll(punto, zona);
+        card.getChildren().addAll(encabezado, relojHoraLabel, relojFechaLabel, pie);
+
+        // Primera actualización inmediata y luego una actualización por segundo.
+        actualizarReloj();
+        if (relojTimeline != null) {
+            relojTimeline.stop();
+        }
+        relojTimeline = new Timeline(
+                new KeyFrame(Duration.seconds(1), evento -> actualizarReloj())
+        );
+        relojTimeline.setCycleCount(Animation.INDEFINITE);
+        relojTimeline.play();
+
+        return card;
+    }
+
+    /** Actualiza hora y fecha usando la zona horaria de Colombia. */
+    private void actualizarReloj() {
+        if (relojHoraLabel == null || relojFechaLabel == null) {
+            return;
+        }
+
+        ZonedDateTime ahora = ZonedDateTime.now(ZONA_CINEMA);
+        relojHoraLabel.setText(
+                FORMATO_HORA_RELOJ.format(ahora).toLowerCase(LOCALE_CINEMA)
+        );
+        relojFechaLabel.setText(
+                FORMATO_FECHA_RELOJ.format(ahora).toLowerCase(LOCALE_CINEMA)
+        );
     }
 
     /** Muestra la siguiente entrada comprada que todavía corresponde a una función futura. */
@@ -675,6 +778,137 @@ public class DashboardViewController {
         actualizarResumenCliente();
     }
 
+
+    // ------------------------------------------------------------------
+    // FONDO AMBIENTAL ANIMADO DEL DASHBOARD
+    // ------------------------------------------------------------------
+
+    /**
+     * Añade halos y partículas ambientales detrás de la interfaz.
+     * La capa es transparente a los eventos de ratón, por lo que no
+     * interfiere con botones, campos, cartelera ni navegación.
+     */
+    private void iniciarFondoAnimadoDashboard() {
+        if (dashboardParticleLayer == null) {
+            return;
+        }
+
+        // Halos luminosos grandes y de baja opacidad.
+        Circle haloAzul = new Circle(215);
+        haloAzul.setManaged(false);
+        haloAzul.setFill(Color.web("#2368a4", 0.15));
+
+        Circle haloDorado = new Circle(150);
+        haloDorado.setManaged(false);
+        haloDorado.setFill(Color.web("#d99b24", 0.105));
+
+        Circle haloAzulSecundario = new Circle(105);
+        haloAzulSecundario.setManaged(false);
+        haloAzulSecundario.setFill(Color.web("#3b83bd", 0.095));
+
+        dashboardParticleLayer.getChildren().addAll(
+                haloAzul, haloDorado, haloAzulSecundario
+        );
+
+        Runnable posicionar = () -> {
+            double ancho = dashboardParticleLayer.getWidth();
+            double alto = dashboardParticleLayer.getHeight();
+
+            haloAzul.setCenterX(ancho * 0.69);
+            haloAzul.setCenterY(alto * 0.22);
+
+            haloDorado.setCenterX(ancho * 0.91);
+            haloDorado.setCenterY(alto * 0.78);
+
+            haloAzulSecundario.setCenterX(ancho * 0.43);
+            haloAzulSecundario.setCenterY(alto * 0.87);
+        };
+
+        dashboardParticleLayer.widthProperty().addListener(
+                (obs, anterior, nuevo) -> posicionar.run()
+        );
+        dashboardParticleLayer.heightProperty().addListener(
+                (obs, anterior, nuevo) -> posicionar.run()
+        );
+        posicionar.run();
+
+        animarHaloDashboard(haloAzul, 1.10, -18, 9.5);
+        animarHaloDashboard(haloDorado, 1.14, 16, 11.0);
+        animarHaloDashboard(haloAzulSecundario, 1.18, -12, 8.0);
+
+        // Partículas pequeñas con trayectorias y tiempos desfasados.
+        for (int i = 0; i < 30; i++) {
+            double radio = 1.15 + (i % 4) * 0.62;
+            Circle particula = new Circle(radio);
+            particula.setManaged(false);
+            particula.setFill(i % 5 == 0
+                    ? Color.web("#ffd36a", 0.88)
+                    : Color.web("#91bde7", 0.58));
+
+            double proporcionX = 0.24 + ((i * 37) % 73) / 100.0;
+            double proporcionY = 0.035 + ((i * 53) % 91) / 100.0;
+            particula.layoutXProperty().bind(
+                    dashboardParticleLayer.widthProperty().multiply(proporcionX)
+            );
+            particula.layoutYProperty().bind(
+                    dashboardParticleLayer.heightProperty().multiply(proporcionY)
+            );
+            dashboardParticleLayer.getChildren().add(particula);
+
+            FadeTransition brillo = new FadeTransition(
+                    Duration.seconds(2.6 + (i % 5) * 0.72), particula
+            );
+            brillo.setFromValue(0.12);
+            brillo.setToValue(i % 3 == 0 ? 0.92 : 0.62);
+            brillo.setAutoReverse(true);
+            brillo.setCycleCount(Animation.INDEFINITE);
+            brillo.setDelay(Duration.millis(i * 115L));
+            brillo.setInterpolator(Interpolator.EASE_BOTH);
+
+            TranslateTransition deriva = new TranslateTransition(
+                    Duration.seconds(6.0 + (i % 6) * 1.1), particula
+            );
+            deriva.setFromY(0);
+            deriva.setToY(-13 - (i % 6) * 4.2);
+            deriva.setFromX(0);
+            deriva.setToX((i % 2 == 0 ? 1 : -1) * (7 + (i % 5) * 3));
+            deriva.setAutoReverse(true);
+            deriva.setCycleCount(Animation.INDEFINITE);
+            deriva.setDelay(Duration.millis(i * 90L));
+            deriva.setInterpolator(Interpolator.EASE_BOTH);
+
+            new ParallelTransition(brillo, deriva).play();
+        }
+    }
+
+    private void animarHaloDashboard(
+            Circle halo,
+            double escalaFinal,
+            double desplazamientoY,
+            double duracionSegundos
+    ) {
+        ScaleTransition pulso = new ScaleTransition(
+                Duration.seconds(duracionSegundos), halo
+        );
+        pulso.setFromX(0.94);
+        pulso.setFromY(0.94);
+        pulso.setToX(escalaFinal);
+        pulso.setToY(escalaFinal);
+        pulso.setAutoReverse(true);
+        pulso.setCycleCount(Animation.INDEFINITE);
+        pulso.setInterpolator(Interpolator.EASE_BOTH);
+
+        TranslateTransition movimiento = new TranslateTransition(
+                Duration.seconds(duracionSegundos + 1.8), halo
+        );
+        movimiento.setFromY(0);
+        movimiento.setToY(desplazamientoY);
+        movimiento.setAutoReverse(true);
+        movimiento.setCycleCount(Animation.INDEFINITE);
+        movimiento.setInterpolator(Interpolator.EASE_BOTH);
+
+        new ParallelTransition(pulso, movimiento).play();
+    }
 
     // ------------------------------------------------------------------
     // ANIMACIONES DEL DASHBOARD
@@ -1113,15 +1347,119 @@ public class DashboardViewController {
 
     @FXML
     private void cerrarSesion() {
+        // Detiene el reloj cuando se abandona el Dashboard.
+        if (relojTimeline != null) {
+            relojTimeline.stop();
+        }
+
         try {
             aplicacion.mostrarLogin("Has cerrado sesión correctamente.");
         } catch (IOException ex) {
-            Alert alerta = new Alert(Alert.AlertType.ERROR);
-            alerta.setTitle("CinemaUQ");
-            alerta.setHeaderText("No fue posible cerrar sesión");
-            alerta.setContentText(ex.getMessage());
-            alerta.showAndWait();
+            mostrarErrorSesion(ex);
         }
+    }
+
+    /**
+     * Alerta de error del Dashboard con el estilo azul oscuro y dorado de CinemaUQ.
+     */
+    private void mostrarErrorSesion(IOException ex) {
+        Dialog<Void> dialogo = new Dialog<>();
+        dialogo.setTitle("CinemaUQ · Error de sesión");
+        dialogo.setHeaderText(null);
+
+        if (contentHost != null && contentHost.getScene() != null) {
+            dialogo.initOwner(contentHost.getScene().getWindow());
+        }
+
+        dialogo.getDialogPane().getButtonTypes().add(ButtonType.OK);
+
+        DialogPane panel = dialogo.getDialogPane();
+        panel.setMinWidth(430);
+        panel.setPrefWidth(455);
+        panel.setStyle(
+                "-fx-background-color: #071629;"
+                        + "-fx-control-inner-background: #0b1b2d;"
+                        + "-fx-border-color: #344c67;"
+                        + "-fx-border-width: 1;"
+                        + "-fx-padding: 0;"
+        );
+        panel.setBackground(new javafx.scene.layout.Background(
+                new javafx.scene.layout.BackgroundFill(
+                        javafx.scene.paint.Color.web("#071629"),
+                        javafx.scene.layout.CornerRadii.EMPTY,
+                        javafx.geometry.Insets.EMPTY
+                )
+        ));
+
+        Button aceptar = (Button) panel.lookupButton(ButtonType.OK);
+        aceptar.setText("Entendido");
+        aceptar.setStyle(
+                "-fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);"
+                        + "-fx-text-fill: #101827;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-background-radius: 8;"
+                        + "-fx-padding: 9 24;"
+        );
+
+        VBox contenido = new VBox(12);
+        contenido.setAlignment(Pos.CENTER);
+        contenido.setPadding(new javafx.geometry.Insets(23, 25, 20, 25));
+        contenido.setStyle(
+                "-fx-background-color: linear-gradient(to bottom, #10243a, #09192b);"
+        );
+
+        Label icono = new Label("!");
+        icono.setMinSize(56, 56);
+        icono.setAlignment(Pos.CENTER);
+        icono.setStyle(
+                "-fx-background-color: #482b36;"
+                        + "-fx-background-radius: 40;"
+                        + "-fx-border-color: #ff8b86;"
+                        + "-fx-border-radius: 40;"
+                        + "-fx-text-fill: #ff8b86;"
+                        + "-fx-font-size: 27px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label titulo = new Label("No fue posible cerrar sesión");
+        titulo.setStyle(
+                "-fx-text-fill: #f5f7fb;"
+                        + "-fx-font-size: 18px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label detalle = new Label(
+                ex.getMessage() == null || ex.getMessage().isBlank()
+                        ? "Ocurrió un problema al regresar al inicio de sesión."
+                        : ex.getMessage()
+        );
+        detalle.setWrapText(true);
+        detalle.setMaxWidth(350);
+        detalle.setAlignment(Pos.CENTER);
+        detalle.setStyle("-fx-text-fill: #b8c9d9; -fx-font-size: 11px;");
+
+        Label marca = new Label("CINEMAUQ  ·  EXPERIENCIA CINEMATOGRÁFICA");
+        marca.setStyle("-fx-text-fill: #7189a2; -fx-font-size: 8px;");
+
+        contenido.getChildren().addAll(icono, titulo, detalle, marca);
+        panel.setContent(contenido);
+
+        panel.sceneProperty().addListener((observable, anterior, escena) -> {
+            if (escena == null) return;
+            javafx.application.Platform.runLater(() -> {
+                if (escena.getRoot() instanceof Region region) {
+                    region.setStyle("-fx-background-color: #071629;");
+                }
+                panel.applyCss();
+                Node barra = panel.lookup(".button-bar");
+                if (barra instanceof Region regionBarra) {
+                    regionBarra.setStyle("-fx-background-color: #071629;");
+                }
+                panel.layout();
+            });
+        });
+
+        dialogo.showAndWait();
     }
 
     private String iniciales(String nombre) {

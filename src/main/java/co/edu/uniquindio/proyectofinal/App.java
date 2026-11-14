@@ -10,6 +10,7 @@ import co.edu.uniquindio.proyectofinal.model.principal.Administrador;
 import co.edu.uniquindio.proyectofinal.model.principal.Cine;
 import co.edu.uniquindio.proyectofinal.model.principal.Cliente;
 import co.edu.uniquindio.proyectofinal.model.principal.TipoSala;
+import co.edu.uniquindio.proyectofinal.model.principal.Promocion;
 import co.edu.uniquindio.proyectofinal.model.principal.TarjetaVirtual;
 import co.edu.uniquindio.proyectofinal.model.principal.Usuario;
 import co.edu.uniquindio.proyectofinal.model.service.*;
@@ -30,6 +31,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
+import java.time.LocalDate;
 import java.util.EnumSet;
 import java.util.Objects;
 
@@ -219,8 +221,16 @@ public class App extends Application {
 
         // Salas con asientos y funciones de demostración para las películas iniciales.
         DatosInicialesFuncionesCinemaUQ.cargarFunciones(
-                catalogoService, funcionService, gestionSalasService, cineService
+                catalogoService,
+                funcionService,
+                gestionSalasService,
+                cineService,
+                disponibilidadAsientosService
         );
+
+        // Códigos promocionales de demostración disponibles en Administración
+        // y en el proceso de reserva/compra de entradas.
+        registrarPromocionesDemo();
 
         // Los observadores se notifican una sola vez por compra confirmada.
         compraService.agregarObservador(notificacionService);
@@ -351,6 +361,65 @@ public class App extends Application {
         combo.agregarComponente(catalogoService.buscarProducto(codigoProducto2)
                 .orElseThrow(), cantidad2);
         return combo;
+    }
+
+    /**
+     * Registra los códigos promocionales iniciales de CinemaUQ.
+     * Se consultan antes de insertar para evitar duplicados si la inicialización
+     * se invoca más de una vez durante la misma sesión.
+     */
+    private void registrarPromocionesDemo() {
+        LocalDate fechaInicio = LocalDate.of(2026, 1, 1);
+        LocalDate fechaFin = LocalDate.of(2027, 12, 31);
+
+        java.util.List<Promocion> promociones = java.util.List.of(
+                new Promocion(
+                        "CINEMA10",
+                        "Descuento CinemaUQ",
+                        "Obtén un 10% de descuento en tus entradas.",
+                        new BigDecimal("10"),
+                        fechaInicio,
+                        fechaFin
+                ),
+                new Promocion(
+                        "ESTUDIANTE15",
+                        "Estudiante UQ",
+                        "Obtén un 15% de descuento en tus entradas.",
+                        new BigDecimal("15"),
+                        fechaInicio,
+                        fechaFin
+                ),
+                new Promocion(
+                        "CINEUQ20",
+                        "Especial CinemaUQ",
+                        "Disfruta de un 20% de descuento en tus entradas.",
+                        new BigDecimal("20"),
+                        fechaInicio,
+                        fechaFin
+                ),
+                new Promocion(
+                        "BIENVENIDO",
+                        "Primera compra",
+                        "Obtén un 5% de descuento en tu compra.",
+                        new BigDecimal("5"),
+                        fechaInicio,
+                        fechaFin
+                ),
+                new Promocion(
+                        "MARATON25",
+                        "Maratón de cine",
+                        "Obtén un 25% de descuento en tus entradas.",
+                        new BigDecimal("25"),
+                        fechaInicio,
+                        fechaFin
+                )
+        );
+
+        for (Promocion promocion : promociones) {
+            if (promocionService.buscarPromocion(promocion.getCodigo()).isEmpty()) {
+                promocionService.registrarPromocion(promocion);
+            }
+        }
     }
 
     private void registrarTipoSalaBase(

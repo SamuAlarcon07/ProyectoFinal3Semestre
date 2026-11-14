@@ -503,15 +503,143 @@
     -fx-background-color: transparent;
     -fx-padding: 12px 0 0 0;
 }
-.date-picker, .combo-box, .choice-box {
+.date-picker {
     -fx-background-color: #13273e;
     -fx-border-color: #314a66;
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
 }
-.date-picker .text-field,
-.combo-box .list-cell {
+.date-picker .text-field {
     -fx-text-fill: #eef3f8;
+}
+
+
+/* ==========================================================
+   COMBOBOX / CHOICEBOX - POPUPS AZUL NOCHE Y DORADO
+   Evita el popup blanco predeterminado de JavaFX.
+   ========================================================== */
+.combo-box,
+.choice-box {
+    -fx-background-color: #10243a;
+    -fx-background-insets: 0;
+    -fx-border-color: #35516e;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+.combo-box:hover,
+.choice-box:hover {
+    -fx-border-color: #627f9e;
+}
+.combo-box:focused,
+.combo-box:showing,
+.choice-box:focused,
+.choice-box:showing {
+    -fx-border-color: #f0b92e;
+    -fx-border-width: 1.3px;
+    -fx-effect: dropshadow(gaussian, rgba(240,185,46,0.16), 8, 0.10, 0, 0);
+}
+.combo-box > .list-cell,
+.cinemauq-combo-button-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #edf3fa;
+    -fx-font-size: 11px;
+    -fx-padding: 7px 10px;
+}
+.combo-box > .arrow-button,
+.choice-box > .open-button {
+    -fx-background-color: #19334d;
+    -fx-background-radius: 0 7px 7px 0;
+    -fx-padding: 0 10px;
+}
+.combo-box > .arrow-button:hover,
+.choice-box > .open-button:hover {
+    -fx-background-color: #254561;
+}
+.combo-box > .arrow-button > .arrow,
+.choice-box > .open-button > .arrow {
+    -fx-background-color: #f3bf43;
+}
+
+/* Ventana flotante de opciones del ComboBox */
+.combo-box-popup,
+.combo-box-popup > .list-view {
+    -fx-background-color: #0b1b2e;
+    -fx-control-inner-background: #10243a;
+    -fx-control-inner-background-alt: #132a43;
+    -fx-border-color: #35516e;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 3px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.38), 12, 0.15, 0, 4);
+}
+.combo-box-popup .list-view {
+    -fx-background-color: #0b1b2e;
+    -fx-control-inner-background: #10243a;
+    -fx-padding: 3px;
+}
+.combo-box-popup .list-cell,
+.combo-box-popup .cinemauq-combo-cell {
+    -fx-background-color: #10243a;
+    -fx-text-fill: #e8eff7;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-padding: 8px 11px;
+}
+.combo-box-popup .list-cell:empty {
+    -fx-background-color: #10243a;
+}
+.combo-box-popup .list-cell:filled:hover,
+.combo-box-popup .cinemauq-combo-cell:filled:hover {
+    -fx-background-color: #203c58;
+    -fx-text-fill: #ffffff;
+}
+.combo-box-popup .list-cell:filled:selected,
+.combo-box-popup .list-cell:filled:selected:hover,
+.combo-box-popup .cinemauq-combo-cell:filled:selected {
+    -fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);
+    -fx-text-fill: #101827;
+    -fx-font-weight: bold;
+}
+.combo-box-popup .list-view .scroll-bar:vertical {
+    -fx-background-color: #0b1b2e;
+    -fx-background-radius: 5px;
+}
+.combo-box-popup .list-view .scroll-bar:vertical .thumb {
+    -fx-background-color: #45627f;
+    -fx-background-radius: 5px;
+}
+.combo-box-popup .list-view .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #d6aa42;
+}
+
+/* ChoiceBox despliega un ContextMenu separado. */
+.context-menu {
+    -fx-background-color: #0b1b2e;
+    -fx-background-radius: 8px;
+    -fx-border-color: #35516e;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-padding: 4px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.38), 12, 0.15, 0, 4);
+}
+.context-menu .menu-item {
+    -fx-background-color: #0b1b2e;
+    -fx-padding: 7px 12px;
+}
+.context-menu .menu-item .label {
+    -fx-text-fill: #e8eff7;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+}
+.context-menu .menu-item:focused,
+.context-menu .menu-item:hover {
+    -fx-background-color: #203c58;
+}
+.context-menu .menu-item:focused .label,
+.context-menu .menu-item:hover .label {
+    -fx-text-fill: #ffffff;
 }
 
 
@@ -1049,4 +1177,1549 @@
 .date-picker-popup > * > .date-cell:disabled {
     -fx-text-fill: #50657a;
     -fx-opacity: 0.55;
+}
+
+
+
+/* ==========================================================
+   CAMPOS MULTILÍNEA ADMINISTRATIVOS - TEMA CINEMAUQ
+   ========================================================== */
+.admin-text-area {
+    -fx-control-inner-background: #10243a;
+    -fx-background-color: #10243a;
+    -fx-background-insets: 0;
+    -fx-background-radius: 9px;
+    -fx-border-color: #35516e;
+    -fx-border-width: 1px;
+    -fx-border-radius: 9px;
+    -fx-text-fill: #edf3fa;
+    -fx-prompt-text-fill: #8196ad;
+    -fx-highlight-fill: #d9a52b;
+    -fx-highlight-text-fill: #101827;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+    -fx-padding: 0;
+    -fx-cursor: text;
+}
+.admin-text-area .content {
+    -fx-background-color: #10243a;
+    -fx-background-radius: 8px;
+    -fx-padding: 9px 11px;
+}
+.admin-text-area:focused {
+    -fx-border-color: #f0b92e;
+    -fx-border-width: 1.4px;
+    -fx-effect: dropshadow(gaussian, rgba(240,185,46,0.18), 9, 0.12, 0, 0);
+}
+.admin-text-area:focused .content {
+    -fx-background-color: #10243a;
+}
+.admin-text-area:disabled {
+    -fx-opacity: 0.72;
+}
+.admin-text-area .scroll-pane,
+.admin-text-area .scroll-pane .viewport {
+    -fx-background-color: #10243a;
+    -fx-background: #10243a;
+}
+.admin-text-area .scroll-bar:vertical,
+.admin-text-area .scroll-bar:horizontal {
+    -fx-background-color: #0b1b2e;
+    -fx-background-radius: 5px;
+}
+.admin-text-area .scroll-bar .thumb {
+    -fx-background-color: #45627f;
+    -fx-background-radius: 5px;
+}
+.admin-text-area .scroll-bar .thumb:hover {
+    -fx-background-color: #d6aa42;
+}
+.admin-text-area .scroll-bar .increment-button,
+.admin-text-area .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+}
+.admin-text-area .scroll-bar .increment-arrow,
+.admin-text-area .scroll-bar .decrement-arrow {
+    -fx-background-color: #d6aa42;
+}
+
+
+
+/* ==========================================================
+   CASILLAS DE SELECCIÓN - FORMULARIOS ADMINISTRATIVOS
+   ========================================================== */
+.admin-check-box {
+    -fx-text-fill: #dce6f2;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-font-weight: normal;
+    -fx-label-padding: 0 0 0 7px;
+    -fx-cursor: hand;
+    -fx-opacity: 1;
+}
+.admin-check-box > .box {
+    -fx-background-color: #0b1b2e;
+    -fx-background-insets: 0;
+    -fx-background-radius: 4px;
+    -fx-border-color: #607b98;
+    -fx-border-width: 1.2px;
+    -fx-border-radius: 4px;
+    -fx-padding: 2px;
+    -fx-min-width: 15px;
+    -fx-min-height: 15px;
+    -fx-pref-width: 15px;
+    -fx-pref-height: 15px;
+}
+.admin-check-box:hover {
+    -fx-text-fill: #ffffff;
+}
+.admin-check-box:hover > .box {
+    -fx-background-color: #18324c;
+    -fx-border-color: #e8b83e;
+}
+.admin-check-box:focused > .box {
+    -fx-border-color: #ffd04a;
+    -fx-border-width: 1.5px;
+    -fx-effect: dropshadow(gaussian, rgba(240,185,46,0.20), 6, 0.10, 0, 0);
+}
+.admin-check-box:selected > .box {
+    -fx-background-color: linear-gradient(to bottom, #ffd34d, #eaa018);
+    -fx-border-color: #ffd34d;
+}
+.admin-check-box:selected > .box > .mark {
+    -fx-background-color: #102033;
+}
+.admin-check-box:indeterminate > .box {
+    -fx-background-color: #dba52d;
+    -fx-border-color: #ffd34d;
+}
+.admin-check-box:indeterminate > .box > .mark {
+    -fx-background-color: #102033;
+}
+.admin-check-box:disabled {
+    -fx-opacity: 0.55;
+}
+
+/* Por si el administrador incorpora botones de opción más adelante. */
+.admin-radio-button {
+    -fx-text-fill: #dce6f2;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-label-padding: 0 0 0 7px;
+    -fx-cursor: hand;
+}
+.admin-radio-button > .radio {
+    -fx-background-color: #0b1b2e;
+    -fx-background-insets: 0;
+    -fx-border-color: #607b98;
+    -fx-border-width: 1.2px;
+    -fx-border-radius: 20px;
+    -fx-background-radius: 20px;
+}
+.admin-radio-button:selected > .radio {
+    -fx-background-color: #ffd04a;
+    -fx-border-color: #ffd04a;
+}
+.admin-radio-button:selected > .radio > .dot {
+    -fx-background-color: #102033;
+}
+.admin-radio-button:hover > .radio {
+    -fx-border-color: #e8b83e;
+}
+
+
+
+/* ==========================================================
+   LISTA DE COMPONENTES DEL COMBO - TEMA CINEMAUQ
+   Corrige el panel blanco que aparece al crear un combo.
+   ========================================================== */
+.admin-combo-components {
+    -fx-background-color: #0b1b2e;
+    -fx-control-inner-background: #10243a;
+    -fx-control-inner-background-alt: #132a43;
+    -fx-background-insets: 0;
+    -fx-background-radius: 9px;
+    -fx-border-color: #35516e;
+    -fx-border-width: 1px;
+    -fx-border-radius: 9px;
+    -fx-padding: 3px;
+}
+.admin-combo-components .virtual-flow,
+.admin-combo-components .virtual-flow .clipped-container,
+.admin-combo-components .virtual-flow .sheet {
+    -fx-background-color: #10243a;
+}
+.admin-combo-components .list-cell {
+    -fx-background-color: #10243a;
+    -fx-text-fill: #e8eff7;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-padding: 8px 11px;
+}
+.admin-combo-components .list-cell:empty {
+    -fx-background-color: #10243a;
+}
+.admin-combo-components .list-cell:filled:hover {
+    -fx-background-color: #203c58;
+    -fx-text-fill: #ffffff;
+}
+.admin-combo-components .list-cell:filled:selected,
+.admin-combo-components .list-cell:filled:selected:hover {
+    -fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);
+    -fx-text-fill: #101827;
+    -fx-font-weight: bold;
+}
+.admin-combo-components:focused {
+    -fx-border-color: #f0b92e;
+    -fx-effect: dropshadow(gaussian, rgba(240,185,46,0.16), 8, 0.10, 0, 0);
+}
+.admin-combo-components .scroll-bar:vertical,
+.admin-combo-components .scroll-bar:horizontal {
+    -fx-background-color: #0b1b2e;
+    -fx-background-radius: 5px;
+}
+.admin-combo-components .scroll-bar .thumb {
+    -fx-background-color: #45627f;
+    -fx-background-radius: 5px;
+}
+.admin-combo-components .scroll-bar .thumb:hover {
+    -fx-background-color: #d6aa42;
+}
+.admin-combo-components .scroll-bar .increment-button,
+.admin-combo-components .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+}
+.admin-combo-components .scroll-bar .increment-arrow,
+.admin-combo-components .scroll-bar .decrement-arrow {
+    -fx-background-color: #d6aa42;
+}
+.admin-combo-components .placeholder .label,
+.admin-list-placeholder {
+    -fx-text-fill: #8196ad;
+    -fx-font-size: 10px;
+}
+
+
+
+/* ==========================================================
+   SELECTOR DE ASIENTOS - INTERACCIÓN Y ESTADOS VISIBLES
+   ========================================================== */
+.seat-selection-dialog {
+    -fx-background-color: #09192b;
+    -fx-border-color: #34516e;
+    -fx-border-width: 1px;
+}
+.seat-selection-dialog > .header-panel {
+    -fx-background-color: #10243a;
+    -fx-border-color: transparent transparent #294760 transparent;
+    -fx-border-width: 0 0 1px 0;
+}
+.seat-selection-dialog > .header-panel > .label {
+    -fx-text-fill: #f3f6fb;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+.seat-selection-dialog > .content {
+    -fx-background-color: #0b1b2d;
+}
+.seat-dialog-content {
+    -fx-background-color: #0b1b2d;
+}
+.seat-dialog-scroll,
+.seat-dialog-scroll > .viewport {
+    -fx-background-color: #0b1b2d;
+    -fx-background: #0b1b2d;
+    -fx-border-color: transparent;
+}
+.seat-dialog-scroll .corner {
+    -fx-background-color: #0b1b2d;
+}
+.seat-dialog-scroll .scroll-bar:vertical,
+.seat-dialog-scroll .scroll-bar:horizontal {
+    -fx-background-color: #0b1b2d;
+    -fx-background-radius: 6px;
+}
+.seat-dialog-scroll .scroll-bar .thumb {
+    -fx-background-color: #48627d;
+    -fx-background-radius: 6px;
+}
+.seat-dialog-scroll .scroll-bar .thumb:hover {
+    -fx-background-color: #d6aa42;
+}
+.seat-availability-info {
+    -fx-text-fill: #aebfd1;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-padding: 4px 2px;
+}
+.seat-toggle {
+    -fx-background-color: #123b51;
+    -fx-background-insets: 0;
+    -fx-border-color: #50a994;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #f4f8fb;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.16), 4, 0.08, 0, 1);
+}
+.seat-toggle:hover {
+    -fx-background-color: #245d58;
+    -fx-border-color: #8bd5ad;
+    -fx-border-width: 2px;
+    -fx-effect: dropshadow(gaussian, rgba(139,213,173,0.35), 7, 0.18, 0, 0);
+}
+.seat-toggle:focused {
+    -fx-border-color: #ffe08a;
+    -fx-border-width: 2px;
+}
+.seat-toggle:selected {
+    -fx-background-color: linear-gradient(to bottom, #ffd34d, #eaa018);
+    -fx-border-color: #fff0ad;
+    -fx-border-width: 2.5px;
+    -fx-text-fill: #101827;
+    -fx-effect: dropshadow(gaussian, rgba(242,189,57,0.78), 12, 0.30, 0, 0);
+}
+.seat-toggle:selected:hover {
+    -fx-background-color: linear-gradient(to bottom, #ffe17b, #f4b52b);
+}
+.seat-toggle-occupied,
+.seat-toggle-occupied:disabled {
+    -fx-background-color: #47566a;
+    -fx-border-color: #77869a;
+    -fx-border-width: 1.2px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #d3dbe5;
+    -fx-opacity: 1;
+    -fx-cursor: default;
+    -fx-effect: none;
+}
+.seat-toggle-occupied:hover {
+    -fx-background-color: #47566a;
+    -fx-border-color: #77869a;
+}
+.seat-legend-available {
+    -fx-background-color: #123b51;
+    -fx-border-color: #50a994;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+.seat-legend-selected {
+    -fx-background-color: #f2bd39;
+    -fx-border-color: #ffe08a;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+.seat-legend-occupied {
+    -fx-background-color: #47566a;
+    -fx-border-color: #77869a;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
+
+/* ASIENTOS_DIALOG_FORCE_STYLE: refuerzo para el DialogPane y el viewport */
+.seat-selection-dialog,
+.dialog-pane.seat-selection-dialog {
+    -fx-background-color: #09192b;
+    -fx-control-inner-background: #09192b;
+}
+.seat-selection-dialog > .header-panel {
+    -fx-background-color: #10243a;
+}
+.seat-selection-dialog > .header-panel .label {
+    -fx-text-fill: #edf3fa;
+}
+.seat-selection-dialog > .content,
+.seat-selection-dialog > .content > .scroll-pane,
+.seat-selection-dialog > .content > .scroll-pane > .viewport,
+.seat-dialog-scroll,
+.seat-dialog-scroll > .viewport,
+.seat-dialog-content {
+    -fx-background-color: #0b1b2d;
+    -fx-background: #0b1b2d;
+}
+.seat-dialog-scroll .viewport {
+    -fx-background-color: #0b1b2d;
+}
+.seat-dialog-content .label {
+    -fx-text-fill: #e8eff7;
+}
+.seat-dialog-content .seat-screen {
+    -fx-text-fill: #101827;
+}
+.seat-dialog-content .seat-selection-summary {
+    -fx-text-fill: #f2bd39;
+}
+.seat-dialog-content .seat-toggle {
+    -fx-background-color: #123b51;
+    -fx-text-fill: #f4f8fb;
+}
+.seat-dialog-content .seat-toggle:selected {
+    -fx-background-color: #f2bd39;
+    -fx-text-fill: #101827;
+}
+.seat-dialog-content .seat-toggle-occupied,
+.seat-dialog-content .seat-toggle-occupied:disabled {
+    -fx-background-color: #47566a;
+    -fx-text-fill: #d3dbe5;
+    -fx-opacity: 1;
+}
+
+
+/* ==========================================================
+   SELECTOR DE ASIENTOS - FONDO OPACO PARA TODAS LAS CAPAS
+   ========================================================== */
+.seat-selection-dialog,
+.seat-selection-dialog:header,
+.seat-selection-dialog > .content,
+.seat-selection-dialog > .header-panel,
+.seat-selection-dialog > .button-bar {
+    -fx-background-color: #09192b;
+    -fx-background: #09192b;
+    -fx-control-inner-background: #09192b;
+}
+.seat-selection-dialog > .content {
+    -fx-padding: 0;
+}
+.seat-selection-dialog > .header-panel .label {
+    -fx-text-fill: #edf3fa;
+}
+.seat-dialog-scroll,
+.seat-dialog-scroll > .viewport,
+.seat-dialog-scroll .viewport,
+.seat-dialog-scroll .corner {
+    -fx-background-color: #0b1b2d;
+    -fx-background: #0b1b2d;
+    -fx-border-color: transparent;
+}
+.seat-dialog-content,
+.seat-map {
+    -fx-background-color: #0b1b2d;
+    -fx-background: #0b1b2d;
+}
+.seat-dialog-scroll .scroll-bar:vertical {
+    -fx-background-color: #09192b;
+    -fx-background-radius: 6px;
+    -fx-padding: 2px;
+}
+.seat-dialog-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: #486782;
+    -fx-background-radius: 6px;
+}
+.seat-dialog-scroll .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #d5a941;
+}
+.seat-dialog-scroll .scroll-bar .increment-button,
+.seat-dialog-scroll .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+}
+.seat-dialog-scroll .scroll-bar .increment-arrow,
+.seat-dialog-scroll .scroll-bar .decrement-arrow {
+    -fx-background-color: #d5a941;
+}
+
+
+/* ==========================================================
+   SELECTOR DE ASIENTOS - BOTONES INTERACTIVOS Y PARES
+   ========================================================== */
+.seat-function-title {
+    -fx-text-fill: #f3f6fb;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 2px 0;
+}
+.seat-map {
+    -fx-padding: 12px 8px;
+    -fx-background-color: #0b1b2d;
+}
+.seat-row-label {
+    -fx-text-fill: #aebfd1;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+}
+.seat-button {
+    -fx-background-color: #183b50;
+    -fx-background-insets: 0;
+    -fx-border-color: #3f947d;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 9px 9px 5px 5px;
+    -fx-background-radius: 9px 9px 5px 5px;
+    -fx-text-fill: #f4f8fb;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+.seat-button:hover {
+    -fx-background-color: #245d58;
+    -fx-border-color: #8bd5ad;
+    -fx-border-width: 2px;
+    -fx-effect: dropshadow(gaussian, rgba(139,213,173,0.35), 7, 0.18, 0, 0);
+}
+.seat-button:focused {
+    -fx-border-color: #ffe08a;
+    -fx-border-width: 2px;
+}
+.seat-button-selected {
+    -fx-background-color: linear-gradient(to bottom, #ffd34d, #eaa018);
+    -fx-border-color: #fff0ad;
+    -fx-border-width: 2.5px;
+    -fx-text-fill: #101827;
+    -fx-effect: dropshadow(gaussian, rgba(242,189,57,0.65), 10, 0.28, 0, 0);
+}
+.seat-button-selected:hover {
+    -fx-background-color: linear-gradient(to bottom, #ffe17d, #f1b32e);
+    -fx-border-color: #fff4c7;
+}
+.seat-button-occupied,
+.seat-button:disabled {
+    -fx-background-color: #3a4655;
+    -fx-border-color: #667386;
+    -fx-text-fill: #aeb8c5;
+    -fx-opacity: 0.92;
+    -fx-cursor: default;
+    -fx-effect: none;
+}
+.seat-button-occupied:hover,
+.seat-button:disabled:hover {
+    -fx-background-color: #3a4655;
+    -fx-border-color: #667386;
+}
+.seat-selection-dialog > .button-bar {
+    -fx-background-color: #09192b;
+}
+.seat-confirm-button {
+    -fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);
+    -fx-text-fill: #101827;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-padding: 9px 17px;
+}
+.seat-confirm-button:disabled {
+    -fx-opacity: 0.45;
+}
+.seat-cancel-button {
+    -fx-background-color: #172d45;
+    -fx-text-fill: #e5edf6;
+    -fx-border-color: #3b5876;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 9px 17px;
+}
+
+
+/* Distribución del mapa: asientos contiguos en el bloque central */
+.seat-map {
+    -fx-hgap: 4px;
+    -fx-vgap: 9px;
+}
+.seat-button {
+    -fx-min-width: 41px;
+    -fx-pref-width: 41px;
+    -fx-max-width: 41px;
+    -fx-min-height: 37px;
+    -fx-pref-height: 37px;
+    -fx-max-height: 37px;
+}
+
+
+
+/* Selector de asientos: estilos auxiliares para la ventana Stage independiente */
+.seat-dialog-root,
+.seat-dialog-content,
+.seat-dialog-scroll,
+.seat-dialog-scroll .viewport {
+    -fx-background-color: #0b1b2d;
+}
+.seat-dialog-header,
+.seat-dialog-footer {
+    -fx-background-color: #09192b;
+}
+
+
+
+/* ==========================================================
+   DIÁLOGOS DE CLIENTE - TEMA GLOBAL CINEMAUQ
+   Evita superficies blancas en DialogPane y en sus skins internas.
+   ========================================================== */
+.dialog-pane.cinemauq-client-dialog,
+.dialog-pane.cinemauq-dialog {
+    -fx-background-color: #071629;
+    -fx-control-inner-background: #0b1b2d;
+    -fx-background-insets: 0;
+    -fx-border-color: #344c67;
+    -fx-border-width: 1px;
+    -fx-padding: 0;
+}
+.dialog-pane.cinemauq-client-dialog > .header-panel,
+.dialog-pane.cinemauq-dialog > .header-panel {
+    -fx-background-color: #0b1b2d;
+    -fx-background-insets: 0;
+    -fx-padding: 14px 20px 9px 20px;
+}
+.dialog-pane.cinemauq-client-dialog > .header-panel > .label,
+.dialog-pane.cinemauq-dialog > .header-panel > .label {
+    -fx-text-fill: #f5f7fb;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+.dialog-pane.cinemauq-client-dialog > .content,
+.dialog-pane.cinemauq-dialog > .content {
+    -fx-background-color: #0b1b2d;
+    -fx-text-fill: #dce6f2;
+    -fx-padding: 0;
+}
+.dialog-pane.cinemauq-client-dialog > .button-bar,
+.dialog-pane.cinemauq-dialog > .button-bar {
+    -fx-background-color: #071629;
+    -fx-background-insets: 0;
+    -fx-padding: 12px 18px 14px 18px;
+}
+.dialog-pane.cinemauq-client-dialog > .button-bar > .container,
+.dialog-pane.cinemauq-dialog > .button-bar > .container {
+    -fx-background-color: #071629;
+}
+.dialog-pane.cinemauq-client-dialog .label,
+.dialog-pane.cinemauq-dialog .label {
+    -fx-font-family: "Segoe UI";
+}
+.dialog-pane.cinemauq-client-dialog .text-field,
+.dialog-pane.cinemauq-dialog .text-field {
+    -fx-background-color: #0b1b2d;
+    -fx-control-inner-background: #0b1b2d;
+    -fx-text-fill: #f5f7fb;
+    -fx-prompt-text-fill: #8198af;
+    -fx-border-color: #35516e;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+.dialog-pane.cinemauq-client-dialog .text-area,
+.dialog-pane.cinemauq-dialog .text-area {
+    -fx-control-inner-background: #0b1b2d;
+    -fx-background-color: #0b1b2d;
+    -fx-text-fill: #f5f7fb;
+    -fx-prompt-text-fill: #8198af;
+}
+.dialog-pane.cinemauq-client-dialog .button,
+.dialog-pane.cinemauq-dialog .button {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+.dialog-pane.cinemauq-client-dialog .button:default,
+.dialog-pane.cinemauq-dialog .button:default {
+    -fx-background-color: linear-gradient(to right, #ffd34d, #eaa018);
+    -fx-text-fill: #101827;
+    -fx-font-weight: bold;
+}
+.dialog-pane.cinemauq-client-dialog .button:cancel,
+.dialog-pane.cinemauq-dialog .button:cancel {
+    -fx-background-color: #172d45;
+    -fx-text-fill: #e5edf6;
+    -fx-border-color: #3b5876;
+    -fx-border-radius: 8px;
+}
+
+/* ==========================================================
+   INICIO DE SESIÓN PREMIUM - CinemaUQ
+   ========================================================== */
+
+.login-root {
+    -fx-background-color: #050d19;
+}
+
+.login-brand-panel {
+    -fx-background-color: linear-gradient(
+            to bottom right,
+            #07182b 0%,
+            #102844 58%,
+            #142f4d 100%
+    );
+    -fx-border-color: transparent #1b3550 transparent transparent;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.login-eyebrow {
+    -fx-background-color: rgba(244,179,35,0.09);
+    -fx-background-radius: 18px;
+    -fx-border-color: rgba(244,179,35,0.28);
+    -fx-border-radius: 18px;
+    -fx-padding: 7px 12px;
+}
+
+.login-eyebrow-star,
+.login-tag-star {
+    -fx-text-fill: #ffc43d;
+    -fx-font-size: 13px;
+}
+
+.login-eyebrow-text,
+.login-tag-text {
+    -fx-text-fill: #e9bd61;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1.2px;
+}
+
+.login-logo {
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(244,179,35,0.16),
+            22, 0.18, 0, 3
+    );
+}
+
+.login-hero-title,
+.login-hero-accent {
+    -fx-font-size: 34px;
+}
+
+.login-hero-description {
+    -fx-font-size: 13px;
+    -fx-line-spacing: 5px;
+    -fx-text-fill: #c8d4e3;
+}
+
+.login-hero-pill {
+    -fx-background-color: linear-gradient(
+            to right,
+            rgba(244,179,35,0.13),
+            rgba(255,255,255,0.045)
+    );
+    -fx-border-color: rgba(244,179,35,0.42);
+    -fx-padding: 12px 17px;
+}
+
+.login-hero-star {
+    -fx-font-size: 19px;
+}
+
+.login-pill-text {
+    -fx-font-size: 12px;
+}
+
+.login-brand-bottom {
+    -fx-padding: 8px 0 0 0;
+}
+
+.login-status-dot {
+    -fx-text-fill: #57d69a;
+    -fx-font-size: 8px;
+}
+
+.login-bottom-caption {
+    -fx-text-fill: #aebed0;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1.1px;
+}
+
+/* PANEL DEL FORMULARIO */
+
+.login-form-area {
+    -fx-background-color: radial-gradient(
+            center 50% 45%,
+            radius 85%,
+            #10223a 0%,
+            #081526 65%,
+            #06111f 100%
+    );
+    -fx-padding: 42px;
+}
+
+.login-form-card {
+    -fx-background-color: linear-gradient(
+            to bottom right,
+            #12243a,
+            #0d1b2d
+    );
+    -fx-background-radius: 22px;
+    -fx-border-color: rgba(132,158,190,0.23);
+    -fx-border-radius: 22px;
+    -fx-padding: 39px 38px 30px 38px;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(0,0,0,0.48),
+            32, 0.18, 0, 13
+    );
+}
+
+.login-welcome-tag {
+    -fx-padding: 0 0 2px 0;
+}
+
+.login-form-title {
+    -fx-font-size: 27px;
+    -fx-text-fill: #ffffff;
+}
+
+.login-form-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: #9eafc4;
+}
+
+/* CAMPOS DE TEXTO */
+
+.login-field-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #dce5ef;
+}
+
+.login-input {
+    -fx-background-color: #091729;
+    -fx-border-color: #304761;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-pref-height: 47px;
+    -fx-font-size: 13px;
+    -fx-padding: 12px 14px;
+}
+
+.login-input:focused {
+    -fx-border-color: #f4b323;
+    -fx-border-width: 1.5px;
+    -fx-background-color: #0b1c30;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(244,179,35,0.20),
+            12, 0.12, 0, 0
+    );
+}
+
+/* MENSAJES */
+
+.login-message {
+    -fx-padding: 2px 0 0 1px;
+}
+
+/* BOTÓN PRINCIPAL */
+
+.login-primary-button {
+    -fx-background-color: linear-gradient(
+            to right,
+            #ffd65a,
+            #f0a51b
+    );
+    -fx-background-radius: 10px;
+    -fx-pref-height: 48px;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(244,179,35,0.20),
+            13, 0.12, 0, 3
+    );
+}
+
+.login-primary-button:hover {
+    -fx-background-color: linear-gradient(
+            to right,
+            #ffe58b,
+            #ffc044
+    );
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(244,179,35,0.38),
+            18, 0.16, 0, 4
+    );
+    -fx-scale-y: 1.025;
+    -fx-scale-x: 1.025;
+}
+
+.login-primary-button:pressed {
+    -fx-scale-y: 0.985;
+    -fx-scale-x: 0.985;
+}
+
+/* REGISTRO */
+
+.login-register-row {
+    -fx-padding: 1px 0 0 0;
+}
+
+.login-helper-text {
+    -fx-font-size: 11px;
+}
+
+.login-register-link {
+    -fx-font-size: 11px;
+}
+
+/* SEGURIDAD */
+
+.login-secure-note {
+    -fx-border-color: rgba(132,158,190,0.15) transparent transparent transparent;
+    -fx-border-width: 1px 0 0 0;
+    -fx-padding: 14px 0 0 0;
+}
+
+.login-secure-check {
+    -fx-text-fill: #65d6a0;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.login-secure-text {
+    -fx-text-fill: #71869f;
+    -fx-font-size: 9px;
+}
+
+
+
+
+/* ==========================================================
+   LOGIN CINEMATOGRÁFICO - FONDO ANIMADO
+   ========================================================== */
+
+.login-root {
+    -fx-background-color: #050d19;
+}
+
+.login-content {
+    -fx-background-color: transparent;
+}
+
+.login-particle-layer {
+    -fx-background-color: transparent;
+}
+
+.login-brand-panel {
+    -fx-background-color: linear-gradient(
+            to bottom right,
+            #07182b 0%,
+            #102844 58%,
+            #142f4d 100%
+    );
+    -fx-border-color: transparent #1b3550 transparent transparent;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.login-logo {
+    -fx-effect: dropshadow(gaussian, rgba(244,179,35,0.24), 28, 0.2, 0, 4);
+}
+
+.login-hero-title,
+.login-hero-accent {
+    -fx-font-size: 34px;
+}
+
+.login-hero-description {
+    -fx-font-size: 13px;
+    -fx-line-spacing: 5px;
+    -fx-text-fill: #c8d4e3;
+}
+
+.login-hero-pill {
+    -fx-background-color: linear-gradient(
+            to right,
+            rgba(244,179,35,0.15),
+            rgba(255,255,255,0.045)
+    );
+    -fx-border-color: rgba(244,179,35,0.45);
+    -fx-border-radius: 22px;
+    -fx-background-radius: 22px;
+    -fx-padding: 12px 17px;
+}
+
+.login-hero-star {
+    -fx-text-fill: #ffc43d;
+    -fx-font-size: 19px;
+}
+
+.login-pill-text {
+    -fx-font-size: 12px;
+}
+
+.login-brand-bottom {
+    -fx-padding: 8px 0 0 0;
+}
+
+.login-status-dot {
+    -fx-text-fill: #57d69a;
+    -fx-font-size: 8px;
+}
+
+.login-bottom-caption {
+    -fx-text-fill: #aebed0;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1.1px;
+}
+
+/* Zona derecha con profundidad y tonos de cine */
+.login-form-area {
+    -fx-background-color: radial-gradient(
+            center 50% 45%,
+            radius 85%,
+            #10223a 0%,
+            #081526 65%,
+            #06111f 100%
+    );
+    -fx-padding: 42px;
+}
+
+.login-form-card {
+    -fx-background-color: linear-gradient(
+            to bottom right,
+            rgba(19,37,59,0.97),
+            rgba(10,25,42,0.97)
+    );
+    -fx-background-radius: 24px;
+    -fx-border-color: rgba(155,184,216,0.24);
+    -fx-border-radius: 24px;
+    -fx-padding: 40px 38px 32px 38px;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(0,0,0,0.48),
+            34, 0.2, 0, 14
+    );
+}
+
+.login-form-title {
+    -fx-font-size: 27px;
+    -fx-text-fill: #ffffff;
+}
+
+.login-form-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: #9eafc4;
+}
+
+.login-field-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #dce5ef;
+}
+
+.login-input {
+    -fx-background-color: rgba(5,17,31,0.92);
+    -fx-border-color: #304761;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-pref-height: 47px;
+    -fx-font-size: 13px;
+    -fx-padding: 12px 14px;
+}
+
+.login-input:focused {
+    -fx-border-color: #f4b323;
+    -fx-border-width: 1.5px;
+    -fx-background-color: #0b1c30;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(244,179,35,0.25),
+            14, 0.15, 0, 0
+    );
+}
+
+.login-message {
+    -fx-padding: 2px 0 0 1px;
+}
+
+.login-primary-button {
+    -fx-background-color: linear-gradient(to right, #ffd65a, #f0a51b);
+    -fx-background-radius: 10px;
+    -fx-pref-height: 48px;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(244,179,35,0.24), 15, 0.14, 0, 3);
+}
+
+.login-primary-button:hover {
+    -fx-background-color: linear-gradient(to right, #ffe58b, #ffc044);
+    -fx-effect: dropshadow(gaussian, rgba(244,179,35,0.42), 20, 0.18, 0, 4);
+    -fx-scale-y: 1.025;
+    -fx-scale-x: 1.025;
+}
+
+.login-primary-button:pressed {
+    -fx-scale-y: 0.985;
+    -fx-scale-x: 0.985;
+}
+
+.login-register-row {
+    -fx-padding: 1px 0 0 0;
+}
+
+.login-helper-text {
+    -fx-font-size: 11px;
+}
+
+.login-register-link {
+    -fx-font-size: 11px;
+    -fx-cursor: hand;
+}
+
+/* Movimiento suave del fondo sin interferir con los controles. */
+.login-particle-layer .circle {
+    -fx-effect: dropshadow(gaussian, rgba(255,196,61,0.22), 8, 0.2, 0, 0);
+}
+
+
+/* ==========================================================
+   CORRECCIÓN: TARJETAS Y CONTROLES POR ENCIMA DE LAS PARTÍCULAS
+   ========================================================== */
+
+/* La capa animada debe ser transparente y no cubrir los paneles. */
+.login-particle-layer {
+    -fx-background-color: transparent;
+}
+
+/* Panel izquierdo: recuperar contraste y lectura. */
+.login-brand-panel {
+    -fx-background-color: linear-gradient(
+            to bottom right,
+            #07182b 0%,
+            #102844 58%,
+            #142f4d 100%
+    );
+}
+
+/* Tarjeta del formulario: superficie sólida tipo glass premium. */
+.login-form-area {
+    -fx-background-color: radial-gradient(
+            center 50% 45%,
+            radius 85%,
+            #10223a 0%,
+            #081526 65%,
+            #06111f 100%
+    );
+}
+
+.login-form-card,
+.form-card.login-form-card {
+    -fx-background-color: linear-gradient(
+            to bottom right,
+            #142941,
+            #0d1c30
+    );
+    -fx-background-radius: 22px;
+    -fx-border-color: rgba(151,181,214,0.34);
+    -fx-border-width: 1px;
+    -fx-border-radius: 22px;
+    -fx-padding: 39px 38px 32px 38px;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(0,0,0,0.58),
+            30, 0.18, 0, 12
+    );
+}
+
+/* Forzar colores legibles aunque existan reglas globales anteriores. */
+.login-form-title,
+.login-form-card .form-title {
+    -fx-text-fill: #f7f9fc;
+    -fx-font-size: 27px;
+    -fx-font-weight: bold;
+}
+
+.login-form-subtitle,
+.login-form-card .form-subtitle {
+    -fx-text-fill: #aebed0;
+}
+
+.login-field-label,
+.login-form-card .field-label {
+    -fx-text-fill: #e1e9f2;
+    -fx-font-weight: bold;
+}
+
+.login-input,
+.login-form-card .input-field {
+    -fx-background-color: #091729;
+    -fx-text-fill: #f4f6fa;
+    -fx-prompt-text-fill: #8293aa;
+    -fx-border-color: #344d69;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-pref-height: 47px;
+    -fx-padding: 12px 14px;
+}
+
+.login-helper-text,
+.login-form-card .helper-text {
+    -fx-text-fill: #aebbd0;
+}
+
+.login-register-link,
+.login-form-card .button-link {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ffc43d;
+    -fx-font-weight: bold;
+}
+
+.login-primary-button,
+.login-form-card .button-primary {
+    -fx-background-color: linear-gradient(to right, #ffd65a, #f0a51b);
+    -fx-text-fill: #101827;
+    -fx-background-radius: 10px;
+    -fx-pref-height: 48px;
+    -fx-font-weight: bold;
+}
+
+.login-message {
+    -fx-text-fill: #c5d2e2;
+}
+
+
+/* ==========================================================
+   CORRECCIÓN DEFINITIVA DE LOGIN - CinemaUQ
+   Reglas específicas para que el formulario y sus textos
+   conserven contraste incluso con las animaciones de fondo.
+   ========================================================== */
+
+.login-root {
+    -fx-background-color: #050d19;
+}
+
+.login-root .login-content {
+    -fx-background-color: transparent;
+}
+
+.login-root .login-brand-panel {
+    -fx-background-color: linear-gradient(to bottom right, #07182b 0%, #102844 58%, #142f4d 100%);
+    -fx-background-insets: 0;
+}
+
+.login-root .login-form-area {
+    -fx-background-color: #071323;
+    -fx-background-insets: 0;
+    -fx-padding: 34px;
+}
+
+.login-root .login-form-card {
+    -fx-background-color: #101f32;
+    -fx-background-insets: 0;
+    -fx-background-radius: 20px;
+    -fx-border-color: #304761;
+    -fx-border-width: 1.2px;
+    -fx-border-radius: 20px;
+    -fx-padding: 36px 34px 30px 34px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.55), 25, 0.18, 0, 9);
+}
+
+.login-root .login-form-title {
+    -fx-text-fill: #ffffff;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+}
+
+.login-root .login-form-subtitle {
+    -fx-text-fill: #b8c6d8;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+}
+
+.login-root .login-field-label {
+    -fx-text-fill: #e7edf5;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.login-root .login-input {
+    -fx-background-color: #091729;
+    -fx-background-insets: 0;
+    -fx-background-radius: 9px;
+    -fx-border-color: #38516e;
+    -fx-border-width: 1px;
+    -fx-border-radius: 9px;
+    -fx-text-fill: #ffffff;
+    -fx-prompt-text-fill: #8294aa;
+    -fx-highlight-fill: #d99b20;
+    -fx-highlight-text-fill: #071323;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+    -fx-padding: 11px 13px;
+    -fx-pref-height: 44px;
+}
+
+.login-root .login-input:focused {
+    -fx-background-color: #0b1c30;
+    -fx-border-color: #f4b323;
+    -fx-border-width: 1.5px;
+    -fx-effect: dropshadow(gaussian, rgba(244,179,35,0.24), 10, 0.12, 0, 0);
+}
+
+.login-root .login-message {
+    -fx-text-fill: #c6d2e0;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+}
+
+.login-root .login-message.message-error {
+    -fx-text-fill: #ff9292;
+}
+
+.login-root .login-message.message-success {
+    -fx-text-fill: #8bd5ad;
+}
+
+.login-root .login-primary-button {
+    -fx-background-color: linear-gradient(to right, #ffd65a, #efa51a);
+    -fx-background-insets: 0;
+    -fx-background-radius: 9px;
+    -fx-border-color: transparent;
+    -fx-border-radius: 9px;
+    -fx-text-fill: #101827;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-pref-height: 47px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(244,179,35,0.25), 13, 0.12, 0, 3);
+}
+
+.login-root .login-primary-button:hover {
+    -fx-background-color: linear-gradient(to right, #ffe58b, #ffc044);
+    -fx-effect: dropshadow(gaussian, rgba(244,179,35,0.42), 17, 0.16, 0, 4);
+}
+
+.login-root .login-primary-button:pressed {
+    -fx-background-color: #e9a51a;
+}
+
+.login-root .login-helper-text {
+    -fx-text-fill: #aebed0;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+}
+
+.login-root .login-register-link {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ffc43d;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4px 2px;
+    -fx-cursor: hand;
+}
+
+.login-root .login-register-link:hover {
+    -fx-text-fill: #ffe39a;
+    -fx-underline: true;
+}
+
+.login-root .login-hero-title {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 33px;
+    -fx-font-weight: bold;
+}
+
+.login-root .login-hero-accent {
+    -fx-text-fill: #ffc13b;
+    -fx-font-size: 33px;
+    -fx-font-weight: bold;
+}
+
+.login-root .login-hero-description {
+    -fx-text-fill: #d0dbea;
+    -fx-font-size: 13px;
+    -fx-line-spacing: 5px;
+}
+
+.login-root .login-hero-pill {
+    -fx-background-color: rgba(20,43,68,0.96);
+    -fx-background-radius: 20px;
+    -fx-border-color: rgba(244,179,35,0.55);
+    -fx-border-radius: 20px;
+    -fx-padding: 11px 16px;
+}
+
+.login-root .login-pill-text {
+    -fx-text-fill: #f1f5fa;
+    -fx-font-size: 12px;
+}
+
+.login-root .login-hero-star {
+    -fx-text-fill: #ffc43d;
+    -fx-font-size: 19px;
+}
+
+.login-root .login-bottom-caption {
+    -fx-text-fill: #d0dbea;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+}
+
+.login-root .brand-footer {
+    -fx-text-fill: #9aabc0;
+    -fx-font-size: 9px;
+}
+
+.login-root .login-particle-layer {
+    -fx-background-color: transparent;
+}
+
+.login-root .login-particle-layer .circle {
+    -fx-effect: dropshadow(gaussian, rgba(255,196,61,0.20), 7, 0.18, 0, 0);
+}
+
+
+/* =====================================================
+   CORRECCIÓN DE CAMPOS BLANCOS - REGISTRO CINEMAUQ
+   ===================================================== */
+
+/* Todos los campos de texto y contraseñas */
+.login-root .text-field,
+.login-root .password-field,
+.login-root .text-input,
+.login-root .login-input {
+
+    -fx-control-inner-background: #091729;
+    -fx-control-inner-background-alt: #091729;
+
+    -fx-background-color: #091729;
+    -fx-background-insets: 0;
+    -fx-background-radius: 9px;
+
+    -fx-border-color: #38516e;
+    -fx-border-width: 1px;
+    -fx-border-radius: 9px;
+
+    -fx-text-fill: #ffffff;
+    -fx-prompt-text-fill: #8294aa;
+
+    -fx-highlight-fill: #d99b20;
+    -fx-highlight-text-fill: #071323;
+
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+
+    -fx-padding: 11px 13px;
+    -fx-pref-height: 44px;
+}
+
+/* Cuando el usuario selecciona un campo */
+.login-root .text-field:focused,
+.login-root .password-field:focused,
+.login-root .text-input:focused {
+
+    -fx-control-inner-background: #0b1c30;
+    -fx-background-color: #0b1c30;
+
+    -fx-border-color: #f4b323;
+    -fx-border-width: 1.5px;
+
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(244,179,35,0.25),
+            10, 0.12, 0, 0
+    );
+}
+
+/* Conserva los campos oscuros también al pasar el cursor */
+.login-root .text-field:hover,
+.login-root .password-field:hover {
+
+    -fx-control-inner-background: #0b1c30;
+    -fx-background-color: #0b1c30;
+    -fx-border-color: #526b88;
+}
+
+/* Evita fondos blancos en los campos del formulario */
+.login-root .text-field .content,
+.login-root .password-field .content {
+    -fx-background-color: transparent;
+}
+
+
+/* ==========================================================
+   DASHBOARD CINEMATOGRÁFICO - FONDO AMBIENTAL ANIMADO
+   Se conservan los paneles y tarjetas sólidos; las superficies
+   estructurales centrales dejan pasar los halos del fondo.
+   ========================================================== */
+.dashboard-animated-root {
+    -fx-background-color: #050d19;
+}
+.dashboard-frame {
+    -fx-background-color: transparent;
+}
+.dashboard-particle-layer {
+    -fx-background-color: transparent;
+}
+.dashboard-workspace {
+    -fx-background-color: rgba(7, 19, 35, 0.68);
+}
+.dashboard-body {
+    -fx-background-color: rgba(7, 19, 35, 0.54);
+}
+.dashboard-topbar {
+    -fx-background-color: rgba(6, 16, 30, 0.88);
+}
+.dashboard-content-scroll,
+.dashboard-right-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+.dashboard-content-scroll > .viewport,
+.dashboard-right-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+.dashboard-content-host,
+.dashboard-right-panel {
+    -fx-background-color: transparent;
+}
+
+
+/* ==========================================================
+   RELOJ DIGITAL DEL PANEL LATERAL - CINEMAUQ
+   ========================================================== */
+.dashboard-clock-card {
+    -fx-background-color: linear-gradient(to bottom right, #142b45, #0a192b 72%, #17243a);
+    -fx-background-radius: 15px;
+    -fx-border-color: rgba(213,165,45,0.58);
+    -fx-border-width: 1px;
+    -fx-border-radius: 15px;
+    -fx-padding: 17px 16px 16px 16px;
+    -fx-min-height: 145px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.22), 14, 0.10, 0, 4);
+}
+.dashboard-clock-icon {
+    -fx-text-fill: #f5bf3c;
+    -fx-font-size: 19px;
+    -fx-font-weight: bold;
+}
+.dashboard-clock-live {
+    -fx-text-fill: #82d9ae;
+    -fx-background-color: rgba(65,190,130,0.11);
+    -fx-background-radius: 12px;
+    -fx-padding: 4px 7px;
+    -fx-font-size: 8px;
+    -fx-font-weight: bold;
+}
+.dashboard-clock-time {
+    -fx-text-fill: #ffd04b;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 34px;
+    -fx-font-weight: bold;
+}
+.dashboard-clock-date {
+    -fx-text-fill: #c3d0df;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+}
+.dashboard-clock-dot {
+    -fx-text-fill: #61d49b;
+    -fx-font-size: 8px;
+}
+.dashboard-clock-zone {
+    -fx-text-fill: #8298b1;
+    -fx-font-size: 8px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 0.8px;
 }
