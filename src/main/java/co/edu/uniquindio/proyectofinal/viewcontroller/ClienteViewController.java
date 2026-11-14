@@ -1151,7 +1151,8 @@ public class ClienteViewController {
         hero.getChildren().addAll(heroTexto, espacioHero, puntosHero);
 
         // Indicadores secundarios.
-        BigDecimal valorPuntos = BigDecimal.valueOf(saldo).multiply(new BigDecimal("50"));
+        BigDecimal valorPuntos = BigDecimal.valueOf(saldo)
+                .multiply(operaciones.consultarValorPunto());
         HBox indicadores = new HBox(10);
         indicadores.setAlignment(javafx.geometry.Pos.CENTER);
         indicadores.getChildren().addAll(
@@ -1170,8 +1171,8 @@ public class ClienteViewController {
                 + "-fx-border-color: #294760; -fx-border-radius: 13;");
         Label reglasTitulo = new Label("✦  ¿Cómo funciona tu programa de puntos?");
         reglasTitulo.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;");
-        Label reglaAcumulacion = new Label("•  Acumulas 1 punto por cada $10.000 efectivamente pagados.");
-        Label reglaValor = new Label("•  Cada punto equivale a $50 pesos colombianos.");
+        Label reglaAcumulacion = new Label("•  Acumulas 100 puntos por cada $10.000 efectivamente pagados.");
+        Label reglaValor = new Label("•  Cada 100 puntos equivalen a $1.000 de recompensa.");
         Label reglaRedencion = new Label("•  Puedes redimir puntos hasta por el 50 % del subtotal.");
         for (Label regla : List.of(reglaAcumulacion, reglaValor, reglaRedencion)) {
             regla.setStyle("-fx-text-fill: #b9cadd; -fx-font-size: 11px;");

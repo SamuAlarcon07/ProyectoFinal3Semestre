@@ -1832,3 +1832,894 @@
     -fx-border-color: #3b5876;
     -fx-border-radius: 8px;
 }
+
+/* ==========================================================
+   INICIO DE SESIÓN PREMIUM - CinemaUQ
+   ========================================================== */
+
+.login-root {
+    -fx-background-color: #050d19;
+}
+
+.login-brand-panel {
+    -fx-background-color: linear-gradient(
+            to bottom right,
+            #07182b 0%,
+            #102844 58%,
+            #142f4d 100%
+    );
+    -fx-border-color: transparent #1b3550 transparent transparent;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.login-eyebrow {
+    -fx-background-color: rgba(244,179,35,0.09);
+    -fx-background-radius: 18px;
+    -fx-border-color: rgba(244,179,35,0.28);
+    -fx-border-radius: 18px;
+    -fx-padding: 7px 12px;
+}
+
+.login-eyebrow-star,
+.login-tag-star {
+    -fx-text-fill: #ffc43d;
+    -fx-font-size: 13px;
+}
+
+.login-eyebrow-text,
+.login-tag-text {
+    -fx-text-fill: #e9bd61;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1.2px;
+}
+
+.login-logo {
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(244,179,35,0.16),
+            22, 0.18, 0, 3
+    );
+}
+
+.login-hero-title,
+.login-hero-accent {
+    -fx-font-size: 34px;
+}
+
+.login-hero-description {
+    -fx-font-size: 13px;
+    -fx-line-spacing: 5px;
+    -fx-text-fill: #c8d4e3;
+}
+
+.login-hero-pill {
+    -fx-background-color: linear-gradient(
+            to right,
+            rgba(244,179,35,0.13),
+            rgba(255,255,255,0.045)
+    );
+    -fx-border-color: rgba(244,179,35,0.42);
+    -fx-padding: 12px 17px;
+}
+
+.login-hero-star {
+    -fx-font-size: 19px;
+}
+
+.login-pill-text {
+    -fx-font-size: 12px;
+}
+
+.login-brand-bottom {
+    -fx-padding: 8px 0 0 0;
+}
+
+.login-status-dot {
+    -fx-text-fill: #57d69a;
+    -fx-font-size: 8px;
+}
+
+.login-bottom-caption {
+    -fx-text-fill: #aebed0;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1.1px;
+}
+
+/* PANEL DEL FORMULARIO */
+
+.login-form-area {
+    -fx-background-color: radial-gradient(
+            center 50% 45%,
+            radius 85%,
+            #10223a 0%,
+            #081526 65%,
+            #06111f 100%
+    );
+    -fx-padding: 42px;
+}
+
+.login-form-card {
+    -fx-background-color: linear-gradient(
+            to bottom right,
+            #12243a,
+            #0d1b2d
+    );
+    -fx-background-radius: 22px;
+    -fx-border-color: rgba(132,158,190,0.23);
+    -fx-border-radius: 22px;
+    -fx-padding: 39px 38px 30px 38px;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(0,0,0,0.48),
+            32, 0.18, 0, 13
+    );
+}
+
+.login-welcome-tag {
+    -fx-padding: 0 0 2px 0;
+}
+
+.login-form-title {
+    -fx-font-size: 27px;
+    -fx-text-fill: #ffffff;
+}
+
+.login-form-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: #9eafc4;
+}
+
+/* CAMPOS DE TEXTO */
+
+.login-field-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #dce5ef;
+}
+
+.login-input {
+    -fx-background-color: #091729;
+    -fx-border-color: #304761;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-pref-height: 47px;
+    -fx-font-size: 13px;
+    -fx-padding: 12px 14px;
+}
+
+.login-input:focused {
+    -fx-border-color: #f4b323;
+    -fx-border-width: 1.5px;
+    -fx-background-color: #0b1c30;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(244,179,35,0.20),
+            12, 0.12, 0, 0
+    );
+}
+
+/* MENSAJES */
+
+.login-message {
+    -fx-padding: 2px 0 0 1px;
+}
+
+/* BOTÓN PRINCIPAL */
+
+.login-primary-button {
+    -fx-background-color: linear-gradient(
+            to right,
+            #ffd65a,
+            #f0a51b
+    );
+    -fx-background-radius: 10px;
+    -fx-pref-height: 48px;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(244,179,35,0.20),
+            13, 0.12, 0, 3
+    );
+}
+
+.login-primary-button:hover {
+    -fx-background-color: linear-gradient(
+            to right,
+            #ffe58b,
+            #ffc044
+    );
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(244,179,35,0.38),
+            18, 0.16, 0, 4
+    );
+    -fx-scale-y: 1.025;
+    -fx-scale-x: 1.025;
+}
+
+.login-primary-button:pressed {
+    -fx-scale-y: 0.985;
+    -fx-scale-x: 0.985;
+}
+
+/* REGISTRO */
+
+.login-register-row {
+    -fx-padding: 1px 0 0 0;
+}
+
+.login-helper-text {
+    -fx-font-size: 11px;
+}
+
+.login-register-link {
+    -fx-font-size: 11px;
+}
+
+/* SEGURIDAD */
+
+.login-secure-note {
+    -fx-border-color: rgba(132,158,190,0.15) transparent transparent transparent;
+    -fx-border-width: 1px 0 0 0;
+    -fx-padding: 14px 0 0 0;
+}
+
+.login-secure-check {
+    -fx-text-fill: #65d6a0;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.login-secure-text {
+    -fx-text-fill: #71869f;
+    -fx-font-size: 9px;
+}
+
+
+
+
+/* ==========================================================
+   LOGIN CINEMATOGRÁFICO - FONDO ANIMADO
+   ========================================================== */
+
+.login-root {
+    -fx-background-color: #050d19;
+}
+
+.login-content {
+    -fx-background-color: transparent;
+}
+
+.login-particle-layer {
+    -fx-background-color: transparent;
+}
+
+.login-brand-panel {
+    -fx-background-color: linear-gradient(
+            to bottom right,
+            #07182b 0%,
+            #102844 58%,
+            #142f4d 100%
+    );
+    -fx-border-color: transparent #1b3550 transparent transparent;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.login-logo {
+    -fx-effect: dropshadow(gaussian, rgba(244,179,35,0.24), 28, 0.2, 0, 4);
+}
+
+.login-hero-title,
+.login-hero-accent {
+    -fx-font-size: 34px;
+}
+
+.login-hero-description {
+    -fx-font-size: 13px;
+    -fx-line-spacing: 5px;
+    -fx-text-fill: #c8d4e3;
+}
+
+.login-hero-pill {
+    -fx-background-color: linear-gradient(
+            to right,
+            rgba(244,179,35,0.15),
+            rgba(255,255,255,0.045)
+    );
+    -fx-border-color: rgba(244,179,35,0.45);
+    -fx-border-radius: 22px;
+    -fx-background-radius: 22px;
+    -fx-padding: 12px 17px;
+}
+
+.login-hero-star {
+    -fx-text-fill: #ffc43d;
+    -fx-font-size: 19px;
+}
+
+.login-pill-text {
+    -fx-font-size: 12px;
+}
+
+.login-brand-bottom {
+    -fx-padding: 8px 0 0 0;
+}
+
+.login-status-dot {
+    -fx-text-fill: #57d69a;
+    -fx-font-size: 8px;
+}
+
+.login-bottom-caption {
+    -fx-text-fill: #aebed0;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1.1px;
+}
+
+/* Zona derecha con profundidad y tonos de cine */
+.login-form-area {
+    -fx-background-color: radial-gradient(
+            center 50% 45%,
+            radius 85%,
+            #10223a 0%,
+            #081526 65%,
+            #06111f 100%
+    );
+    -fx-padding: 42px;
+}
+
+.login-form-card {
+    -fx-background-color: linear-gradient(
+            to bottom right,
+            rgba(19,37,59,0.97),
+            rgba(10,25,42,0.97)
+    );
+    -fx-background-radius: 24px;
+    -fx-border-color: rgba(155,184,216,0.24);
+    -fx-border-radius: 24px;
+    -fx-padding: 40px 38px 32px 38px;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(0,0,0,0.48),
+            34, 0.2, 0, 14
+    );
+}
+
+.login-form-title {
+    -fx-font-size: 27px;
+    -fx-text-fill: #ffffff;
+}
+
+.login-form-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: #9eafc4;
+}
+
+.login-field-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #dce5ef;
+}
+
+.login-input {
+    -fx-background-color: rgba(5,17,31,0.92);
+    -fx-border-color: #304761;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-pref-height: 47px;
+    -fx-font-size: 13px;
+    -fx-padding: 12px 14px;
+}
+
+.login-input:focused {
+    -fx-border-color: #f4b323;
+    -fx-border-width: 1.5px;
+    -fx-background-color: #0b1c30;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(244,179,35,0.25),
+            14, 0.15, 0, 0
+    );
+}
+
+.login-message {
+    -fx-padding: 2px 0 0 1px;
+}
+
+.login-primary-button {
+    -fx-background-color: linear-gradient(to right, #ffd65a, #f0a51b);
+    -fx-background-radius: 10px;
+    -fx-pref-height: 48px;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(244,179,35,0.24), 15, 0.14, 0, 3);
+}
+
+.login-primary-button:hover {
+    -fx-background-color: linear-gradient(to right, #ffe58b, #ffc044);
+    -fx-effect: dropshadow(gaussian, rgba(244,179,35,0.42), 20, 0.18, 0, 4);
+    -fx-scale-y: 1.025;
+    -fx-scale-x: 1.025;
+}
+
+.login-primary-button:pressed {
+    -fx-scale-y: 0.985;
+    -fx-scale-x: 0.985;
+}
+
+.login-register-row {
+    -fx-padding: 1px 0 0 0;
+}
+
+.login-helper-text {
+    -fx-font-size: 11px;
+}
+
+.login-register-link {
+    -fx-font-size: 11px;
+    -fx-cursor: hand;
+}
+
+/* Movimiento suave del fondo sin interferir con los controles. */
+.login-particle-layer .circle {
+    -fx-effect: dropshadow(gaussian, rgba(255,196,61,0.22), 8, 0.2, 0, 0);
+}
+
+
+/* ==========================================================
+   CORRECCIÓN: TARJETAS Y CONTROLES POR ENCIMA DE LAS PARTÍCULAS
+   ========================================================== */
+
+/* La capa animada debe ser transparente y no cubrir los paneles. */
+.login-particle-layer {
+    -fx-background-color: transparent;
+}
+
+/* Panel izquierdo: recuperar contraste y lectura. */
+.login-brand-panel {
+    -fx-background-color: linear-gradient(
+            to bottom right,
+            #07182b 0%,
+            #102844 58%,
+            #142f4d 100%
+    );
+}
+
+/* Tarjeta del formulario: superficie sólida tipo glass premium. */
+.login-form-area {
+    -fx-background-color: radial-gradient(
+            center 50% 45%,
+            radius 85%,
+            #10223a 0%,
+            #081526 65%,
+            #06111f 100%
+    );
+}
+
+.login-form-card,
+.form-card.login-form-card {
+    -fx-background-color: linear-gradient(
+            to bottom right,
+            #142941,
+            #0d1c30
+    );
+    -fx-background-radius: 22px;
+    -fx-border-color: rgba(151,181,214,0.34);
+    -fx-border-width: 1px;
+    -fx-border-radius: 22px;
+    -fx-padding: 39px 38px 32px 38px;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(0,0,0,0.58),
+            30, 0.18, 0, 12
+    );
+}
+
+/* Forzar colores legibles aunque existan reglas globales anteriores. */
+.login-form-title,
+.login-form-card .form-title {
+    -fx-text-fill: #f7f9fc;
+    -fx-font-size: 27px;
+    -fx-font-weight: bold;
+}
+
+.login-form-subtitle,
+.login-form-card .form-subtitle {
+    -fx-text-fill: #aebed0;
+}
+
+.login-field-label,
+.login-form-card .field-label {
+    -fx-text-fill: #e1e9f2;
+    -fx-font-weight: bold;
+}
+
+.login-input,
+.login-form-card .input-field {
+    -fx-background-color: #091729;
+    -fx-text-fill: #f4f6fa;
+    -fx-prompt-text-fill: #8293aa;
+    -fx-border-color: #344d69;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-pref-height: 47px;
+    -fx-padding: 12px 14px;
+}
+
+.login-helper-text,
+.login-form-card .helper-text {
+    -fx-text-fill: #aebbd0;
+}
+
+.login-register-link,
+.login-form-card .button-link {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ffc43d;
+    -fx-font-weight: bold;
+}
+
+.login-primary-button,
+.login-form-card .button-primary {
+    -fx-background-color: linear-gradient(to right, #ffd65a, #f0a51b);
+    -fx-text-fill: #101827;
+    -fx-background-radius: 10px;
+    -fx-pref-height: 48px;
+    -fx-font-weight: bold;
+}
+
+.login-message {
+    -fx-text-fill: #c5d2e2;
+}
+
+
+/* ==========================================================
+   CORRECCIÓN DEFINITIVA DE LOGIN - CinemaUQ
+   Reglas específicas para que el formulario y sus textos
+   conserven contraste incluso con las animaciones de fondo.
+   ========================================================== */
+
+.login-root {
+    -fx-background-color: #050d19;
+}
+
+.login-root .login-content {
+    -fx-background-color: transparent;
+}
+
+.login-root .login-brand-panel {
+    -fx-background-color: linear-gradient(to bottom right, #07182b 0%, #102844 58%, #142f4d 100%);
+    -fx-background-insets: 0;
+}
+
+.login-root .login-form-area {
+    -fx-background-color: #071323;
+    -fx-background-insets: 0;
+    -fx-padding: 34px;
+}
+
+.login-root .login-form-card {
+    -fx-background-color: #101f32;
+    -fx-background-insets: 0;
+    -fx-background-radius: 20px;
+    -fx-border-color: #304761;
+    -fx-border-width: 1.2px;
+    -fx-border-radius: 20px;
+    -fx-padding: 36px 34px 30px 34px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.55), 25, 0.18, 0, 9);
+}
+
+.login-root .login-form-title {
+    -fx-text-fill: #ffffff;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+}
+
+.login-root .login-form-subtitle {
+    -fx-text-fill: #b8c6d8;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+}
+
+.login-root .login-field-label {
+    -fx-text-fill: #e7edf5;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.login-root .login-input {
+    -fx-background-color: #091729;
+    -fx-background-insets: 0;
+    -fx-background-radius: 9px;
+    -fx-border-color: #38516e;
+    -fx-border-width: 1px;
+    -fx-border-radius: 9px;
+    -fx-text-fill: #ffffff;
+    -fx-prompt-text-fill: #8294aa;
+    -fx-highlight-fill: #d99b20;
+    -fx-highlight-text-fill: #071323;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+    -fx-padding: 11px 13px;
+    -fx-pref-height: 44px;
+}
+
+.login-root .login-input:focused {
+    -fx-background-color: #0b1c30;
+    -fx-border-color: #f4b323;
+    -fx-border-width: 1.5px;
+    -fx-effect: dropshadow(gaussian, rgba(244,179,35,0.24), 10, 0.12, 0, 0);
+}
+
+.login-root .login-message {
+    -fx-text-fill: #c6d2e0;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+}
+
+.login-root .login-message.message-error {
+    -fx-text-fill: #ff9292;
+}
+
+.login-root .login-message.message-success {
+    -fx-text-fill: #8bd5ad;
+}
+
+.login-root .login-primary-button {
+    -fx-background-color: linear-gradient(to right, #ffd65a, #efa51a);
+    -fx-background-insets: 0;
+    -fx-background-radius: 9px;
+    -fx-border-color: transparent;
+    -fx-border-radius: 9px;
+    -fx-text-fill: #101827;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-pref-height: 47px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(244,179,35,0.25), 13, 0.12, 0, 3);
+}
+
+.login-root .login-primary-button:hover {
+    -fx-background-color: linear-gradient(to right, #ffe58b, #ffc044);
+    -fx-effect: dropshadow(gaussian, rgba(244,179,35,0.42), 17, 0.16, 0, 4);
+}
+
+.login-root .login-primary-button:pressed {
+    -fx-background-color: #e9a51a;
+}
+
+.login-root .login-helper-text {
+    -fx-text-fill: #aebed0;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+}
+
+.login-root .login-register-link {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ffc43d;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4px 2px;
+    -fx-cursor: hand;
+}
+
+.login-root .login-register-link:hover {
+    -fx-text-fill: #ffe39a;
+    -fx-underline: true;
+}
+
+.login-root .login-hero-title {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 33px;
+    -fx-font-weight: bold;
+}
+
+.login-root .login-hero-accent {
+    -fx-text-fill: #ffc13b;
+    -fx-font-size: 33px;
+    -fx-font-weight: bold;
+}
+
+.login-root .login-hero-description {
+    -fx-text-fill: #d0dbea;
+    -fx-font-size: 13px;
+    -fx-line-spacing: 5px;
+}
+
+.login-root .login-hero-pill {
+    -fx-background-color: rgba(20,43,68,0.96);
+    -fx-background-radius: 20px;
+    -fx-border-color: rgba(244,179,35,0.55);
+    -fx-border-radius: 20px;
+    -fx-padding: 11px 16px;
+}
+
+.login-root .login-pill-text {
+    -fx-text-fill: #f1f5fa;
+    -fx-font-size: 12px;
+}
+
+.login-root .login-hero-star {
+    -fx-text-fill: #ffc43d;
+    -fx-font-size: 19px;
+}
+
+.login-root .login-bottom-caption {
+    -fx-text-fill: #d0dbea;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+}
+
+.login-root .brand-footer {
+    -fx-text-fill: #9aabc0;
+    -fx-font-size: 9px;
+}
+
+.login-root .login-particle-layer {
+    -fx-background-color: transparent;
+}
+
+.login-root .login-particle-layer .circle {
+    -fx-effect: dropshadow(gaussian, rgba(255,196,61,0.20), 7, 0.18, 0, 0);
+}
+
+
+/* =====================================================
+   CORRECCIÓN DE CAMPOS BLANCOS - REGISTRO CINEMAUQ
+   ===================================================== */
+
+/* Todos los campos de texto y contraseñas */
+.login-root .text-field,
+.login-root .password-field,
+.login-root .text-input,
+.login-root .login-input {
+
+    -fx-control-inner-background: #091729;
+    -fx-control-inner-background-alt: #091729;
+
+    -fx-background-color: #091729;
+    -fx-background-insets: 0;
+    -fx-background-radius: 9px;
+
+    -fx-border-color: #38516e;
+    -fx-border-width: 1px;
+    -fx-border-radius: 9px;
+
+    -fx-text-fill: #ffffff;
+    -fx-prompt-text-fill: #8294aa;
+
+    -fx-highlight-fill: #d99b20;
+    -fx-highlight-text-fill: #071323;
+
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+
+    -fx-padding: 11px 13px;
+    -fx-pref-height: 44px;
+}
+
+/* Cuando el usuario selecciona un campo */
+.login-root .text-field:focused,
+.login-root .password-field:focused,
+.login-root .text-input:focused {
+
+    -fx-control-inner-background: #0b1c30;
+    -fx-background-color: #0b1c30;
+
+    -fx-border-color: #f4b323;
+    -fx-border-width: 1.5px;
+
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(244,179,35,0.25),
+            10, 0.12, 0, 0
+    );
+}
+
+/* Conserva los campos oscuros también al pasar el cursor */
+.login-root .text-field:hover,
+.login-root .password-field:hover {
+
+    -fx-control-inner-background: #0b1c30;
+    -fx-background-color: #0b1c30;
+    -fx-border-color: #526b88;
+}
+
+/* Evita fondos blancos en los campos del formulario */
+.login-root .text-field .content,
+.login-root .password-field .content {
+    -fx-background-color: transparent;
+}
+
+
+/* ==========================================================
+   DASHBOARD CINEMATOGRÁFICO - FONDO AMBIENTAL ANIMADO
+   Se conservan los paneles y tarjetas sólidos; las superficies
+   estructurales centrales dejan pasar los halos del fondo.
+   ========================================================== */
+.dashboard-animated-root {
+    -fx-background-color: #050d19;
+}
+.dashboard-frame {
+    -fx-background-color: transparent;
+}
+.dashboard-particle-layer {
+    -fx-background-color: transparent;
+}
+.dashboard-workspace {
+    -fx-background-color: rgba(7, 19, 35, 0.68);
+}
+.dashboard-body {
+    -fx-background-color: rgba(7, 19, 35, 0.54);
+}
+.dashboard-topbar {
+    -fx-background-color: rgba(6, 16, 30, 0.88);
+}
+.dashboard-content-scroll,
+.dashboard-right-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+.dashboard-content-scroll > .viewport,
+.dashboard-right-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+.dashboard-content-host,
+.dashboard-right-panel {
+    -fx-background-color: transparent;
+}
+
+
+/* ==========================================================
+   RELOJ DIGITAL DEL PANEL LATERAL - CINEMAUQ
+   ========================================================== */
+.dashboard-clock-card {
+    -fx-background-color: linear-gradient(to bottom right, #142b45, #0a192b 72%, #17243a);
+    -fx-background-radius: 15px;
+    -fx-border-color: rgba(213,165,45,0.58);
+    -fx-border-width: 1px;
+    -fx-border-radius: 15px;
+    -fx-padding: 17px 16px 16px 16px;
+    -fx-min-height: 145px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.22), 14, 0.10, 0, 4);
+}
+.dashboard-clock-icon {
+    -fx-text-fill: #f5bf3c;
+    -fx-font-size: 19px;
+    -fx-font-weight: bold;
+}
+.dashboard-clock-live {
+    -fx-text-fill: #82d9ae;
+    -fx-background-color: rgba(65,190,130,0.11);
+    -fx-background-radius: 12px;
+    -fx-padding: 4px 7px;
+    -fx-font-size: 8px;
+    -fx-font-weight: bold;
+}
+.dashboard-clock-time {
+    -fx-text-fill: #ffd04b;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 34px;
+    -fx-font-weight: bold;
+}
+.dashboard-clock-date {
+    -fx-text-fill: #c3d0df;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+}
+.dashboard-clock-dot {
+    -fx-text-fill: #61d49b;
+    -fx-font-size: 8px;
+}
+.dashboard-clock-zone {
+    -fx-text-fill: #8298b1;
+    -fx-font-size: 8px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 0.8px;
+}

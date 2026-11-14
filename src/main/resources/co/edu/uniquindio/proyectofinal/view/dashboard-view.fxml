@@ -9,87 +9,160 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx/21.0.6"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="co.edu.uniquindio.proyectofinal.viewcontroller.DashboardViewController"
-            styleClass="dashboard-shell">
+<StackPane xmlns="http://javafx.com/javafx/21.0.6"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="co.edu.uniquindio.proyectofinal.viewcontroller.DashboardViewController"
+           styleClass="dashboard-shell dashboard-animated-root">
 
-    <left>
-        <VBox prefWidth="250" minWidth="230" maxWidth="250"
-              styleClass="sidebar" spacing="18">
-            <padding>
-                <Insets top="24" right="15" bottom="18" left="15"/>
-            </padding>
+    <!-- CAPA ANIMADA DE FONDO -->
+    <Pane fx:id="dashboardParticleLayer"
+          mouseTransparent="true"
+          pickOnBounds="false"
+          styleClass="dashboard-particle-layer"/>
 
-            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="brand-row">
-                <ImageView fitWidth="195.0" fitHeight="75.0"
-                           preserveRatio="true" smooth="true"
-                           pickOnBounds="true" styleClass="brand-logo-dashboard">
-                    <image>
-                        <Image url="@../images/Logo.png"/>
-                    </image>
-                </ImageView>
-            </HBox>
+    <!-- INTERFAZ PRINCIPAL -->
+    <BorderPane styleClass="dashboard-frame">
 
-            <Separator styleClass="sidebar-separator"/>
+        <!-- MENÚ LATERAL -->
+        <left>
+            <VBox prefWidth="250"
+                  minWidth="230"
+                  maxWidth="250"
+                  styleClass="sidebar"
+                  spacing="18">
 
-            <VBox fx:id="menuContainer" spacing="7" styleClass="nav-list"/>
+                <padding>
+                    <Insets top="24" right="15" bottom="18" left="15"/>
+                </padding>
 
-            <Region VBox.vgrow="ALWAYS"/>
+                <!-- LOGO -->
+                <HBox alignment="CENTER_LEFT"
+                      spacing="10"
+                      styleClass="brand-row">
 
-            <VBox spacing="7" styleClass="sidebar-footer">
-                <Label text="UNIVERSIDAD DEL QUINDÍO" styleClass="sidebar-caption"/>
-                <Label text="Cinema experience" styleClass="sidebar-caption-muted"/>
-                <Button text="↪   Cerrar sesión" onAction="#cerrarSesion"
-                        maxWidth="Infinity" styleClass="logout-button"/>
+                    <ImageView fitWidth="195.0"
+                               fitHeight="75.0"
+                               preserveRatio="true"
+                               smooth="true"
+                               pickOnBounds="true"
+                               styleClass="brand-logo-dashboard">
+
+                        <image>
+                            <Image url="@../images/Logo.png"/>
+                        </image>
+
+                    </ImageView>
+                </HBox>
+
+                <Separator styleClass="sidebar-separator"/>
+
+                <!-- OPCIONES DE NAVEGACIÓN -->
+                <VBox fx:id="menuContainer"
+                      spacing="7"
+                      styleClass="nav-list"/>
+
+                <Region VBox.vgrow="ALWAYS"/>
+
+                <!-- PIE DEL MENÚ -->
+                <VBox spacing="7"
+                      styleClass="sidebar-footer">
+
+                    <Label text="UNIVERSIDAD DEL QUINDÍO"
+                           styleClass="sidebar-caption"/>
+
+                    <Label text="Cinema experience"
+                           styleClass="sidebar-caption-muted"/>
+
+                    <Button text="↪   Cerrar sesión"
+                            onAction="#cerrarSesion"
+                            maxWidth="Infinity"
+                            styleClass="logout-button"/>
+                </VBox>
+
             </VBox>
-        </VBox>
-    </left>
+        </left>
 
-    <center>
-        <BorderPane styleClass="dashboard-workspace">
-            <top>
-                <HBox alignment="CENTER_LEFT" spacing="16" styleClass="dashboard-topbar">
-                    <TextField fx:id="searchField"
-                               promptText="Buscar películas, salas o funciones..."
-                               styleClass="dashboard-search"
-                               HBox.hgrow="ALWAYS"/>
-                    <Button text="🔔" onAction="#mostrarNotificaciones"
-                            styleClass="notification-button"/>
-                </HBox>
-            </top>
+        <!-- ÁREA CENTRAL -->
+        <center>
+            <BorderPane styleClass="dashboard-workspace">
 
-            <center>
-                <HBox spacing="14" styleClass="dashboard-body">
-                    <ScrollPane fx:id="contentScroll" fitToWidth="true"
-                                hbarPolicy="NEVER"
-                                styleClass="dashboard-content-scroll"
-                                HBox.hgrow="ALWAYS">
-                        <content>
-                            <StackPane fx:id="contentHost" styleClass="dashboard-content-host"/>
-                        </content>
-                    </ScrollPane>
+                <!-- BARRA SUPERIOR -->
+                <top>
+                    <HBox alignment="CENTER_LEFT"
+                          spacing="16"
+                          styleClass="dashboard-topbar">
 
-                    <ScrollPane fitToWidth="true" fitToHeight="true"
-                                hbarPolicy="NEVER" vbarPolicy="NEVER"
-                                prefWidth="310" minWidth="285" maxWidth="330"
-                                styleClass="dashboard-right-scroll">
-                        <content>
-                            <VBox fx:id="rightPanel" spacing="13" fillWidth="true"
-                                  styleClass="dashboard-right-panel">
-                                <padding>
-                                    <Insets top="3" right="3" bottom="3" left="3"/>
-                                </padding>
-                            </VBox>
-                        </content>
-                    </ScrollPane>
-                </HBox>
-            </center>
-        </BorderPane>
-    </center>
-</BorderPane>
+                        <TextField fx:id="searchField"
+                                   promptText="Buscar películas, salas o funciones..."
+                                   styleClass="dashboard-search"
+                                   HBox.hgrow="ALWAYS"/>
+
+                        <Button text="🔔"
+                                onAction="#mostrarNotificaciones"
+                                styleClass="notification-button"/>
+
+                    </HBox>
+                </top>
+
+                <!-- CONTENIDO Y PANEL DERECHO -->
+                <center>
+                    <HBox spacing="14"
+                          styleClass="dashboard-body">
+
+                        <!-- CONTENIDO PRINCIPAL -->
+                        <ScrollPane fx:id="contentScroll"
+                                    fitToWidth="true"
+                                    hbarPolicy="NEVER"
+                                    styleClass="dashboard-content-scroll"
+                                    HBox.hgrow="ALWAYS">
+
+                            <content>
+                                <StackPane fx:id="contentHost"
+                                           styleClass="dashboard-content-host"/>
+                            </content>
+
+                        </ScrollPane>
+
+                        <!-- PANEL LATERAL DERECHO -->
+                        <ScrollPane fitToWidth="true"
+                                    fitToHeight="true"
+                                    hbarPolicy="NEVER"
+                                    vbarPolicy="NEVER"
+                                    prefWidth="310"
+                                    minWidth="285"
+                                    maxWidth="330"
+                                    styleClass="dashboard-right-scroll">
+
+                            <content>
+                                <VBox fx:id="rightPanel"
+                                      spacing="13"
+                                      fillWidth="true"
+                                      styleClass="dashboard-right-panel">
+
+                                    <padding>
+                                        <Insets top="3"
+                                                right="3"
+                                                bottom="3"
+                                                left="3"/>
+                                    </padding>
+
+                                </VBox>
+                            </content>
+
+                        </ScrollPane>
+
+                    </HBox>
+                </center>
+
+            </BorderPane>
+        </center>
+
+    </BorderPane>
+
+</StackPane>

@@ -5,120 +5,263 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx/21.0.6"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="co.edu.uniquindio.proyectofinal.viewcontroller.RegistroViewController"
-            styleClass="app-background">
+<StackPane xmlns="http://javafx.com/javafx/21.0.6"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="co.edu.uniquindio.proyectofinal.viewcontroller.RegistroViewController"
+           styleClass="app-background login-root"
+           style="-fx-background-color: #050d19;">
 
-    <left>
-        <VBox alignment="CENTER_LEFT"
-              spacing="22.0"
-              styleClass="brand-panel">
-            <padding>
-                <Insets top="52" right="48" bottom="52" left="58"/>
-            </padding>
+    <!-- FONDO ANIMADO -->
+    <Pane fx:id="particleLayer"
+          mouseTransparent="true"
+          pickOnBounds="false"
+          styleClass="login-particle-layer"/>
 
-            <VBox spacing="2">
-                <Label text="CINEMA" styleClass="brand-title"/>
-                <Label text="UQ" styleClass="brand-mark"/>
-            </VBox>
+    <BorderPane style="-fx-background-color: transparent;">
 
-            <VBox spacing="10">
-                <Label text="Haz espacio" styleClass="hero-title"/>
-                <Label text="para nuevas historias."
-                       styleClass="hero-title-accent"/>
-                <Label text="Crea tu cuenta y ten a la mano tus películas, entradas y próximas experiencias."
-                       wrapText="true"
-                       styleClass="hero-description"
-                       maxWidth="390"/>
-            </VBox>
+        <!-- ============================================= -->
+        <!-- PANEL IZQUIERDO -->
+        <!-- ============================================= -->
 
-            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="hero-pill">
-                <Label text="✦" styleClass="hero-star"/>
-                <Label text="Una cuenta. Muchas historias."
-                       styleClass="hero-pill-text"/>
-            </HBox>
+        <left>
+            <VBox fx:id="brandPanel"
+                  alignment="CENTER_LEFT"
+                  spacing="22"
+                  prefWidth="430"
+                  minWidth="360"
+                  styleClass="brand-panel login-brand-panel"
+                  style="-fx-background-color: linear-gradient(to bottom right, rgba(7,24,43,0.88), rgba(16,40,68,0.83) 58%, rgba(20,47,77,0.88));">
 
-            <Label text="UNIVERSIDAD DEL QUINDÍO · CINEMA EXPERIENCE"
-                   styleClass="brand-footer"/>
-        </VBox>
-    </left>
+                <padding>
+                    <Insets top="52"
+                            right="48"
+                            bottom="52"
+                            left="58"/>
+                </padding>
 
-    <center>
-        <VBox alignment="CENTER" styleClass="form-area">
-            <VBox spacing="12"
-                  maxWidth="410"
-                  styleClass="form-card form-card-compact">
+                <!-- LOGO -->
+                <ImageView fx:id="logoView"
+                           fitWidth="300"
+                           fitHeight="116"
+                           preserveRatio="true"
+                           smooth="true"
+                           pickOnBounds="true"
+                           styleClass="brand-logo login-logo">
 
-                <VBox spacing="6">
-                    <Label text="Crear cuenta" styleClass="form-title"/>
-                    <Label text="Completa tus datos para registrarte como cliente."
-                           styleClass="form-subtitle"
-                           wrapText="true"/>
+                    <image>
+                        <Image url="@../images/Logo.png"/>
+                    </image>
+
+                </ImageView>
+
+                <!-- PRESENTACIÓN -->
+                <VBox spacing="10">
+
+                    <Label text="Haz espacio"
+                           styleClass="hero-title"
+                           style="-fx-font-family: 'Segoe UI'; -fx-font-size: 33px; -fx-font-weight: bold; -fx-text-fill: #ffffff;"/>
+
+                    <Label text="para nuevas historias."
+                           wrapText="true"
+                           maxWidth="310"
+                           styleClass="hero-title-accent"
+                           style="-fx-font-family: 'Segoe UI'; -fx-font-size: 30px; -fx-font-weight: bold; -fx-text-fill: #ffc13b;"/>
+
+                    <Label text="Crea tu cuenta y ten a la mano tus películas, entradas y próximas experiencias."
+                           wrapText="true"
+                           maxWidth="390"
+                           styleClass="hero-description"
+                           style="-fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-text-fill: #d0dbea; -fx-line-spacing: 5px;"/>
+
                 </VBox>
 
-                <VBox spacing="5">
-                    <Label text="Identificación" styleClass="field-label"/>
-                    <TextField fx:id="identificacionField"
-                               promptText="Número de identificación"
-                               styleClass="input-field"/>
-                </VBox>
+                <!-- MENSAJE DESTACADO -->
+                <HBox alignment="CENTER_LEFT"
+                      spacing="10"
+                      styleClass="hero-pill"
+                      style="-fx-background-color: rgba(20,43,68,0.91); -fx-background-radius: 20px; -fx-border-color: rgba(244,179,35,0.55); -fx-border-radius: 20px; -fx-padding: 11px 16px;">
 
-                <VBox spacing="5">
-                    <Label text="Nombre completo" styleClass="field-label"/>
-                    <TextField fx:id="nombreField"
-                               promptText="Tu nombre"
-                               styleClass="input-field"/>
-                </VBox>
+                    <Label fx:id="heroStar"
+                           text="✦"
+                           style="-fx-text-fill: #ffc43d; -fx-font-size: 19px;"/>
 
-                <VBox spacing="5">
-                    <Label text="Correo electrónico" styleClass="field-label"/>
-                    <TextField fx:id="correoField"
-                               promptText="nombre@correo.com"
-                               styleClass="input-field"/>
-                </VBox>
+                    <Label text="Una cuenta. Muchas historias."
+                           styleClass="hero-pill-text"
+                           style="-fx-text-fill: #f1f5fa; -fx-font-size: 12px;"/>
 
-                <HBox spacing="10">
-                    <VBox spacing="5" HBox.hgrow="ALWAYS">
-                        <Label text="Contraseña" styleClass="field-label"/>
-                        <PasswordField fx:id="contrasenaField"
-                                       promptText="Mínimo 8 caracteres"
-                                       styleClass="input-field"/>
-                    </VBox>
-
-                    <VBox spacing="5" HBox.hgrow="ALWAYS">
-                        <Label text="Confirmar" styleClass="field-label"/>
-                        <PasswordField fx:id="confirmarContrasenaField"
-                                       promptText="Repite la contraseña"
-                                       styleClass="input-field"
-                                       onAction="#registrarCliente"/>
-                    </VBox>
                 </HBox>
 
-                <Label fx:id="mensajeLabel"
-                       text=" "
-                       wrapText="true"
-                       minHeight="30"
-                       styleClass="message-label"/>
+                <!-- PIE DE PÁGINA -->
+                <VBox spacing="7">
 
-                <Button text="Crear mi cuenta"
-                        onAction="#registrarCliente"
-                        maxWidth="Infinity"
-                        styleClass="button-primary"/>
+                    <HBox spacing="6"
+                          alignment="CENTER_LEFT">
 
-                <HBox alignment="CENTER" spacing="5">
-                    <Label text="¿Ya tienes una cuenta?"
-                           styleClass="helper-text"/>
-                    <Button text="Inicia sesión"
-                            onAction="#volverAlLogin"
-                            styleClass="button-link"/>
-                </HBox>
+                        <Label text="●"
+                               style="-fx-text-fill: #57d69a; -fx-font-size: 8px;"/>
+
+                        <Label text="TU UNIVERSO DE CINE"
+                               style="-fx-text-fill: #d0dbea; -fx-font-size: 9px; -fx-font-weight: bold;"/>
+
+                    </HBox>
+
+                    <Label text="UNIVERSIDAD DEL QUINDÍO · CINEMA EXPERIENCE"
+                           styleClass="brand-footer"/>
+
+                </VBox>
 
             </VBox>
-        </VBox>
-    </center>
-</BorderPane>
+        </left>
+
+        <!-- ============================================= -->
+        <!-- PANEL DERECHO -->
+        <!-- ============================================= -->
+
+        <center>
+            <VBox alignment="CENTER"
+                  styleClass="form-area login-form-area"
+                  style="-fx-background-color: rgba(7,19,35,0.76); -fx-padding: 24px;">
+
+                <!-- TARJETA DE REGISTRO -->
+                <VBox fx:id="formCard"
+                      spacing="12"
+                      maxWidth="410"
+                      styleClass="form-card login-form-card"
+                      style="-fx-background-color: #101f32; -fx-background-radius: 20px; -fx-border-color: #304761; -fx-border-width: 1.2px; -fx-border-radius: 20px; -fx-padding: 25px 32px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.55), 25, 0.18, 0, 9);">
+
+                    <!-- ENCABEZADO -->
+                    <VBox spacing="6">
+
+                        <Label text="Crear cuenta"
+                               styleClass="form-title login-form-title"
+                               style="-fx-font-family: 'Segoe UI'; -fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #ffffff;"/>
+
+                        <Label text="Completa tus datos para registrarte como cliente."
+                               wrapText="true"
+                               styleClass="form-subtitle login-form-subtitle"
+                               style="-fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-text-fill: #b8c6d8;"/>
+
+                    </VBox>
+
+                    <!-- IDENTIFICACIÓN -->
+                    <VBox spacing="5">
+
+                        <Label text="Identificación"
+                               styleClass="field-label login-field-label"
+                               style="-fx-text-fill: #ffffff; -fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+
+                        <TextField fx:id="identificacionField"
+                                   promptText="Número de identificación"
+                                   styleClass="input-field login-input"
+                                   style="-fx-background-color: #091729; -fx-background-radius: 9px; -fx-border-color: #38516e; -fx-border-radius: 9px; -fx-text-fill: #ffffff; -fx-prompt-text-fill: #8294aa; -fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-padding: 11px 13px; -fx-pref-height: 44px;"/>
+
+                    </VBox>
+
+                    <!-- NOMBRE COMPLETO -->
+                    <VBox spacing="5">
+
+                        <Label text="Nombre completo"
+                               styleClass="field-label login-field-label"
+                               style="-fx-text-fill: #ffffff; -fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+
+                        <TextField fx:id="nombreField"
+                                   promptText="Tu nombre completo"
+                                   styleClass="input-field login-input"
+                                   style="-fx-background-color: #091729; -fx-background-radius: 9px; -fx-border-color: #38516e; -fx-border-radius: 9px; -fx-text-fill: #ffffff; -fx-prompt-text-fill: #8294aa; -fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-padding: 11px 13px; -fx-pref-height: 44px;"/>
+
+                    </VBox>
+
+                    <!-- CORREO ELECTRÓNICO -->
+                    <VBox spacing="5">
+
+                        <Label text="Correo electrónico"
+                               styleClass="field-label login-field-label"
+                               style="-fx-text-fill: #ffffff; -fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+
+                        <TextField fx:id="correoField"
+                                   promptText="nombre@correo.com"
+                                   styleClass="input-field login-input"
+                                   style="-fx-background-color: #091729; -fx-background-radius: 9px; -fx-border-color: #38516e; -fx-border-radius: 9px; -fx-text-fill: #ffffff; -fx-prompt-text-fill: #8294aa; -fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-padding: 11px 13px; -fx-pref-height: 44px;"/>
+
+                    </VBox>
+
+                    <!-- CONTRASEÑAS -->
+                    <HBox spacing="10">
+
+                        <VBox spacing="5"
+                              HBox.hgrow="ALWAYS">
+
+                            <Label text="Contraseña"
+                                   styleClass="field-label login-field-label"
+                                   style="-fx-text-fill: #ffffff; -fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+
+                            <PasswordField fx:id="contrasenaField"
+                                           promptText="Mínimo 8 caracteres"
+                                           styleClass="input-field login-input"
+                                           style="-fx-background-color: #091729; -fx-background-radius: 9px; -fx-border-color: #38516e; -fx-border-radius: 9px; -fx-text-fill: #ffffff; -fx-prompt-text-fill: #8294aa; -fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-padding: 11px 13px; -fx-pref-height: 44px;"/>
+
+                        </VBox>
+
+                        <VBox spacing="5"
+                              HBox.hgrow="ALWAYS">
+
+                            <Label text="Confirmar"
+                                   styleClass="field-label login-field-label"
+                                   style="-fx-text-fill: #ffffff; -fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+
+                            <PasswordField fx:id="confirmarContrasenaField"
+                                           promptText="Repite la contraseña"
+                                           styleClass="input-field login-input"
+                                           onAction="#registrarCliente"
+                                           style="-fx-background-color: #091729; -fx-background-radius: 9px; -fx-border-color: #38516e; -fx-border-radius: 9px; -fx-text-fill: #ffffff; -fx-prompt-text-fill: #8294aa; -fx-font-family: 'Segoe UI'; -fx-font-size: 12px; -fx-padding: 11px 13px; -fx-pref-height: 44px;"/>
+
+                        </VBox>
+
+                    </HBox>
+
+                    <!-- MENSAJES -->
+                    <Label fx:id="mensajeLabel"
+                           text=" "
+                           wrapText="true"
+                           minHeight="30"
+                           styleClass="message-label login-message"/>
+
+                    <!-- BOTÓN CREAR CUENTA CON POP -->
+                    <Button fx:id="registerButton"
+                            text="Crear mi cuenta"
+                            onAction="#registrarCliente"
+                            maxWidth="Infinity"
+                            styleClass="button-primary login-primary-button"
+                            style="-fx-background-color: linear-gradient(to right, #ffd65a, #efa51a); -fx-background-radius: 9px; -fx-text-fill: #101827; -fx-font-family: 'Segoe UI'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-pref-height: 46px; -fx-cursor: hand;"/>
+
+                    <!-- VOLVER AL LOGIN -->
+                    <HBox alignment="CENTER"
+                          spacing="5">
+
+                        <Label text="¿Ya tienes una cuenta?"
+                               styleClass="helper-text login-helper-text"
+                               style="-fx-text-fill: #aebed0;"/>
+
+                        <Button text="Inicia sesión"
+                                onAction="#volverAlLogin"
+                                styleClass="button-link login-register-link"
+                                style="-fx-background-color: transparent; -fx-text-fill: #ffc43d; -fx-font-family: 'Segoe UI'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 4px 2px; -fx-cursor: hand;"/>
+
+                    </HBox>
+
+                </VBox>
+
+            </VBox>
+        </center>
+
+    </BorderPane>
+
+</StackPane>
