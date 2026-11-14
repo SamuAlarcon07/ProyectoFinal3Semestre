@@ -1,5 +1,7 @@
 package co.edu.uniquindio.proyectofinal.model.service;
 
+import co.edu.uniquindio.proyectofinal.model.util.FechaHoraUtil;
+
 
 
 import co.edu.uniquindio.proyectofinal.model.interfaces.CompraEventListener;
@@ -54,7 +56,7 @@ public class NotificacionService implements CompraEventListener {
 
         }
 
-        String contenido = LocalDateTime.now() + " - " + mensaje.trim();
+        String contenido = FechaHoraUtil.formatear(LocalDateTime.now()) + " - " + mensaje.trim();
 
         notificacionesPorCliente.computeIfAbsent(cliente.getId(), id -> new ArrayList<>()).add(contenido);
 

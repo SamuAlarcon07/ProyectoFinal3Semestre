@@ -6,6 +6,7 @@ import co.edu.uniquindio.proyectofinal.controller.CinemaOperationsController;
 import co.edu.uniquindio.proyectofinal.controller.DashboardController;
 import co.edu.uniquindio.proyectofinal.controller.ReservaController;
 import co.edu.uniquindio.proyectofinal.model.principal.*;
+import co.edu.uniquindio.proyectofinal.model.util.FechaHoraUtil;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -1091,6 +1092,11 @@ public class DashboardViewController {
                 searchField,
                 filtro
         );
+
+        // Mantiene sincronizados los puntos, la tarjeta virtual y la actividad
+        // reciente cuando el cliente confirma una compra de entradas.
+        vista.setAlActualizarResumen(this::actualizarResumenCliente);
+
         return vista.construirVista();
     }
 
@@ -1176,7 +1182,7 @@ public class DashboardViewController {
             row.getStyleClass().add("function-card");
             Label movie = new Label(f.getPelicula().getTitulo());
             movie.getStyleClass().add("function-title");
-            Label when = new Label(f.getFechaHora().toString().replace('T', ' ')
+            Label when = new Label(FechaHoraUtil.formatear(f.getFechaHora())
                     + " · " + f.getSala().getNombre());
             when.getStyleClass().add("muted-small");
             row.getChildren().addAll(movie, new Region(), when);

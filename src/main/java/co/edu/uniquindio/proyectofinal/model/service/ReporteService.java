@@ -6,6 +6,7 @@ import co.edu.uniquindio.proyectofinal.model.interfaces.ElementoVendible;
 import co.edu.uniquindio.proyectofinal.model.interfaces.ExportadorReporte;
 import co.edu.uniquindio.proyectofinal.model.patrones.estructurales.decorator.ElementoVendibleDecorador;
 import co.edu.uniquindio.proyectofinal.model.principal.*;
+import co.edu.uniquindio.proyectofinal.model.util.FechaHoraUtil;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -37,7 +38,7 @@ public class ReporteService {
         for (Compra compra : filtradas) {
             texto.append(compra.getCodigo())
                     .append(" | Cliente: ").append(compra.getCliente().getId())
-                    .append(" | Fecha: ").append(compra.getFecha())
+                    .append(" | Fecha: ").append(FechaHoraUtil.formatear(compra.getFecha()))
                     .append(" | Total: $").append(compra.getTotal()).append('\n');
         }
         texto.append("Total de ventas: $").append(total);
@@ -83,7 +84,7 @@ public class ReporteService {
                     Funcion funcion = entrada.getFuncion();
                     String clave = funcion.getCodigo() + " - "
                             + funcion.getPelicula().getTitulo() + " - "
-                            + funcion.getFechaHora();
+                            + FechaHoraUtil.formatear(funcion.getFechaHora());
                     cantidades.merge(clave, detalle.getCantidad(), Integer::sum);
                 }
             }
@@ -193,7 +194,7 @@ public class ReporteService {
                         && dentroDelPeriodo(movimiento.getFecha(), desde, hasta)) {
                     operaciones++;
                     total = total.add(movimiento.getValor());
-                    texto.append(movimiento.getFecha())
+                    texto.append(FechaHoraUtil.formatear(movimiento.getFecha()))
                             .append(" | Tarjeta: ").append(tarjeta.getNumero())
                             .append(" | Cliente: ").append(tarjeta.getTitular().getId())
                             .append(" | Responsable: ").append(movimiento.getResponsableId())
@@ -388,12 +389,12 @@ public class ReporteService {
     }
 
     private String cabecera(String titulo, LocalDate desde, LocalDate hasta) {
-        return titulo + "\nFecha de generación: " + LocalDateTime.now()
+        return titulo + "\nFecha de generación: " + FechaHoraUtil.formatear(LocalDateTime.now())
                 + "\nPeriodo: " + desde + " a " + hasta + "\n";
     }
 
     private String cabeceraSinPeriodo(String titulo) {
-        return titulo + "\nFecha de generación: " + LocalDateTime.now() + "\n";
+        return titulo + "\nFecha de generación: " + FechaHoraUtil.formatear(LocalDateTime.now()) + "\n";
     }
 
     private String porcentaje(long parte, long total) {

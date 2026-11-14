@@ -122,6 +122,9 @@ public class CarteleraViewController {
     private Label etiquetaResultados;
     private ComboBox<String> filtroGenero;
 
+    // Notifica al Dashboard para actualizar inmediatamente puntos y saldo tras un pago.
+    private Runnable alActualizarResumen = () -> { };
+
     public CarteleraViewController(
             CarteleraController carteleraController,
             ReservaController reservaController,
@@ -138,6 +141,13 @@ public class CarteleraViewController {
         this.ventanaPropietaria = ventanaPropietaria;
         this.campoBusqueda = campoBusqueda;
         this.filtroInicial = filtroInicial == null ? "" : filtroInicial.trim();
+    }
+
+    /**
+     * Permite que el Dashboard actualice el panel lateral después de una compra confirmada.
+     */
+    public void setAlActualizarResumen(Runnable callback) {
+        this.alActualizarResumen = callback == null ? () -> { } : callback;
     }
 
     /** Construye el contenido de la sección Cartelera. */
@@ -1627,6 +1637,11 @@ public class CarteleraViewController {
                 }
                 Compra compra = reservaController.confirmarCompra(
                         reservas, cliente, codigoPromocion.getText(), puntos);
+
+                // El pago y la acumulación ya quedaron confirmados.
+                // Sincroniza inmediatamente el panel lateral del Dashboard.
+                alActualizarResumen.run();
+
                 mostrarAlertaCompraExitosa(compra, funcion, seleccion);
             } catch (RuntimeException ex) {
                 try {
