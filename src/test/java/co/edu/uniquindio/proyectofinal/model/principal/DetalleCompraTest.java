@@ -1,3 +1,4 @@
+
 package co.edu.uniquindio.proyectofinal.model.principal;
 
 import org.junit.jupiter.api.Test;

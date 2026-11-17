@@ -1,3 +1,4 @@
+
 package co.edu.uniquindio.proyectofinal.model.principal;
 
 import co.edu.uniquindio.proyectofinal.model.enums.TipoMovimientoInventario;
